@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\Settings;
+use App\Models\AdminLanguage;
 use App\Models\Amenity;
 use App\Models\Language;
 use App\Models\User;
+use App\Support\AdminLanguages;
 use App\Support\InstallCode;
 use App\Support\Languages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -217,19 +219,38 @@ class LanguagesTest extends TestCase
         $this->assertSame('bubbles', Amenity::firstWhere('name', 'Hot tub')->iconName());
     }
 
-    public function test_the_wizard_saves_the_chosen_language(): void
+    /**
+     * Without a matching browser language, visitors and admins see English:
+     * the wizard makes it the default of both, whatever APP_LOCALE says.
+     */
+    public function test_the_wizard_makes_english_the_default_of_website_and_admin(): void
     {
+        Language::query()->update(['is_default' => false]);
+        Language::query()->where('code', 'nl')->update(['is_default' => true]);
+        AdminLanguage::query()->update(['is_default' => false]);
+        AdminLanguage::query()->where('code', 'nl')->update(['is_default' => true]);
+        Language::forgets();
+        AdminLanguage::forgets();
         InstallCode::ensureCode();
+
+        $this->withSession(['install_code_ok' => true])->get('/install/account')
+            ->assertOk()
+            ->assertSee('name="password"', false)
+            ->assertDontSee('site_language');
 
         $this->withSession(['install_code_ok' => true])->post('/install/account', [
             'name' => 'Luis',
             'email' => 'luis@example.nl',
             'password' => 'a-long-enough-password',
             'password_confirmation' => 'a-long-enough-password',
-            'site_language' => 'es',
         ])->assertRedirect('/admin');
 
-        Language::forgets();
-        $this->assertSame('es', Languages::default());
+        $this->assertSame('en', Languages::default());
+        $this->assertSame('en', AdminLanguages::default());
+        $this->assertSame(['en'], Language::where('is_default', true)->pluck('code')->all());
+        $this->assertSame(['en'], AdminLanguage::where('is_default', true)->pluck('code')->all());
+
+        // A Dutch visitor still gets Dutch while Dutch is on.
+        $this->withHeader('Accept-Language', 'nl-NL,nl;q=0.9')->get('/')->assertSee('<html lang="nl"', false);
     }
 }

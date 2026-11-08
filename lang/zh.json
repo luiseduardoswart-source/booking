@@ -1239,7 +1239,6 @@
     "The import service returned an error (status :status).": "导入服务返回错误（状态 :status）。",
     "The individual style fields behind the template. Empty = the default look. Manual tweaks are always possible, also after picking a template.": "模板背后的各项样式字段。留空 = 默认外观。选择模板后也随时可以手动调整。",
     "The keys of the dynamic pricing services. You choose which service an accommodation uses at the accommodation or under Default accommodation settings.": "动态定价服务的密钥。每个住宿使用哪项服务，可在该住宿或“默认住宿设置”中选择。",
-    "The language your website opens in for visitors without a clear preference. You can change this later under Settings → Website → Languages.": "对没有明确偏好的访客，你的网站以此语言打开。之后可在“设置 → 网站 → 语言”中修改。",
     "The languages of the admin screen: add, rename, enable or disable them and set the default. This is separate from the website; you choose your own language in the user menu at the top right.": "后台界面的语言：添加、重命名、启用或停用语言，并设置默认语言。这与网站无关；您自己的语言可在右上角的用户菜单中选择。",
     "The mailbox the website uses to send emails to guests and to you. You find the details at your hosting provider, for example under Emails at Hostinger. Empty = the server settings.": "网站用来向客人和您发送邮件的邮箱。相关信息可在您的主机服务商处找到，例如 Hostinger 的“电子邮件”中。留空 = 使用服务器设置。",
     "The monthly limit for AI images has been reached.": "已达到 AI 图片的每月上限。",

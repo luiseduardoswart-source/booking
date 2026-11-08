@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Models\AdminLanguage;
 use App\Models\Language;
 use App\Models\Setting;
 use App\Models\User;
@@ -14,7 +15,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Throwable;
 
@@ -174,11 +174,7 @@ class InstallController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'site_language' => ['nullable', 'string', Rule::in(Languages::available())],
         ]);
-
-        $language = $data['site_language'] ?? null;
-        unset($data['site_language']);
 
         // The first user is by definition the owner: they must be able to reach the
         // whole admin, so explicitly the administrator role.
@@ -188,13 +184,11 @@ class InstallController extends Controller
         ]);
         $user->forceFill(['email_verified_at' => now()])->save();
 
-        // The language the website opens in. The rest stay on; languages can be
-        // added or turned off later under Settings → Website → Languages.
-        if (filled($language)) {
-            Language::query()->update(['is_default' => false]);
-            Language::query()->where('code', $language)->update(['is_default' => true, 'active' => true]);
-            Language::forgets();
-        }
+        // Visitors and admins see their own browser language when it is on;
+        // otherwise English, the source language. Both can be changed later
+        // under Settings (Website → Languages and Admin).
+        $this->makeDefault(Language::class, Languages::SOURCE);
+        $this->makeDefault(AdminLanguage::class, Languages::SOURCE);
 
         // Without a company email address, contact forms and
         // conflict notifications arrive nowhere. The administrator's is the best guess;
@@ -291,5 +285,22 @@ class InstallController extends Controller
         }
 
         file_put_contents($path, $contents);
+    }
+
+    /**
+     * Make $code the default language of the website or the admin, when that
+     * language exists. The other languages keep their on/off state.
+     *
+     * @param  class-string<Language>  $model
+     */
+    private function makeDefault(string $model, string $code): void
+    {
+        if (! $model::query()->where('code', $code)->exists()) {
+            return;
+        }
+
+        $model::query()->update(['is_default' => false]);
+        $model::query()->where('code', $code)->update(['is_default' => true, 'active' => true]);
+        $model::forgets();
     }
 }

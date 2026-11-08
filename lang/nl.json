@@ -1561,7 +1561,6 @@
     "Welcomed in person": "Persoonlijke ontvangst",
     "Who welcomes the guest?": "Wie ontvangt de gast?",
     "No name on the site": "Geen naam op de site",
-    "Add people, such as a family member, under Hosts.": "Voeg mensen, zoals een familielid, toe onder Hosts.",
     ":name welcomes you": "Je wordt ontvangen door :name",
     "You are welcomed in person": "Je wordt persoonlijk ontvangen",
     "Access code": "Toegangscode",
@@ -1627,5 +1626,6 @@
     "Answers on the booking form": "Antwoorden op het boekingsformulier",
     "A form from Forms, shown below the content of this page.": "Een formulier uit Formulieren, getoond onder de inhoud van deze pagina.",
     "Form on this page": "Formulier op deze pagina",
-    "No form": "Geen formulier"
+    "No form": "Geen formulier",
+    "Not in the list yet? Add the person with the + button, for example a family member.": "Staat de persoon er nog niet tussen? Voeg hem toe met de +-knop, bijvoorbeeld een familielid."
 }

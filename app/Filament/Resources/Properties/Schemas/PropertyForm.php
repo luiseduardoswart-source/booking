@@ -10,7 +10,7 @@ use App\Filament\Support\TranslationFields;
 use App\Livewire\NightlyPricesCalendar;
 use App\Models\Amenity;
 use App\Models\Discount;
-use App\Models\Host;
+use App\Filament\Resources\Hosts\HostResource;
 use App\Models\Property;
 use App\Payments\PaymentProvider;
 use App\Services\Importing\ListingImportException;
@@ -409,10 +409,15 @@ class PropertyForm
                 ->native(false),
             Select::make('check_in_host_id')
                 ->label(__('Who welcomes the guest?'))
-                ->options(fn (): array => Host::query()->orderBy('name')->pluck('name', 'id')->all())
+                ->relationship('welcomedBy', 'name', fn ($query) => $query->orderBy('name'))
+                ->preload()
                 ->placeholder(__('No name on the site'))
-                ->hint(__('Add people, such as a family member, under Hosts.'))
+                ->hint(__('Not in the list yet? Add the person with the + button, for example a family member.'))
                 ->native(false)
+                // A new host (name, photo, text) right here, without leaving the accommodation.
+                ->createOptionForm(fn (): array => HostResource::profileFields())
+                ->createOptionModalHeading(fn (): string => __('filament-actions::create.single.modal.heading', ['label' => HostResource::getModelLabel()]))
+                ->createOptionAction(fn (Action $action) => $action->visible(fn (): bool => HostResource::canCreate()))
                 ->visible(fn (Get $get): bool => $get('check_in_kind') === Property::CHECK_IN_WELCOME),
             ...self::accessCodeFields(),
         ];

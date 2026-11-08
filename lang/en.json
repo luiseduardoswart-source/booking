@@ -1561,7 +1561,6 @@
     "Welcomed in person": "Welcomed in person",
     "Who welcomes the guest?": "Who welcomes the guest?",
     "No name on the site": "No name on the site",
-    "Add people, such as a family member, under Hosts.": "Add people, such as a family member, under Hosts.",
     ":name welcomes you": ":name welcomes you",
     "You are welcomed in person": "You are welcomed in person",
     "Access code": "Access code",
@@ -1627,5 +1626,6 @@
     "Answers on the booking form": "Answers on the booking form",
     "A form from Forms, shown below the content of this page.": "A form from Forms, shown below the content of this page.",
     "Form on this page": "Form on this page",
-    "No form": "No form"
+    "No form": "No form",
+    "Not in the list yet? Add the person with the + button, for example a family member.": "Not in the list yet? Add the person with the + button, for example a family member."
 }

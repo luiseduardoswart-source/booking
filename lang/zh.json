@@ -1549,7 +1549,6 @@
     "Welcomed in person": "当面迎接",
     "Who welcomes the guest?": "谁来迎接客人？",
     "No name on the site": "网站上不显示姓名",
-    "Add people, such as a family member, under Hosts.": "在“房东”下添加人员，例如家人。",
     ":name welcomes you": ":name 将迎接您",
     "You are welcomed in person": "有人当面迎接您",
     "Access code": "门禁密码",
@@ -1615,5 +1614,6 @@
     "Answers on the booking form": "预订表单中的答案",
     "A form from Forms, shown below the content of this page.": "来自“表单”的表单，显示在此页面内容下方。",
     "Form on this page": "此页面上的表单",
-    "No form": "无表单"
+    "No form": "无表单",
+    "Not in the list yet? Add the person with the + button, for example a family member.": "列表中还没有？用 + 按钮添加此人，例如家人。"
 }

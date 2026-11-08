@@ -101,6 +101,26 @@ class CheckInKindTest extends TestCase
         $this->assertNull($accommodation->refresh()->check_in_host_id);
     }
 
+    public function test_a_new_host_can_be_added_right_from_the_check_in_choice(): void
+    {
+        $accommodation = $this->accommodation();
+
+        Livewire::actingAs(User::factory()->create(['role' => UserRole::Administrator]))
+            ->test(EditProperty::class, ['record' => $accommodation->getKey()])
+            ->fillForm(['check_in_kind' => 'welcome'])
+            ->callAction(
+                \Filament\Actions\Testing\TestAction::make('createOption')->schemaComponent('check_in_host_id', schema: 'form'),
+                data: ['name' => 'Oma Rosa'],
+            )
+            ->assertHasNoFormErrors()
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $rosa = Host::query()->where('name', 'Oma Rosa')->sole();
+        $this->assertSame($rosa->id, $accommodation->refresh()->check_in_host_id);
+        $this->page($accommodation)->assertSee(__(':name welcomes you', ['name' => 'Oma Rosa']));
+    }
+
     public function test_the_welcome_is_saved_from_the_accommodation_screen(): void
     {
         $maria = Host::create(['name' => 'Maria']);

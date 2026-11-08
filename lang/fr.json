@@ -1549,7 +1549,6 @@
     "Welcomed in person": "Accueil en personne",
     "Who welcomes the guest?": "Qui accueille le voyageur ?",
     "No name on the site": "Aucun nom sur le site",
-    "Add people, such as a family member, under Hosts.": "Ajoutez des personnes, comme un membre de la famille, sous Hôtes.",
     ":name welcomes you": ":name vous accueille",
     "You are welcomed in person": "Vous êtes accueilli en personne",
     "Access code": "Code d'accès",
@@ -1615,5 +1614,6 @@
     "Answers on the booking form": "Réponses du formulaire de réservation",
     "A form from Forms, shown below the content of this page.": "Un formulaire de Formulaires, affiché sous le contenu de cette page.",
     "Form on this page": "Formulaire sur cette page",
-    "No form": "Aucun formulaire"
+    "No form": "Aucun formulaire",
+    "Not in the list yet? Add the person with the + button, for example a family member.": "Pas encore dans la liste ? Ajoutez la personne avec le bouton +, par exemple un membre de la famille."
 }

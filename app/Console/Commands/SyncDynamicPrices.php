@@ -34,6 +34,11 @@ class SyncDynamicPrices extends Command
                 $configured++;
                 $prices = $provider->pricesFor($property, $from, $to);
 
+                // Prices set by hand in the calendar stay when the accommodation says so.
+                if ($property->manualPricesWin()) {
+                    $prices = array_diff_key($prices, array_flip($this->manualDates($property, $from, $to)));
+                }
+
                 foreach ($prices as $date => $cents) {
                     NightlyRate::updateOrCreate(
                         ['property_id' => $property->id, 'date' => $date],
@@ -54,5 +59,20 @@ class SyncDynamicPrices extends Command
         $this->info("Done — {$total} nightly prices synchronised.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The nights in the period with a price set by hand.
+     *
+     * @return array<int, string> dates (Y-m-d)
+     */
+    private function manualDates(Property $property, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        return $property->nightlyRates()
+            ->where('source', NightlyRate::SOURCE_MANUAL)
+            ->whereBetween('date', [$from->toDateString(), $to->toDateString()])
+            ->get(['date'])
+            ->map(fn (NightlyRate $rate) => $rate->date->toDateString())
+            ->all();
     }
 }

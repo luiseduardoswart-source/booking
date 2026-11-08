@@ -1546,5 +1546,14 @@
     "Refund deposits: :count outstanding": "Refund deposits: :count outstanding",
     "departed :date": "departed :date",
     "The following deposits are ready to be refunded (via admin → Payments → Refund):": "The following deposits are ready to be refunded (via admin → Payments → Refund):",
-    "Tip: turn on \":setting\" in the settings to do this automatically.": "Tip: turn on \":setting\" in the settings to do this automatically."
+    "Tip: turn on \":setting\" in the settings to do this automatically.": "Tip: turn on \":setting\" in the settings to do this automatically.",
+    "Discount on the dynamic price": "Discount on the dynamic price",
+    "No discount": "No discount",
+    "Percentage off": "Percentage off",
+    "Fixed amount off per night": "Fixed amount off per night",
+    "For example the surcharge for Airbnb or Vrbo that does not belong on your own site": "For example the surcharge for Airbnb or Vrbo that does not belong on your own site",
+    "E.g. 18 for 18% off the dynamic price": "E.g. 18 for 18% off the dynamic price",
+    "Discount per night": "Discount per night",
+    "Manual prices go before the dynamic price": "Manual prices go before the dynamic price",
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it."
 }

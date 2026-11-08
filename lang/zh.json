@@ -1534,5 +1534,14 @@
     "Refund deposits: :count outstanding": "退还押金：:count 笔待处理",
     "departed :date": ":date 离开",
     "The following deposits are ready to be refunded (via admin → Payments → Refund):": "以下押金可以退还（在管理后台 → 付款 → 退款）：",
-    "Tip: turn on \":setting\" in the settings to do this automatically.": "提示：在设置中开启“:setting”即可自动处理。"
+    "Tip: turn on \":setting\" in the settings to do this automatically.": "提示：在设置中开启“:setting”即可自动处理。",
+    "Discount on the dynamic price": "动态价格折扣",
+    "No discount": "无折扣",
+    "Percentage off": "按百分比减",
+    "Fixed amount off per night": "每晚减固定金额",
+    "For example the surcharge for Airbnb or Vrbo that does not belong on your own site": "例如为 Airbnb 或 Vrbo 加的费用，不应出现在您自己的网站上",
+    "E.g. 18 for 18% off the dynamic price": "例如填 18 表示动态价格减 18%",
+    "Discount per night": "每晚折扣",
+    "Manual prices go before the dynamic price": "手动价格优先于动态价格",
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "是：您在日历中自行设置的价格保持不变。否：下一次更新会将其覆盖。"
 }

@@ -1534,5 +1534,14 @@
     "Refund deposits: :count outstanding": "Devolver fianzas: :count pendientes",
     "departed :date": "salida el :date",
     "The following deposits are ready to be refunded (via admin → Payments → Refund):": "Las siguientes fianzas están listas para devolverse (en administración → Pagos → Reembolsar):",
-    "Tip: turn on \":setting\" in the settings to do this automatically.": "Consejo: activa «:setting» en los ajustes para hacerlo automáticamente."
+    "Tip: turn on \":setting\" in the settings to do this automatically.": "Consejo: activa «:setting» en los ajustes para hacerlo automáticamente.",
+    "Discount on the dynamic price": "Descuento sobre el precio dinámico",
+    "No discount": "Sin descuento",
+    "Percentage off": "Porcentaje de descuento",
+    "Fixed amount off per night": "Importe fijo menos por noche",
+    "For example the surcharge for Airbnb or Vrbo that does not belong on your own site": "Por ejemplo, el recargo para Airbnb o Vrbo que no corresponde a tu propio sitio",
+    "E.g. 18 for 18% off the dynamic price": "P. ej. 18 para un 18 % menos del precio dinámico",
+    "Discount per night": "Descuento por noche",
+    "Manual prices go before the dynamic price": "Los precios manuales tienen prioridad sobre el precio dinámico",
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Sí: un precio que pones tú en el calendario se mantiene. No: la siguiente actualización lo sobrescribe."
 }

@@ -5,6 +5,7 @@ namespace App\Engines;
 use App\Engines\Pricing\Quote;
 use App\Engines\Pricing\QuoteLine;
 use App\Models\Discount;
+use App\Models\NightlyRate;
 use App\Models\Property;
 use App\Models\RateSeason;
 use App\Support\Money;
@@ -259,16 +260,20 @@ class PricingEngine
 
     /**
      * Night overrides for a period (up to and including the last night), keyed by date.
+     * Prices from the dynamic pricing service come minus the discount on
+     * dynamic prices; prices set by hand stay exactly as entered.
      *
      * @return array<string, int>
      */
     private function overridesMap(Property $property, CarbonImmutable $from, CarbonImmutable $toLastNight): array
     {
-        return $property->nightlyRates()
+        [$dynamic, $manual] = $property->nightlyRates()
             ->whereBetween('date', [$from->toDateString(), $toLastNight->toDateString()])
-            ->pluck('price_cents', 'date')
-            ->mapWithKeys(fn (int $cents, string $date) => [CarbonImmutable::parse($date)->toDateString() => $cents])
-            ->all();
+            ->get(['date', 'price_cents', 'source'])
+            ->partition(fn (NightlyRate $rate) => $rate->source === NightlyRate::SOURCE_PRICELABS)
+            ->map(fn ($rates) => $rates->mapWithKeys(fn (NightlyRate $rate) => [$rate->date->toDateString() => $rate->price_cents])->all());
+
+        return $property->withDynamicDiscount($dynamic) + $manual;
     }
 
     /**

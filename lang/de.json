@@ -1534,5 +1534,14 @@
     "Refund deposits: :count outstanding": "Kautionen erstatten: :count offen",
     "departed :date": "abgereist am :date",
     "The following deposits are ready to be refunded (via admin → Payments → Refund):": "Die folgenden Kautionen können erstattet werden (über Verwaltung → Zahlungen → Erstatten):",
-    "Tip: turn on \":setting\" in the settings to do this automatically.": "Tipp: Schalte „:setting“ in den Einstellungen ein, um das zu automatisieren."
+    "Tip: turn on \":setting\" in the settings to do this automatically.": "Tipp: Schalte „:setting“ in den Einstellungen ein, um das zu automatisieren.",
+    "Discount on the dynamic price": "Rabatt auf den dynamischen Preis",
+    "No discount": "Kein Rabatt",
+    "Percentage off": "Prozentsatz abziehen",
+    "Fixed amount off per night": "Fester Betrag weniger pro Nacht",
+    "For example the surcharge for Airbnb or Vrbo that does not belong on your own site": "Zum Beispiel der Aufschlag für Airbnb oder Vrbo, der nicht auf Ihre eigene Website gehört",
+    "E.g. 18 for 18% off the dynamic price": "Z. B. 18 für 18 % weniger als der dynamische Preis",
+    "Discount per night": "Rabatt pro Nacht",
+    "Manual prices go before the dynamic price": "Manuelle Preise haben Vorrang vor dem dynamischen Preis",
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Ja: Ein Preis, den Sie selbst im Kalender festlegen, bleibt bestehen. Nein: Die nächste Aktualisierung überschreibt ihn."
 }

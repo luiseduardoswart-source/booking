@@ -33,6 +33,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'min_stay_nights', 'booking_window_months',
     'id_required', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
     'down_payment_percentage', 'vat_percentage', 'pricing_service',
+    'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
     'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund',
     'balance_payment_days_before_arrival', 'checkin_days_before_arrival', 'review_days_after_departure', 'mail_texts', 'cancellation_texts',
     'address', 'postal_code', 'city', 'country', 'latitude', 'longitude',
@@ -55,6 +56,13 @@ class Property extends Model implements HasMedia
 
     public const WEEKEND_PERCENT = 'percent';
 
+    /** Discount on the dynamic price: none, a percentage or a fixed amount per night. */
+    public const DISCOUNT_NONE = 'none';
+
+    public const DISCOUNT_PERCENT = 'percent';
+
+    public const DISCOUNT_FIXED = 'fixed';
+
     /** Down payment meaning: the guest pays everything at once. */
     public const FULL_PAYMENT = 100;
 
@@ -66,6 +74,8 @@ class Property extends Model implements HasMedia
         'deposit_days_after_departure' => 3,
         'deposit_auto_refund' => false,
         'pricing_service' => PricingServices::NO,
+        'dynamic_discount_kind' => self::DISCOUNT_NONE,
+        'manual_prices_win' => false,
         'balance_payment_days_before_arrival' => 14,
         'checkin_days_before_arrival' => 3,
         'review_days_after_departure' => 2,
@@ -91,8 +101,16 @@ class Property extends Model implements HasMedia
 
         static::created(fn (self $accommodation) => Access::linkToHost($accommodation));
 
-        // Weekend adjustment: only the value of the chosen kind is kept.
+        // Discount on the dynamic price and weekend adjustment: only the value
+        // of the chosen kind is kept.
         static::saving(function (self $accommodation): void {
+            if ($accommodation->dynamic_discount_kind !== self::DISCOUNT_PERCENT) {
+                $accommodation->dynamic_discount_percentage = null;
+            }
+            if ($accommodation->dynamic_discount_kind !== self::DISCOUNT_FIXED) {
+                $accommodation->dynamic_discount_cents = null;
+            }
+
             if ($accommodation->weekend_kind === null && ! $accommodation->is_master) {
                 if ($accommodation->isDirty('weekend_kind')) {
                     // Deliberately chose "follow the default": own values removed.
@@ -374,6 +392,40 @@ class Property extends Model implements HasMedia
             : $this->weekend_price_cents;
 
         return $amount ?? $nightlyPrice;
+    }
+
+    /**
+     * Prices from the dynamic pricing service as the guest pays them on this
+     * site: minus the discount on dynamic prices. A service like PriceLabs is
+     * often set up with a surcharge that covers the Airbnb or Vrbo commission;
+     * that surcharge does not belong on the own booking site. Never below zero.
+     *
+     * @param  array<string, int>  $prices  date (Y-m-d) => price in cents
+     * @return array<string, int>
+     */
+    public function withDynamicDiscount(array $prices): array
+    {
+        if ($prices === []) {
+            return $prices;
+        }
+
+        $discount = match ($this->effective('dynamic_discount_kind')) {
+            self::DISCOUNT_PERCENT => fn (int $cents) => $cents * (float) $this->effective('dynamic_discount_percentage') / 100,
+            self::DISCOUNT_FIXED => fn () => (int) $this->effectiveAmount('dynamic_discount_cents'),
+            default => null,
+        };
+
+        if ($discount === null) {
+            return $prices;
+        }
+
+        return array_map(fn (int $cents) => max(0, (int) round($cents - $discount($cents))), $prices);
+    }
+
+    /** Does a price set by hand in the calendar go before the dynamic price? Own choice, otherwise the default. */
+    public function manualPricesWin(): bool
+    {
+        return (bool) $this->effective('manual_prices_win');
     }
 
     /**

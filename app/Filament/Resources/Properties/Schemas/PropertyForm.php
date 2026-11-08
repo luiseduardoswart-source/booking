@@ -385,6 +385,51 @@ class PropertyForm
     }
 
     /**
+     * Discount on the price of the dynamic pricing service, for example the
+     * surcharge set up there for the Airbnb or Vrbo commission, which does not
+     * belong on the own booking site. Empty = follow the default; required on
+     * the defaults screen. A price rule, so only with that permission.
+     *
+     * @return array<int, Select|TextInput>
+     */
+    private static function dynamicDiscountFields(): array
+    {
+        $paymentRules = self::withPaymentRules();
+        $kind = fn (Get $get, ?Property $record, string $wanted): bool => $paymentRules($record) && $get('dynamic_discount_kind') === $wanted;
+
+        return [
+            Select::make('dynamic_discount_kind')
+                ->label(__('Discount on the dynamic price'))
+                ->options([
+                    Property::DISCOUNT_NONE => __('No discount'),
+                    Property::DISCOUNT_PERCENT => __('Percentage off'),
+                    Property::DISCOUNT_FIXED => __('Fixed amount off per night'),
+                ])
+                ->hint(__('For example the surcharge for Airbnb or Vrbo that does not belong on your own site'))
+                ->placeholder(__('Follow the default'))
+                ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
+                ->required(fn (?Property $record) => (bool) $record?->is_master)
+                ->live()
+                ->native(false)
+                ->visible($paymentRules),
+            TextInput::make('dynamic_discount_percentage')
+                ->label(__('Discount'))
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(100)
+                ->step(0.01)
+                ->suffix('%')
+                ->required()
+                ->hint(__('E.g. 18 for 18% off the dynamic price'))
+                ->visible(fn (Get $get, ?Property $record): bool => $kind($get, $record, Property::DISCOUNT_PERCENT)),
+            self::euroInput('dynamic_discount_cents', __('Discount per night'))
+                ->minValue(0)
+                ->required()
+                ->visible(fn (Get $get, ?Property $record): bool => $kind($get, $record, Property::DISCOUNT_FIXED)),
+        ];
+    }
+
+    /**
      * The currency of all amounts of this accommodation. Empty = the default;
      * required on the defaults screen. Warns if the payment service cannot
      * settle in it.
@@ -863,6 +908,9 @@ class PropertyForm
                                             ->label(__('Listing ID at that service'))
                                             ->hint(__('Empty = no dynamic pricing for this property'))
                                             ->visible(fn (?Property $record) => ! $record?->is_master),
+                                        ...self::dynamicDiscountFields(),
+                                        self::inheritToggle('manual_prices_win', __('Manual prices go before the dynamic price'), __('Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.'))
+                                            ->visible(self::withPaymentRules()),
                                         self::inheritToggle('prices_in_calendar', __('Show the price per night in the calendar'), __('Like flight prices — the price is shown on each calendar day')),
                                     ]),
 

@@ -1546,5 +1546,14 @@
     "Refund deposits: :count outstanding": "Borg terugstorten: :count openstaand",
     "departed :date": "vertrokken :date",
     "The following deposits are ready to be refunded (via admin → Payments → Refund):": "De volgende borgen staan klaar om terug te storten (via beheer → Betalingen → Terugbetalen):",
-    "Tip: turn on \":setting\" in the settings to do this automatically.": "Tip: zet \":setting\" aan in de instellingen om dit te automatiseren."
+    "Tip: turn on \":setting\" in the settings to do this automatically.": "Tip: zet \":setting\" aan in de instellingen om dit te automatiseren.",
+    "Discount on the dynamic price": "Korting op de dynamische prijs",
+    "No discount": "Geen korting",
+    "Percentage off": "Percentage eraf",
+    "Fixed amount off per night": "Vast bedrag eraf per nacht",
+    "For example the surcharge for Airbnb or Vrbo that does not belong on your own site": "Bijvoorbeeld de opslag voor Airbnb of Vrbo die niet op je eigen site hoort",
+    "E.g. 18 for 18% off the dynamic price": "Bijv. 18 voor 18% van de dynamische prijs af",
+    "Discount per night": "Korting per nacht",
+    "Manual prices go before the dynamic price": "Handmatige prijzen gaan voor op de dynamische prijs",
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Ja: een prijs die je zelf in de kalender zet, blijft staan. Nee: de volgende update overschrijft hem."
 }

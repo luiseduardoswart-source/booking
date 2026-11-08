@@ -1534,5 +1534,14 @@
     "Refund deposits: :count outstanding": "Cautions à rembourser : :count en attente",
     "departed :date": "parti le :date",
     "The following deposits are ready to be refunded (via admin → Payments → Refund):": "Les cautions suivantes sont prêtes à être remboursées (via administration → Paiements → Rembourser) :",
-    "Tip: turn on \":setting\" in the settings to do this automatically.": "Astuce : activez « :setting » dans les paramètres pour automatiser cela."
+    "Tip: turn on \":setting\" in the settings to do this automatically.": "Astuce : activez « :setting » dans les paramètres pour automatiser cela.",
+    "Discount on the dynamic price": "Remise sur le prix dynamique",
+    "No discount": "Aucune remise",
+    "Percentage off": "Pourcentage en moins",
+    "Fixed amount off per night": "Montant fixe en moins par nuit",
+    "For example the surcharge for Airbnb or Vrbo that does not belong on your own site": "Par exemple la majoration pour Airbnb ou Vrbo qui n'a pas sa place sur votre propre site",
+    "E.g. 18 for 18% off the dynamic price": "Ex. 18 pour 18 % de moins que le prix dynamique",
+    "Discount per night": "Remise par nuit",
+    "Manual prices go before the dynamic price": "Les prix manuels priment sur le prix dynamique",
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Oui : un prix que vous fixez vous-même dans le calendrier est conservé. Non : la prochaine mise à jour l'écrase."
 }

@@ -101,7 +101,10 @@ class SiteBookingController extends Controller
             'pets' => $property->petsRule(),
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            // The last four digits are the door code: then a phone number is needed.
+            'phone' => $property->phoneRequired()
+                ? ['required', 'string', 'max:50', 'regex:/(\D*\d){4}/']
+                : ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['nullable', 'string', 'max:20'],
             'city' => ['nullable', 'string', 'max:100'],
@@ -110,6 +113,8 @@ class SiteBookingController extends Controller
             'terms' => ['accepted'],
         ], [
             'terms.accepted' => __('You must agree to the conditions in order to book.'),
+            'phone.required' => __('Your phone number is needed: its last four digits are the code of the door.'),
+            'phone.regex' => __('Your phone number is needed: its last four digits are the code of the door.'),
             ...$property->guestsNotifications(),
             ...Booking::arrivalNotification(),
         ]);

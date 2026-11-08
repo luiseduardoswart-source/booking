@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Booking;
+use App\Models\Property;
 use App\Models\Setting;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Support\Carbon;
@@ -15,6 +16,9 @@ use Illuminate\Support\HtmlString;
  */
 final class MailPlaceholders
 {
+    /** Merge field key of an own check-in field: this prefix plus the field's fixed key. */
+    public const FIELD_PREFIX = 'field_';
+
     /**
      * Key (stored in the saved text, do not change) => label in the editor,
      * in the admin's language.
@@ -23,6 +27,10 @@ final class MailPlaceholders
      */
     public static function labels(): array
     {
+        $ownFields = collect(Property::checkInFieldNames())
+            ->mapWithKeys(fn (string $name, string $key) => [self::FIELD_PREFIX.$key => $name])
+            ->all();
+
         return [
             'name' => __('Guest name'),
             'first_name' => __('Guest first name'),
@@ -34,11 +42,13 @@ final class MailPlaceholders
             'guests' => __('Number of guests'),
             'check_in' => __('Check-in from'),
             'check_out' => __('Check-out before'),
+            'access_code' => __('Access code'),
             'address' => __('Accommodation address'),
             'total' => __('Total amount'),
             'company' => __('Company name'),
             'phone' => __('Company phone number'),
             'email' => __('Company email address'),
+            ...$ownFields,
         ];
     }
 
@@ -70,6 +80,10 @@ final class MailPlaceholders
         $date = fn ($day) => $day === null ? '' : Carbon::parse($day)->locale($language)->translatedFormat('l j F Y');
         $time = fn (string $field) => ($value = $property?->effective($field)) ? Carbon::parse($value)->format('H:i') : '';
 
+        $ownFields = collect(Property::checkInFieldNames())
+            ->mapWithKeys(fn (string $name, string $key) => [self::FIELD_PREFIX.$key => fn () => (string) $property?->checkInValue($key)])
+            ->all();
+
         // Only calculated if the field is in the text.
         return [
             'name' => fn () => (string) $booking->guest_name,
@@ -82,6 +96,8 @@ final class MailPlaceholders
             'guests' => fn () => (string) $booking->guests,
             'check_in' => fn () => $time('check_in_from'),
             'check_out' => fn () => $time('check_out_until'),
+            // No code to give (not confirmed, no phone number...): never an empty spot in the mail.
+            'access_code' => fn () => $property?->accessCodeFor($booking) ?? __('You will receive the code from us separately.'),
             'address' => fn () => trim(implode(', ', array_filter([
                 $property?->address,
                 trim($property?->postal_code.' '.$property?->city),
@@ -90,6 +106,7 @@ final class MailPlaceholders
             'company' => fn () => (string) Setting::get('company', 'name', config('app.name')),
             'phone' => fn () => (string) Setting::get('company', 'phone', ''),
             'email' => fn () => (string) Setting::get('company', 'email', ''),
+            ...$ownFields,
         ];
     }
 }

@@ -41,6 +41,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -413,7 +414,89 @@ class PropertyForm
                 ->hint(__('Add people, such as a family member, under Hosts.'))
                 ->native(false)
                 ->visible(fn (Get $get): bool => $get('check_in_kind') === Property::CHECK_IN_WELCOME),
+            ...self::accessCodeFields(),
         ];
+    }
+
+    /**
+     * The door code for self check-in, for the "Access code" merge field in the
+     * automatic mails: a fixed code or the last four digits of the guest's
+     * phone number. Only with self check-in (own choice or the default).
+     *
+     * @return array<int, Select|TextInput>
+     */
+    private static function accessCodeFields(): array
+    {
+        $selfCheckIn = fn (Get $get, ?Property $record): bool => ($get('check_in_kind') ?? ($record?->is_master ? null : Property::master()->check_in_kind)) === Property::CHECK_IN_SELF;
+
+        return [
+            Select::make('access_code_kind')
+                ->label(__('Access code'))
+                ->options([
+                    Property::ACCESS_NONE => __('No code'),
+                    Property::ACCESS_FIXED => __('Fixed code'),
+                    Property::ACCESS_PHONE => __('Last 4 digits of the guest\'s phone number'),
+                ])
+                ->placeholder(__('Follow the default'))
+                ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
+                ->required(fn (?Property $record) => (bool) $record?->is_master)
+                ->helperText(fn (Get $get): ?string => $get('access_code_kind') === Property::ACCESS_PHONE
+                    ? __('The phone number becomes required on the booking form.')
+                    : null)
+                ->live()
+                ->native(false)
+                ->visible($selfCheckIn),
+            TextInput::make('access_code')
+                ->label(__('Code'))
+                ->password()
+                ->revealable()
+                ->maxLength(50)
+                ->required()
+                ->hint(__('Put it in a mail with the merge field "Access code".'))
+                ->visible(fn (Get $get, ?Property $record): bool => $selfCheckIn($get, $record) && $get('access_code_kind') === Property::ACCESS_FIXED),
+        ];
+    }
+
+    /**
+     * Own check-in details, such as a WiFi password or a parking code. On the
+     * defaults screen you name the fields (with a default value); on an
+     * accommodation you fill in its own value. Each field becomes a merge field
+     * in the automatic mails.
+     */
+    private static function checkInDetails(): Section
+    {
+        $fields = Property::checkInFieldNames();
+
+        return Section::make(__('Check-in details'))
+            ->description(__('Codes and details for the automatic mails, for example a WiFi password. Insert them in a mail text with {{.'))
+            ->components([
+                Repeater::make('check_in_fields')
+                    ->label(__('Check-in details'))
+                    ->hiddenLabel()
+                    ->schema([
+                        Hidden::make('key'),
+                        TextInput::make('name')
+                            ->label(__('Name'))
+                            ->required()
+                            ->maxLength(60),
+                        TextInput::make('value')
+                            ->label(__('Default value'))
+                            ->maxLength(255),
+                    ])
+                    ->columns(2)
+                    ->addActionLabel(__('Add field'))
+                    ->defaultItems(0)
+                    ->visible(fn (?Property $record) => (bool) $record?->is_master),
+                Grid::make(2)
+                    ->schema(collect($fields)->map(fn (string $name, string $key) => TextInput::make("check_in_values.{$key}")
+                        ->label($name)
+                        ->maxLength(255)
+                        ->placeholder(fn () => Property::master()->checkInValue($key))
+                        ->hint(__('Empty = follow the default')))->values()->all())
+                    ->visible(fn (?Property $record) => ! $record?->is_master),
+                Text::make(__('No fields yet. Add them on the defaults screen.'))
+                    ->visible(fn (?Property $record) => ! $record?->is_master && $fields === []),
+            ]);
     }
 
     /**
@@ -1187,6 +1270,8 @@ class PropertyForm
                                             ['house_rules'],
                                         )->contained(false)->columnSpanFull(),
                                     ]),
+
+                                self::checkInDetails(),
                             ]);
     }
 

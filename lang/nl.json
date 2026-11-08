@@ -1563,5 +1563,19 @@
     "No name on the site": "Geen naam op de site",
     "Add people, such as a family member, under Hosts.": "Voeg mensen, zoals een familielid, toe onder Hosts.",
     ":name welcomes you": "Je wordt ontvangen door :name",
-    "You are welcomed in person": "Je wordt persoonlijk ontvangen"
+    "You are welcomed in person": "Je wordt persoonlijk ontvangen",
+    "Access code": "Toegangscode",
+    "No code": "Geen code",
+    "Fixed code": "Vaste code",
+    "Last 4 digits of the guest's phone number": "Laatste 4 cijfers van het telefoonnummer van de gast",
+    "The phone number becomes required on the booking form.": "Het telefoonnummer wordt verplicht op het boekingsformulier.",
+    "Put it in a mail with the merge field \"Access code\".": "Zet hem in een mail met het invulveld \"Toegangscode\".",
+    "Check-in details": "Check-in gegevens",
+    "Codes and details for the automatic mails, for example a WiFi password. Insert them in a mail text with {{.": "Codes en gegevens voor de automatische mails, bijvoorbeeld een wifi-wachtwoord. Voeg ze in een mailtekst in met {{.",
+    "Default value": "Standaardwaarde",
+    "Add field": "Veld toevoegen",
+    "No fields yet. Add them on the defaults screen.": "Nog geen velden. Voeg ze toe op het scherm met de standaardinstellingen.",
+    "You will receive the code from us separately.": "Je ontvangt de code apart van ons.",
+    "Your phone number is needed: its last four digits are the code of the door.": "Je telefoonnummer is nodig: de laatste vier cijfers zijn de code van de deur.",
+    "The last four digits are the code of the door.": "De laatste vier cijfers zijn de code van de deur."
 }

@@ -1551,5 +1551,19 @@
     "No name on the site": "网站上不显示姓名",
     "Add people, such as a family member, under Hosts.": "在“房东”下添加人员，例如家人。",
     ":name welcomes you": ":name 将迎接您",
-    "You are welcomed in person": "有人当面迎接您"
+    "You are welcomed in person": "有人当面迎接您",
+    "Access code": "门禁密码",
+    "No code": "无密码",
+    "Fixed code": "固定密码",
+    "Last 4 digits of the guest's phone number": "客人电话号码的后 4 位",
+    "The phone number becomes required on the booking form.": "预订表单中的电话号码将变为必填。",
+    "Put it in a mail with the merge field \"Access code\".": "在邮件中使用“门禁密码”占位字段插入。",
+    "Check-in details": "入住信息",
+    "Codes and details for the automatic mails, for example a WiFi password. Insert them in a mail text with {{.": "用于自动邮件的密码和信息，例如 WiFi 密码。在邮件文本中输入 {{ 插入。",
+    "Default value": "默认值",
+    "Add field": "添加字段",
+    "No fields yet. Add them on the defaults screen.": "尚无字段。请在默认设置页面添加。",
+    "You will receive the code from us separately.": "我们会另行将密码发送给您。",
+    "Your phone number is needed: its last four digits are the code of the door.": "需要您的电话号码：其后四位数字即为门禁密码。",
+    "The last four digits are the code of the door.": "后四位数字即为门禁密码。"
 }

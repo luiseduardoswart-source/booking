@@ -59,6 +59,10 @@ rental business.
 - **Guest limits**: maximum guests, babies and pets per property.
 - **Policies**: cancellation policy, house rules, check-in and check-out times,
   self check-in or a personal welcome by one of the hosts, security deposit.
+- **Self check-in codes**: a fixed door code or the last four digits of the
+  guest's phone number, plus own check-in details (WiFi password, parking code)
+  as merge fields in the automatic emails. Stored encrypted, and only filled in
+  for confirmed bookings.
 - **Import a listing from a link** (for example your Airbnb page) to fill in a
   new property in seconds.
 - **AI writing help** for descriptions, and **automatic translation** of your

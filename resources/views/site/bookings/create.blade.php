@@ -43,9 +43,12 @@
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
                     </label>
                     <label class="block">
-                        <span class="text-sm font-medium text-stone-700">{{ __('Phone') }}</span>
-                        <input type="tel" name="phone" value="{{ old('phone') }}"
+                        <span class="text-sm font-medium text-stone-700">{{ __('Phone') }}@if ($property->phoneRequired()) *@endif</span>
+                        <input type="tel" name="phone" value="{{ old('phone') }}" @required($property->phoneRequired())
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
+                        @if ($property->phoneRequired())
+                            <span class="mt-1 block text-xs text-stone-500">{{ __('The last four digits are the code of the door.') }}</span>
+                        @endif
                     </label>
                     <label class="block sm:col-span-2">
                         <span class="text-sm font-medium text-stone-700">{{ __('Address') }}</span>

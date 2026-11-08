@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\MediaLibrary\HasMedia;
@@ -42,6 +43,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
     'tourist_tax_cents', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
     'check_in_from', 'check_in_until', 'check_out_until', 'check_in_kind', 'check_in_host_id',
+    'access_code_kind', 'access_code', 'check_in_fields', 'check_in_values',
     'meta_title', 'meta_description', 'social_links', 'ical_token', 'external_listing_id',
 ])]
 class Property extends Model implements HasMedia
@@ -69,6 +71,16 @@ class Property extends Model implements HasMedia
 
     public const CHECK_IN_WELCOME = 'welcome';
 
+    /** Access code for self check-in: none, a fixed code, or the last four digits of the guest's phone number. */
+    public const ACCESS_NONE = 'none';
+
+    public const ACCESS_FIXED = 'fixed';
+
+    public const ACCESS_PHONE = 'phone';
+
+    /** Codes and check-in details never leave the model by accident (JSON, API, logs). */
+    protected $hidden = ['access_code', 'check_in_fields', 'check_in_values'];
+
     /** Down payment meaning: the guest pays everything at once. */
     public const FULL_PAYMENT = 100;
 
@@ -83,6 +95,7 @@ class Property extends Model implements HasMedia
         'dynamic_discount_kind' => self::DISCOUNT_NONE,
         'manual_prices_win' => false,
         'check_in_kind' => self::CHECK_IN_SELF,
+        'access_code_kind' => self::ACCESS_NONE,
         'balance_payment_days_before_arrival' => 14,
         'checkin_days_before_arrival' => 3,
         'review_days_after_departure' => 2,
@@ -119,6 +132,16 @@ class Property extends Model implements HasMedia
             }
             if ($accommodation->check_in_kind !== self::CHECK_IN_WELCOME) {
                 $accommodation->check_in_host_id = null;
+            }
+            if ($accommodation->access_code_kind !== self::ACCESS_FIXED) {
+                $accommodation->access_code = null;
+            }
+            // Each own check-in field gets a fixed key once: the mail texts refer to it.
+            if ($accommodation->is_master && is_array($accommodation->check_in_fields)) {
+                $accommodation->check_in_fields = array_values(array_map(
+                    fn (array $field) => [...$field, 'key' => filled($field['key'] ?? null) ? $field['key'] : Str::lower(Str::random(8))],
+                    $accommodation->check_in_fields,
+                ));
             }
 
             if ($accommodation->weekend_kind === null && ! $accommodation->is_master) {
@@ -460,6 +483,60 @@ class Property extends Model implements HasMedia
         return $this->belongsTo(Host::class, 'check_in_host_id');
     }
 
+    /** The kind of access code for self check-in; own choice, otherwise the default. */
+    public function accessCodeKind(): string
+    {
+        return $this->effective('access_code_kind') ?: self::ACCESS_NONE;
+    }
+
+    /** Must the guest give a phone number when booking? Yes when its last digits are the door code. */
+    public function phoneRequired(): bool
+    {
+        return $this->checkInKind() === self::CHECK_IN_SELF && $this->accessCodeKind() === self::ACCESS_PHONE;
+    }
+
+    /**
+     * The code the guest opens the door with, or null if there is none to give:
+     * no self check-in, no code chosen, a booking that is not confirmed (yet),
+     * or a phone number with fewer than four digits.
+     */
+    public function accessCodeFor(Booking $booking): ?string
+    {
+        if ($this->checkInKind() !== self::CHECK_IN_SELF || ! $booking->status?->isConfirmed()) {
+            return null;
+        }
+
+        return match ($this->accessCodeKind()) {
+            self::ACCESS_FIXED => ($this->is_master || $this->access_code_kind !== null ? $this : static::master())->access_code ?: null,
+            self::ACCESS_PHONE => strlen($digits = preg_replace('/\D/', '', (string) $booking->guest_phone)) >= 4 ? substr($digits, -4) : null,
+            default => null,
+        };
+    }
+
+    /**
+     * The own check-in fields (for example "WiFi password"), defined on the
+     * defaults: key => name.
+     *
+     * @return array<string, string>
+     */
+    public static function checkInFieldNames(): array
+    {
+        return collect(static::master()->check_in_fields ?? [])
+            ->filter(fn (array $field) => filled($field['key'] ?? null) && filled($field['name'] ?? null))
+            ->mapWithKeys(fn (array $field) => [$field['key'] => $field['name']])
+            ->all();
+    }
+
+    /** The value of an own check-in field: the own value, otherwise that of the default. */
+    public function checkInValue(string $key): string
+    {
+        if (! $this->is_master && filled($own = $this->check_in_values[$key] ?? null)) {
+            return (string) $own;
+        }
+
+        return (string) (collect(static::master()->check_in_fields ?? [])->firstWhere('key', $key)['value'] ?? '');
+    }
+
     /** Does a price set by hand in the calendar go before the dynamic price? Own choice, otherwise the default. */
     public function manualPricesWin(): bool
     {
@@ -658,6 +735,8 @@ class Property extends Model implements HasMedia
     {
         return LogOptions::defaults()
             ->logFillable()
+            // Door codes and check-in details stay out of the log.
+            ->logExcept(['access_code', 'check_in_fields', 'check_in_values'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
@@ -714,6 +793,9 @@ class Property extends Model implements HasMedia
             'house_rules_translations' => 'array',
             'cancellation_policy_text_translations' => 'array',
             'cancellation_policy' => \App\Enums\CancellationPolicy::class,
+            'access_code' => 'encrypted',
+            'check_in_fields' => 'encrypted:array',
+            'check_in_values' => 'encrypted:array',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
         ];

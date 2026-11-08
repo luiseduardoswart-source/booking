@@ -1551,5 +1551,19 @@
     "No name on the site": "Sin nombre en el sitio",
     "Add people, such as a family member, under Hosts.": "Añade personas, como un familiar, en Anfitriones.",
     ":name welcomes you": ":name te recibe",
-    "You are welcomed in person": "Te reciben en persona"
+    "You are welcomed in person": "Te reciben en persona",
+    "Access code": "Código de acceso",
+    "No code": "Sin código",
+    "Fixed code": "Código fijo",
+    "Last 4 digits of the guest's phone number": "Últimos 4 dígitos del teléfono del huésped",
+    "The phone number becomes required on the booking form.": "El teléfono pasa a ser obligatorio en el formulario de reserva.",
+    "Put it in a mail with the merge field \"Access code\".": "Inclúyelo en un correo con el campo \"Código de acceso\".",
+    "Check-in details": "Datos de check-in",
+    "Codes and details for the automatic mails, for example a WiFi password. Insert them in a mail text with {{.": "Códigos y datos para los correos automáticos, por ejemplo una contraseña wifi. Insértalos en un texto de correo con {{.",
+    "Default value": "Valor predeterminado",
+    "Add field": "Añadir campo",
+    "No fields yet. Add them on the defaults screen.": "Aún no hay campos. Añádelos en la pantalla de valores predeterminados.",
+    "You will receive the code from us separately.": "Recibirás el código por separado.",
+    "Your phone number is needed: its last four digits are the code of the door.": "Necesitamos tu teléfono: sus últimos cuatro dígitos son el código de la puerta.",
+    "The last four digits are the code of the door.": "Los últimos cuatro dígitos son el código de la puerta."
 }

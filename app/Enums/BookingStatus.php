@@ -46,6 +46,12 @@ enum BookingStatus: string implements \Filament\Support\Contracts\HasColor, \Fil
         return in_array($to, $this->allowedTransitions(), true);
     }
 
+    /** Confirmed by the host (paid or not): the guest is really coming, or came. */
+    public function isConfirmed(): bool
+    {
+        return in_array($this, [self::Confirmed, self::Paid, self::Completed], true);
+    }
+
     public function getLabel(): string
     {
         return __($this->label());

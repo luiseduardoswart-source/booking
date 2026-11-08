@@ -1563,5 +1563,19 @@
     "No name on the site": "No name on the site",
     "Add people, such as a family member, under Hosts.": "Add people, such as a family member, under Hosts.",
     ":name welcomes you": ":name welcomes you",
-    "You are welcomed in person": "You are welcomed in person"
+    "You are welcomed in person": "You are welcomed in person",
+    "Access code": "Access code",
+    "No code": "No code",
+    "Fixed code": "Fixed code",
+    "Last 4 digits of the guest's phone number": "Last 4 digits of the guest's phone number",
+    "The phone number becomes required on the booking form.": "The phone number becomes required on the booking form.",
+    "Put it in a mail with the merge field \"Access code\".": "Put it in a mail with the merge field \"Access code\".",
+    "Check-in details": "Check-in details",
+    "Codes and details for the automatic mails, for example a WiFi password. Insert them in a mail text with {{.": "Codes and details for the automatic mails, for example a WiFi password. Insert them in a mail text with {{.",
+    "Default value": "Default value",
+    "Add field": "Add field",
+    "No fields yet. Add them on the defaults screen.": "No fields yet. Add them on the defaults screen.",
+    "You will receive the code from us separately.": "You will receive the code from us separately.",
+    "Your phone number is needed: its last four digits are the code of the door.": "Your phone number is needed: its last four digits are the code of the door.",
+    "The last four digits are the code of the door.": "The last four digits are the code of the door."
 }

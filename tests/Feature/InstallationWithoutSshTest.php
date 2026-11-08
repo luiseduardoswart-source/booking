@@ -100,6 +100,18 @@ class InstallationWithoutSshTest extends TestCase
         $this->assertFileDoesNotExist($this->directory.'/.env');
     }
 
+    /**
+     * A browser in a language the site does not offer falls back to APP_LOCALE.
+     * The source language is English, so a new installation falls back to English.
+     */
+    public function test_a_new_installation_falls_back_to_english(): void
+    {
+        $example = File::get(base_path('.env.example'));
+
+        $this->assertMatchesRegularExpression('/^APP_LOCALE=en$/m', $example);
+        $this->assertMatchesRegularExpression('/^APP_FALLBACK_LOCALE=en$/m', $example);
+    }
+
     public function test_the_app_map_rejects_every_visitor_as_he_after_all_in_the_web_dir_is(): void
     {
         $rules = array_values(array_filter(

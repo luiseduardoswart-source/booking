@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\Booking;
+use App\Models\Setting;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\HtmlString;
+
+/**
+ * Merge fields in the custom texts of the automatic mails: in the editor you
+ * type {{ and pick, for example, "Guest name"; in the mail the real name
+ * appears there. One list for the editor and for the mail.
+ */
+final class MailPlaceholders
+{
+    /**
+     * Key (stored in the saved text, do not change) => label in the editor,
+     * in the admin's language.
+     *
+     * @return array<string, string>
+     */
+    public static function labels(): array
+    {
+        return [
+            'name' => __('Guest name'),
+            'first_name' => __('Guest first name'),
+            'accommodation' => __('Accommodation name'),
+            'booking_number' => __('Booking number'),
+            'arrival' => __('Arrival date'),
+            'departure' => __('Departure date'),
+            'nights' => __('Number of nights'),
+            'guests' => __('Number of guests'),
+            'check_in' => __('Check-in from'),
+            'check_out' => __('Check-out before'),
+            'address' => __('Accommodation address'),
+            'total' => __('Total amount'),
+            'company' => __('Company name'),
+            'phone' => __('Company phone number'),
+            'email' => __('Company email address'),
+        ];
+    }
+
+    /**
+     * The text for the mail. From the editor (HTML with merge fields): the
+     * fields filled in, the values as plain text. An older text without
+     * formatting stays as it was.
+     */
+    public static function fillIn(string $text, Booking $booking): string|HtmlString
+    {
+        if ($text === strip_tags($text)) {
+            return $text;
+        }
+
+        $html = RichContentRenderer::make($text)
+            ->mergeTags(self::values($booking))
+            ->toHtml();
+
+        // On one line: a blank line would break the HTML block in the Markdown
+        // mail, after which the rest is read as Markdown.
+        return new HtmlString(preg_replace('/\s*\n\s*/', ' ', $html));
+    }
+
+    /** @return array<string, callable(): string> */
+    private static function values(Booking $booking): array
+    {
+        $property = $booking->property;
+        $language = app()->getLocale();
+        $date = fn ($day) => $day === null ? '' : Carbon::parse($day)->locale($language)->translatedFormat('l j F Y');
+        $time = fn (string $field) => ($value = $property?->effective($field)) ? Carbon::parse($value)->format('H:i') : '';
+
+        // Only calculated if the field is in the text.
+        return [
+            'name' => fn () => (string) $booking->guest_name,
+            'first_name' => fn () => (string) strtok(trim((string) $booking->guest_name), ' '),
+            'accommodation' => fn () => (string) $property?->localized('name'),
+            'booking_number' => fn () => (string) $booking->booking_number,
+            'arrival' => fn () => $date($booking->arrival_date),
+            'departure' => fn () => $date($booking->departure_date),
+            'nights' => fn () => (string) $booking->nights(),
+            'guests' => fn () => (string) $booking->guests,
+            'check_in' => fn () => $time('check_in_from'),
+            'check_out' => fn () => $time('check_out_until'),
+            'address' => fn () => trim(implode(', ', array_filter([
+                $property?->address,
+                trim($property?->postal_code.' '.$property?->city),
+            ]))),
+            'total' => fn () => Money::format((int) $booking->total_cents, $booking->currency),
+            'company' => fn () => (string) Setting::get('company', 'name', config('app.name')),
+            'phone' => fn () => (string) Setting::get('company', 'phone', ''),
+            'email' => fn () => (string) Setting::get('company', 'email', ''),
+        ];
+    }
+}

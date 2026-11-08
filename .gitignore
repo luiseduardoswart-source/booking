@@ -1,0 +1,39 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+# Local settings of Claude Code (launch configurations and the like).
+/.claude
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+# Personal installation notes with hosting details; the general guide is in
+# README.md.
+/DEPLOYMENT.md
+/node_modules
+# /public/build IS committed on purpose: shared hosting has no Node to build the
+# frontend. Run `npm run build` before you commit.
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+# Uploaded layout templates (Settings → Layout & style): content of the site
+# owner, not source code.
+/public/templates
+/storage/*.key
+# Temporary files of spatie/laravel-medialibrary (for example while processing
+# photos, or after an aborted test run); not source code.
+/storage/media-library
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db

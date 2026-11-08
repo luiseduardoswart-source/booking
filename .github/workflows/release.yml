@@ -1,0 +1,60 @@
+# Builds a ready-to-install zip package for every new release on GitHub,
+# including the PHP packages (vendor/), and attaches it to that release. Whoever
+# installs the website uploads that zip file and extracts it in the folder
+# above public_html: no SSH or Composer needed.
+#
+# To make a release: GitHub → Releases → Draft a new release → a new tag
+# (for example v1.0.0) → Publish release. A few minutes later booking.zip is there.
+
+name: Zip package
+
+on:
+  release:
+    types: [published]
+  # Started by hand (Actions tab), the package is only made available as a
+  # download of that run, to try it without a release.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Packages without development tools
+        run: composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist
+
+      # Layout (see App\Support\Indeling): the app in booking/, the public files
+      # in public_html/. Extracting it in the folder above the web root keeps
+      # the app out of reach of visitors.
+      # git archive leaves out everything marked export-ignore in .gitattributes
+      # (tests, docker, ...). The built frontend (public/build) is in the repo.
+      - name: Build the zip
+        run: |
+          mkdir -p package/booking
+          git archive HEAD | tar -x -C package/booking
+          cp -r vendor package/booking/
+          mv package/booking/public package/public_html
+          cd package
+          zip -q -r -X ../booking.zip booking public_html
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" booking.zip --clobber
+
+      - name: Download from this run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: booking
+          path: booking.zip

@@ -1,0 +1,4 @@
+# The project folder does not belong in the web root: only public/ (with the zip
+# package: public_html/) is for visitors. Should this folder end up in the web
+# root after all, a visitor gets "access denied" instead of .env or the source.
+Require all denied

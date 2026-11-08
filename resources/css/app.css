@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* ---------------------------------------------------------------------------
+   Map popup: strip Leaflet's default bubble so our own card with
+   photo, price and button runs neatly into the corners.
+   --------------------------------------------------------------------------- */
+.leaflet-popup.map-popup .leaflet-popup-content-wrapper {
+    padding: 0;
+    border-radius: 1rem;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
+    overflow: hidden;
+}
+
+.leaflet-popup.map-popup .leaflet-popup-content {
+    margin: 0;
+    width: 17rem !important;
+}
+
+.leaflet-popup.map-popup .leaflet-popup-close-button {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.9);
+    color: #1c1917;
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.leaflet-popup.map-popup .leaflet-popup-close-button:hover {
+    background: #fff;
+}

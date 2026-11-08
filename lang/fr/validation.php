@@ -1,0 +1,73 @@
+<?php
+
+/*
+ * The messages the website can give. If a rule is not listed here,
+ * Laravel falls back to lang/nl/validation.php.
+ */
+return [
+
+    'accepted' => 'Vous devez accepter :attribute.',
+    'after' => ':attribute doit être une date postérieure au :date.',
+    'after_or_equal' => ':attribute doit être une date postérieure ou égale au :date.',
+    'array' => ':attribute doit être une liste.',
+    'before' => ':attribute doit être une date antérieure au :date.',
+    'before_or_equal' => ':attribute doit être une date antérieure ou égale au :date.',
+    'boolean' => ':attribute doit être oui ou non.',
+    'confirmed' => 'La confirmation de :attribute ne correspond pas.',
+    'date' => ':attribute n\'est pas une date valide.',
+    'email' => ':attribute doit être une adresse e-mail valide.',
+    'exists' => 'La valeur de :attribute est invalide.',
+    'file' => ':attribute doit être un fichier.',
+    'image' => ':attribute doit être une image.',
+    'in' => 'La valeur de :attribute est invalide.',
+    'integer' => ':attribute doit être un nombre entier.',
+    'max' => [
+        'array' => ':attribute ne peut pas contenir plus de :max éléments.',
+        'file' => ':attribute ne peut pas dépasser :max kilo-octets.',
+        'numeric' => ':attribute ne peut pas dépasser :max.',
+        'string' => ':attribute ne peut pas dépasser :max caractères.',
+    ],
+    'mimes' => ':attribute doit être un fichier de type : :values.',
+    'min' => [
+        'array' => ':attribute doit contenir au moins :min éléments.',
+        'file' => ':attribute doit faire au moins :min kilo-octets.',
+        'numeric' => ':attribute doit être au moins :min.',
+        'string' => ':attribute doit contenir au moins :min caractères.',
+    ],
+    'numeric' => ':attribute doit être un nombre.',
+    'regex' => 'Le format de :attribute n\'est pas valide.',
+    'required' => ':attribute est obligatoire.',
+    'required_if' => ':attribute est obligatoire lorsque :other est :value.',
+    'required_with' => ':attribute est obligatoire lorsque :values est présent.',
+    'same' => ':attribute et :other doivent correspondre.',
+    'string' => ':attribute doit être un texte.',
+    'unique' => 'Cette valeur de :attribute est déjà utilisée.',
+    'uploaded' => 'Le téléversement de :attribute a échoué.',
+    'url' => ':attribute doit être une URL valide.',
+
+    'attributes' => [
+        'address' => 'L\'adresse',
+        'adults' => 'Le nombre d\'adultes',
+        'arrival' => 'L\'arrivée',
+        'children' => 'Le nombre d\'enfants',
+        'city' => 'La ville',
+        'comment' => 'Le commentaire',
+        'coupon' => 'Le code de réduction',
+        'departure' => 'Le départ',
+        'email' => 'L\'adresse e-mail',
+        'guests' => 'Le nombre de voyageurs',
+        'signature' => 'La signature',
+        'infants' => 'Le nombre de bébés',
+        'message' => 'Le message',
+        'name' => 'Le nom',
+        'notes' => 'Les remarques',
+        'password' => 'Le mot de passe',
+        'pets' => 'Le nombre d\'animaux',
+        'phone' => 'Le téléphone',
+        'photo' => 'La photo',
+        'postal_code' => 'Le code postal',
+        'rating' => 'L\'évaluation',
+        'terms' => 'les conditions',
+    ],
+
+];

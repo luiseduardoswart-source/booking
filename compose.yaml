@@ -1,0 +1,35 @@
+# Local database for development, the same as production: Hostinger runs
+# MariaDB 11.8.9. Errors that only happen on that database then show up
+# locally, not only after deploying.
+#
+# Start it once (after that it starts along with Docker):
+#     docker compose up -d
+#
+# Port 3307 and only on 127.0.0.1: no clash with another MySQL on 3306, and not
+# reachable from other devices on your network.
+#
+# Database and user are fixed as "airbnb" (also in docker/mariadb/init). The
+# password comes from DB_PASSWORD in .env, which Docker Compose reads itself.
+services:
+  db:
+    image: mariadb:11.8.9
+    container_name: airbnb-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MARIADB_DATABASE: airbnb
+      MARIADB_USER: airbnb
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - airbnb-db:/var/lib/mysql
+      - ./docker/mariadb/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  airbnb-db:

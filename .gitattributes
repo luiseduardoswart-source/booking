@@ -1,0 +1,20 @@
+* text=auto eol=lf
+
+*.blade.php diff=html
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.php diff=php
+
+/.github export-ignore
+CHANGELOG.md export-ignore
+.styleci.yml export-ignore
+
+# Left out of the zip package for installations (see .github/workflows/release.yml):
+# only needed for development and testing.
+/docker export-ignore
+/tests export-ignore
+/compose.yaml export-ignore
+/phpunit.xml export-ignore
+/phpunit.mysql.xml export-ignore
+/BUILD-PLAN.md export-ignore

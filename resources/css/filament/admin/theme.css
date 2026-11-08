@@ -1,0 +1,180 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament';
+@source '../../../../resources/views/filament';
+@source '../../../../resources/views/livewire';
+
+/* ---------------------------------------------------------------------------
+   Draggable edge on the right of the sidebar (public/js/sidebar-width.js).
+   Only on wide screens; below that the sidebar slides in and out.
+   --------------------------------------------------------------------------- */
+.sidebar-drag-edge {
+    @apply fixed inset-y-0 z-30 hidden w-1.5 cursor-col-resize transition-colors lg:block
+        hover:bg-primary-500/40 focus-visible:bg-primary-500/60 focus-visible:outline-none;
+    left: calc(var(--sidebar-width) - 3px);
+}
+html.sidebar-drag .sidebar-drag-edge { @apply bg-primary-500/60; }
+html.sidebar-drag, html.sidebar-drag * { cursor: col-resize !important; user-select: none; }
+
+/* ---------------------------------------------------------------------------
+   Visual style editor: panel layout (ported from devsite).
+   --------------------------------------------------------------------------- */
+.se-acc { @apply border-b border-gray-200 dark:border-white/10; }
+.se-acc > summary {
+    @apply flex cursor-pointer select-none items-center gap-2 py-2.5 text-xs font-semibold
+        uppercase tracking-wide text-gray-500 hover:text-gray-700
+        dark:text-gray-400 dark:hover:text-gray-200;
+    list-style: none;
+}
+.se-acc > summary::-webkit-details-marker { display: none; }
+.se-acc .se-chev { @apply ml-auto text-sm transition-transform; }
+.se-acc[open] .se-chev { transform: rotate(180deg); }
+.se-acc > .se-acc-body { @apply pb-4; }
+
+/* segment buttons (alignment etc.) */
+.se-seg {
+    @apply flex overflow-hidden rounded-lg border border-gray-300 bg-white
+        dark:border-white/10 dark:bg-gray-900;
+}
+.se-seg button {
+    @apply flex-1 cursor-pointer px-2 py-1.5 text-center text-sm text-gray-600
+        hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10;
+}
+.se-seg button + button { @apply border-l border-gray-300 dark:border-white/10; }
+.se-seg button.active { @apply bg-primary-600 text-white hover:bg-primary-600; }
+.se-seg.se-seg-sm button { @apply px-1 py-1 text-xs; }
+
+/* compact rows: label left, field right (as in design tools) */
+.se-row { @apply mb-2 flex items-center gap-2; }
+.se-row > span { @apply w-24 shrink-0 text-xs text-gray-500 dark:text-gray-400; }
+.se-row .se-input {
+    @apply w-full min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm
+        text-gray-900 dark:border-white/10 dark:bg-gray-900 dark:text-white;
+}
+.se-row .se-hex { @apply font-mono !text-xs uppercase; }
+.se-units { @apply shrink-0; }
+.se-units button { @apply px-1.5; }
+/* little line that demonstrates the border style (solid/dashed/dotted) */
+.se-line {
+    display: inline-block;
+    width: 16px;
+    border-top: 2px solid currentColor;
+    vertical-align: middle;
+}
+.se-swatch {
+    @apply h-8 w-9 shrink-0 cursor-pointer rounded-lg border border-gray-300 bg-transparent p-0.5
+        dark:border-white/10;
+}
+
+/* ---------- media manager (ported from devsite's app.css) ---------- */
+/* buttons */
+.btn, .btn-primary, .btn-secondary, .btn-success, .btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium
+        transition-colors cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none;
+}
+.btn-sm { @apply px-2.5 py-1.5 text-xs rounded-md; }
+.btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600; }
+.btn-secondary {
+    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50
+        dark:border-white/10 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/5;
+}
+.btn-success { @apply bg-emerald-600 text-white hover:bg-emerald-700; }
+.btn-danger {
+    @apply border border-red-300 bg-white text-red-600 hover:bg-red-50
+        dark:border-red-500/40 dark:bg-gray-900 dark:text-red-400 dark:hover:bg-red-950;
+}
+
+/* forms */
+.label { @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1; }
+.input {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900
+        placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:outline-none
+        dark:border-white/10 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500;
+}
+.form-text { @apply mt-1 text-xs text-gray-500 dark:text-gray-400; }
+.checkbox {
+    @apply h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/40
+        dark:border-white/10 dark:bg-gray-900;
+}
+
+/* cards (hero repeater on Pages) */
+.card {
+    @apply rounded-xl border border-gray-200 bg-white shadow-sm
+        dark:border-white/10 dark:bg-gray-900;
+}
+.card-body { @apply p-4; }
+
+/* modals */
+.modal { @apply fixed inset-0 z-[1400] hidden items-start justify-center overflow-y-auto p-4 sm:p-8; }
+.modal.open { @apply flex; }
+.modal-backdrop { @apply fixed inset-0 bg-black/50; }
+.modal-dialog {
+    @apply relative z-10 w-full max-w-lg rounded-xl bg-white shadow-xl
+        dark:bg-gray-900 dark:text-gray-100;
+}
+.modal-dialog.modal-lg { @apply max-w-3xl; }
+.modal-dialog.modal-xl { @apply max-w-6xl; }
+.modal-header { @apply flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-white/10; }
+.modal-body { @apply p-4 max-h-[70vh] overflow-y-auto; }
+.modal-footer { @apply flex justify-end gap-2 border-t border-gray-200 px-4 py-3 dark:border-white/10; }
+
+/* media manager */
+.media-grid { @apply grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(110px,1fr))]; }
+.media-item {
+    @apply relative cursor-pointer overflow-hidden rounded-lg border-2 border-gray-200 bg-white
+        dark:border-white/10 dark:bg-gray-900;
+}
+.media-item.selected { @apply border-blue-500 dark:border-blue-400; }
+.media-item .thumb { @apply flex h-20 items-center justify-center bg-gray-50 text-2xl text-gray-400 dark:bg-gray-900; }
+.media-item .thumb img { @apply h-full w-full object-cover; }
+.media-item .m-label {
+    @apply block truncate border-t border-gray-100 px-1.5 py-1 text-[11px] text-gray-600
+        dark:border-white/10 dark:text-gray-300;
+}
+.media-item .item-actions { @apply absolute right-1 top-1 hidden gap-1; }
+.media-item:hover .item-actions { @apply flex; }
+/* checkbox for selecting several at once: appears on hover, stays visible when checked */
+.media-item .m-check {
+    @apply absolute left-1 top-1 z-10 hidden cursor-pointer rounded bg-white/90 p-0.5 shadow-sm
+        dark:bg-gray-900/90;
+}
+.media-item:hover .m-check, .media-item.checked .m-check { @apply block; }
+.media-item.checked { @apply border-blue-500 dark:border-blue-400; }
+
+/* list view */
+.media-grid.media-list-view {
+    @apply flex flex-col gap-0 divide-y divide-gray-100 rounded-lg border border-gray-200
+        dark:divide-white/10 dark:border-white/10;
+    display: flex;
+}
+.media-row {
+    @apply flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5;
+}
+.media-row.selected { @apply bg-blue-50 dark:bg-blue-950/40; }
+.media-row.checked { @apply bg-blue-50 dark:bg-blue-950/40; }
+.media-row .m-check { @apply flex shrink-0 cursor-pointer items-center; }
+.media-row .item-actions { @apply hidden shrink-0 gap-1; }
+.media-row:hover .item-actions { @apply flex; }
+.icon-btn {
+    @apply flex h-6 w-6 items-center justify-center rounded border border-gray-300 bg-white text-xs text-gray-600
+        hover:bg-gray-100 cursor-pointer dark:border-white/10 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-white/10;
+}
+
+/* dragging (hero repeater) */
+.drag-handle { @apply cursor-grab text-gray-400 dark:text-gray-500; }
+.sortable-ghost { @apply opacity-40; }
+
+/* photo editor: effects live on the cropper image */
+#image-editor-modal .cropper-view-box img,
+#image-editor-modal .cropper-canvas img { filter: var(--fx, none); }
+
+/* FilePond */
+.mm-pond .filepond--root { margin-bottom: 0; font-family: inherit; font-size: 0.875rem; }
+.mm-pond .filepond--panel-root { @apply bg-gray-50 dark:bg-gray-900; }
+.mm-pond .filepond--root > .filepond--panel-root {
+    @apply rounded-xl border-2 border-dashed border-gray-300 bg-transparent
+        dark:border-white/10 dark:bg-transparent;
+}
+.mm-pond .filepond--drop-label { @apply text-sm text-gray-500 dark:text-gray-300; }
+.mm-pond .filepond--drop-label label { @apply text-inherit; }
+.dark .mm-pond .filepond--item-panel { background-color: rgb(55 65 81); }

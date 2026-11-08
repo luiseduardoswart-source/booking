@@ -1543,5 +1543,13 @@
     "E.g. 18 for 18% off the dynamic price": "例如填 18 表示动态价格减 18%",
     "Discount per night": "每晚折扣",
     "Manual prices go before the dynamic price": "手动价格优先于动态价格",
-    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "是：您在日历中自行设置的价格保持不变。否：下一次更新会将其覆盖。"
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "是：您在日历中自行设置的价格保持不变。否：下一次更新会将其覆盖。",
+    "Type of check-in": "入住方式",
+    "Self check-in (key box, code or smart lock)": "自助入住（钥匙盒、密码或智能锁）",
+    "Welcomed in person": "当面迎接",
+    "Who welcomes the guest?": "谁来迎接客人？",
+    "No name on the site": "网站上不显示姓名",
+    "Add people, such as a family member, under Hosts.": "在“房东”下添加人员，例如家人。",
+    ":name welcomes you": ":name 将迎接您",
+    "You are welcomed in person": "有人当面迎接您"
 }

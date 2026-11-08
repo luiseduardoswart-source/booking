@@ -1543,5 +1543,13 @@
     "E.g. 18 for 18% off the dynamic price": "Z. B. 18 für 18 % weniger als der dynamische Preis",
     "Discount per night": "Rabatt pro Nacht",
     "Manual prices go before the dynamic price": "Manuelle Preise haben Vorrang vor dem dynamischen Preis",
-    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Ja: Ein Preis, den Sie selbst im Kalender festlegen, bleibt bestehen. Nein: Die nächste Aktualisierung überschreibt ihn."
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Ja: Ein Preis, den Sie selbst im Kalender festlegen, bleibt bestehen. Nein: Die nächste Aktualisierung überschreibt ihn.",
+    "Type of check-in": "Art des Check-ins",
+    "Self check-in (key box, code or smart lock)": "Selbst-Check-in (Schlüsselbox, Code oder Smart Lock)",
+    "Welcomed in person": "Persönlicher Empfang",
+    "Who welcomes the guest?": "Wer empfängt den Gast?",
+    "No name on the site": "Kein Name auf der Website",
+    "Add people, such as a family member, under Hosts.": "Personen, etwa ein Familienmitglied, fügen Sie unter Gastgeber hinzu.",
+    ":name welcomes you": ":name empfängt Sie",
+    "You are welcomed in person": "Sie werden persönlich empfangen"
 }

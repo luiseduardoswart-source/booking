@@ -1555,5 +1555,13 @@
     "E.g. 18 for 18% off the dynamic price": "Bijv. 18 voor 18% van de dynamische prijs af",
     "Discount per night": "Korting per nacht",
     "Manual prices go before the dynamic price": "Handmatige prijzen gaan voor op de dynamische prijs",
-    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Ja: een prijs die je zelf in de kalender zet, blijft staan. Nee: de volgende update overschrijft hem."
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Ja: een prijs die je zelf in de kalender zet, blijft staan. Nee: de volgende update overschrijft hem.",
+    "Type of check-in": "Soort check-in",
+    "Self check-in (key box, code or smart lock)": "Zelf inchecken (sleutelkastje, code of slim slot)",
+    "Welcomed in person": "Persoonlijke ontvangst",
+    "Who welcomes the guest?": "Wie ontvangt de gast?",
+    "No name on the site": "Geen naam op de site",
+    "Add people, such as a family member, under Hosts.": "Voeg mensen, zoals een familielid, toe onder Hosts.",
+    ":name welcomes you": "Je wordt ontvangen door :name",
+    "You are welcomed in person": "Je wordt persoonlijk ontvangen"
 }

@@ -12,6 +12,7 @@ use App\Support\Money;
 use App\Support\Access;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -40,7 +41,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'max_guests', 'bedrooms', 'beds', 'sofa_beds', 'bathrooms',
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
     'tourist_tax_cents', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
-    'check_in_from', 'check_in_until', 'check_out_until',
+    'check_in_from', 'check_in_until', 'check_out_until', 'check_in_kind', 'check_in_host_id',
     'meta_title', 'meta_description', 'social_links', 'ical_token', 'external_listing_id',
 ])]
 class Property extends Model implements HasMedia
@@ -63,6 +64,11 @@ class Property extends Model implements HasMedia
 
     public const DISCOUNT_FIXED = 'fixed';
 
+    /** Check-in: by themselves (key box, code or smart lock) or welcomed in person by a host. */
+    public const CHECK_IN_SELF = 'self';
+
+    public const CHECK_IN_WELCOME = 'welcome';
+
     /** Down payment meaning: the guest pays everything at once. */
     public const FULL_PAYMENT = 100;
 
@@ -76,6 +82,7 @@ class Property extends Model implements HasMedia
         'pricing_service' => PricingServices::NO,
         'dynamic_discount_kind' => self::DISCOUNT_NONE,
         'manual_prices_win' => false,
+        'check_in_kind' => self::CHECK_IN_SELF,
         'balance_payment_days_before_arrival' => 14,
         'checkin_days_before_arrival' => 3,
         'review_days_after_departure' => 2,
@@ -109,6 +116,9 @@ class Property extends Model implements HasMedia
             }
             if ($accommodation->dynamic_discount_kind !== self::DISCOUNT_FIXED) {
                 $accommodation->dynamic_discount_cents = null;
+            }
+            if ($accommodation->check_in_kind !== self::CHECK_IN_WELCOME) {
+                $accommodation->check_in_host_id = null;
             }
 
             if ($accommodation->weekend_kind === null && ! $accommodation->is_master) {
@@ -420,6 +430,34 @@ class Property extends Model implements HasMedia
         }
 
         return array_map(fn (int $cents) => max(0, (int) round($cents - $discount($cents))), $prices);
+    }
+
+    /** How the guest checks in; own choice, otherwise the default. */
+    public function checkInKind(): string
+    {
+        return $this->effective('check_in_kind') ?: self::CHECK_IN_SELF;
+    }
+
+    /**
+     * Who welcomes the guest in person: the host chosen with the check-in kind
+     * (the own choice, otherwise that of the default). Null = self check-in, or
+     * no one named.
+     */
+    public function checkInHost(): ?Host
+    {
+        if ($this->checkInKind() !== self::CHECK_IN_WELCOME) {
+            return null;
+        }
+
+        $owner = $this->is_master || $this->check_in_kind !== null ? $this : static::master();
+
+        return $owner->welcomedBy;
+    }
+
+    /** The host chosen to welcome guests (own column only, without the default). */
+    public function welcomedBy(): BelongsTo
+    {
+        return $this->belongsTo(Host::class, 'check_in_host_id');
     }
 
     /** Does a price set by hand in the calendar go before the dynamic price? Own choice, otherwise the default. */

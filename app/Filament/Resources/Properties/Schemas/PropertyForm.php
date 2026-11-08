@@ -10,6 +10,7 @@ use App\Filament\Support\TranslationFields;
 use App\Livewire\NightlyPricesCalendar;
 use App\Models\Amenity;
 use App\Models\Discount;
+use App\Models\Host;
 use App\Models\Property;
 use App\Payments\PaymentProvider;
 use App\Services\Importing\ListingImportException;
@@ -381,6 +382,37 @@ class PropertyForm
                     ]);
                 })
                 ->visible(fn (Get $get): bool => $kind($get) === Property::WEEKEND_PERCENT),
+        ];
+    }
+
+    /**
+     * How the guest checks in: by themselves, or welcomed in person by one of
+     * the hosts (the same people as under Hosts, with name and photo). Empty =
+     * follow the default; required on the defaults screen.
+     *
+     * @return array<int, Select>
+     */
+    private static function checkInFields(): array
+    {
+        return [
+            Select::make('check_in_kind')
+                ->label(__('Type of check-in'))
+                ->options([
+                    Property::CHECK_IN_SELF => __('Self check-in (key box, code or smart lock)'),
+                    Property::CHECK_IN_WELCOME => __('Welcomed in person'),
+                ])
+                ->placeholder(__('Follow the default'))
+                ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
+                ->required(fn (?Property $record) => (bool) $record?->is_master)
+                ->live()
+                ->native(false),
+            Select::make('check_in_host_id')
+                ->label(__('Who welcomes the guest?'))
+                ->options(fn (): array => Host::query()->orderBy('name')->pluck('name', 'id')->all())
+                ->placeholder(__('No name on the site'))
+                ->hint(__('Add people, such as a family member, under Hosts.'))
+                ->native(false)
+                ->visible(fn (Get $get): bool => $get('check_in_kind') === Property::CHECK_IN_WELCOME),
         ];
     }
 
@@ -1147,6 +1179,7 @@ class PropertyForm
                                         TimePicker::make('check_out_until')
                                             ->label(__('Check-out before'))
                                             ->seconds(false),
+                                        ...self::checkInFields(),
                                         TranslationFields::languageSection(
                                             __('House rules'),
                                             __('Choose a language. Empty = the English text.'),

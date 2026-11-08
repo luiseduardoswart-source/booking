@@ -50,12 +50,15 @@ rental business.
   and early bird, as a percentage or a fixed amount. You choose whether discounts
   add up or only the best one applies.
 - **Dynamic pricing** through PriceLabs, Beyond or Wheelhouse. Their nightly
-  prices are fetched every day and take precedence over your own prices.
+  prices are fetched every day and take precedence over your own prices. Take a
+  percentage or fixed amount off them on your own site (for example the
+  surcharge that covers the Airbnb or Vrbo commission), and choose whether
+  prices you set by hand in the calendar stay or get overwritten.
 - **Booking rules**: minimum and maximum stay, how far ahead guests can book,
   arrival and departure days, and rules for specific periods.
 - **Guest limits**: maximum guests, babies and pets per property.
 - **Policies**: cancellation policy, house rules, check-in and check-out times,
-  security deposit.
+  self check-in or a personal welcome by one of the hosts, security deposit.
 - **Import a listing from a link** (for example your Airbnb page) to fill in a
   new property in seconds.
 - **AI writing help** for descriptions, and **automatic translation** of your

@@ -1555,5 +1555,13 @@
     "E.g. 18 for 18% off the dynamic price": "E.g. 18 for 18% off the dynamic price",
     "Discount per night": "Discount per night",
     "Manual prices go before the dynamic price": "Manual prices go before the dynamic price",
-    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it."
+    "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.": "Yes: a price you set yourself in the calendar stays. No: the next update overwrites it.",
+    "Type of check-in": "Type of check-in",
+    "Self check-in (key box, code or smart lock)": "Self check-in (key box, code or smart lock)",
+    "Welcomed in person": "Welcomed in person",
+    "Who welcomes the guest?": "Who welcomes the guest?",
+    "No name on the site": "No name on the site",
+    "Add people, such as a family member, under Hosts.": "Add people, such as a family member, under Hosts.",
+    ":name welcomes you": ":name welcomes you",
+    "You are welcomed in person": "You are welcomed in person"
 }

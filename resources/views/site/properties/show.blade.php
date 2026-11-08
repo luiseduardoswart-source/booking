@@ -84,14 +84,32 @@
                             </div>
                         @endforeach
                     @else
-                    @if ($property->effective('check_in_from'))
+                    @php
+                        $welcome = $property->checkInKind() === \App\Models\Property::CHECK_IN_WELCOME;
+                        $welcomeHost = $welcome ? $property->checkInHost() : null;
+                    @endphp
+                    @if ($property->effective('check_in_from') || $welcome)
                         <div class="flex items-start gap-4">
-                            <x-site-icon name="clock" class="h-7 w-7 shrink-0 text-stone-700" />
+                            @if ($welcomeHost && ($avatar = $welcomeHost->getFirstMediaUrl('avatar', 'thumb')))
+                                <img src="{{ $avatar }}" alt="{{ $welcomeHost->name }}" class="h-7 w-7 shrink-0 rounded-full object-cover">
+                            @else
+                                <x-site-icon name="clock" class="h-7 w-7 shrink-0 text-stone-700" />
+                            @endif
                             <div>
-                                <p class="font-medium text-stone-900">{{ __('Self check-in') }}</p>
-                                <p class="text-sm text-stone-500">
-                                    {{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}@if ($property->effective('check_out_until')), {{ __('check-out before :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}@endif
+                                <p class="font-medium text-stone-900">
+                                    @if ($welcomeHost)
+                                        {{ __(':name welcomes you', ['name' => $welcomeHost->name]) }}
+                                    @elseif ($welcome)
+                                        {{ __('You are welcomed in person') }}
+                                    @else
+                                        {{ __('Self check-in') }}
+                                    @endif
                                 </p>
+                                @if ($property->effective('check_in_from'))
+                                    <p class="text-sm text-stone-500">
+                                        {{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}@if ($property->effective('check_out_until')), {{ __('check-out before :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}@endif
+                                    </p>
+                                @endif
                             </div>
                         </div>
                     @endif

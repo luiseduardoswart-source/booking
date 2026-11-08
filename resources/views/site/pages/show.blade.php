@@ -17,5 +17,10 @@
             {{-- Content comes from the RichEditor in the admin (trusted admin). --}}
             <div class="prose prose-stone mt-8 max-w-none">{!! $page->localized('content') !!}</div>
         @endif
+
+        {{-- A form from the form builder (Pages → Form) --}}
+        @if ($page->form?->active)
+            @include('site.forms.form', ['form' => $page->form])
+        @endif
     </div>
 </x-site-layout>

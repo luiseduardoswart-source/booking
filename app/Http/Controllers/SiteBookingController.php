@@ -8,7 +8,9 @@ use App\Engines\Exceptions\UnavailableForBookingException;
 use App\Engines\PaymentEngine;
 use App\Engines\PricingEngine;
 use App\Models\Booking;
+use App\Models\Form;
 use App\Models\Property;
+use App\Support\FormAnswers;
 use App\Support\Signature;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -72,6 +74,7 @@ class SiteBookingController extends Controller
 
         return view('site.bookings.create', [
             'property' => $property,
+            'bookingForm' => Form::fixed(Form::BOOKING),
             'quote' => $quote,
             'coupon' => $coupon,
             'couponError' => $couponError,
@@ -90,6 +93,9 @@ class SiteBookingController extends Controller
     public function store(Request $request, Property $property, BookingEngine $bookings, PaymentEngine $payments): RedirectResponse
     {
         abort_unless($property->active, 404);
+
+        $bookingForm = Form::fixed(Form::BOOKING);
+        [$ownRules, $ownNames] = FormAnswers::rules($bookingForm);
 
         $validated = $request->validate([
             'arrival' => Booking::arrivalRule(),
@@ -111,13 +117,14 @@ class SiteBookingController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'coupon' => ['nullable', 'string', 'max:50'],
             'terms' => ['accepted'],
+            ...$ownRules,
         ], [
             'terms.accepted' => __('You must agree to the conditions in order to book.'),
             'phone.required' => __('Your phone number is needed: its last four digits are the code of the door.'),
             'phone.regex' => __('Your phone number is needed: its last four digits are the code of the door.'),
             ...$property->guestsNotifications(),
             ...Booking::arrivalNotification(),
-        ]);
+        ], $ownNames);
 
         // With a given breakdown the guest count is always adults +
         // children (infants and pets do not count towards the maximum).
@@ -153,6 +160,7 @@ class SiteBookingController extends Controller
                 acceptedTerms: $property->bookingTermsText($nights),
                 signature: $signature,
                 couponCode: $validated['coupon'] ?? null,
+                formAnswers: FormAnswers::collect($bookingForm, (array) ($validated[FormAnswers::INPUT] ?? [])),
                 guestBreakdown: isset($validated['adults']) ? [
                     'adults' => (int) $validated['adults'],
                     'children' => (int) ($validated['children'] ?? 0),

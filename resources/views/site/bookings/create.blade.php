@@ -50,27 +50,37 @@
                             <span class="mt-1 block text-xs text-stone-500">{{ __('The last four digits are the code of the door.') }}</span>
                         @endif
                     </label>
+                    @if ($bookingForm->shows('address'))
                     <label class="block sm:col-span-2">
                         <span class="text-sm font-medium text-stone-700">{{ __('Address') }}</span>
                         <input type="text" name="address" value="{{ old('address') }}"
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
                     </label>
+                    @endif
+                    @if ($bookingForm->shows('postal_code'))
                     <label class="block">
                         <span class="text-sm font-medium text-stone-700">{{ __('Postal code') }}</span>
                         <input type="text" name="postal_code" value="{{ old('postal_code') }}"
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
                     </label>
+                    @endif
+                    @if ($bookingForm->shows('city'))
                     <label class="block">
                         <span class="text-sm font-medium text-stone-700">{{ __('City') }}</span>
                         <input type="text" name="city" value="{{ old('city') }}"
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
                     </label>
-                    <label class="block sm:col-span-2">
-                        <span class="text-sm font-medium text-stone-700">{{ __('Remarks') }}</span>
-                        <textarea name="notes" rows="3"
-                                  class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">{{ old('notes') }}</textarea>
-                    </label>
+                    @endif
                 </div>
+
+                {{-- Own fields from the form builder (Forms → Booking form) --}}
+                @include('site.forms.fields', ['form' => $bookingForm])
+
+                <label class="block">
+                    <span class="text-sm font-medium text-stone-700">{{ __('Remarks') }}</span>
+                    <textarea name="notes" rows="3"
+                              class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">{{ old('notes') }}</textarea>
+                </label>
 
                 {{-- Signing, only if the rental terms apply to this stay --}}
                 @if ($property->rentalTermsApply($quote->nights))

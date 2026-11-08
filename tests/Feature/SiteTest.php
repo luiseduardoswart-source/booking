@@ -418,7 +418,8 @@ class SiteTest extends TestCase
             'message' => 'Is het huisje in juli nog vrij?',
         ])->assertSessionHas('contact_sent');
 
-        Mail::assertSent(\App\Mail\ContactMessageMail::class);
+        Mail::assertSent(\App\Mail\FormSubmissionMail::class, fn ($mail) => $mail->hasTo('owner@example.com')
+            && $mail->hasReplyTo('piet@example.com'));
     }
 
     public function test_honeypot_blocks_spam(): void

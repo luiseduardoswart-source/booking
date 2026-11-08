@@ -15,6 +15,10 @@ use App\Filament\Resources\Bookings\Pages\EditBooking;
 use App\Filament\Resources\Bookings\Pages\ListBookings;
 use App\Filament\Support\PaymentLink;
 use App\Models\Booking;
+use App\Models\Form;
+use App\Support\FormAnswers;
+use Filament\Schemas\Components\Text;
+use Illuminate\Support\HtmlString;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -117,6 +121,12 @@ class BookingResource extends Resource
 
                 PaymentLink::section(),
 
+                // The guest's answers to the own fields of the booking form (Forms → Booking form).
+                Section::make(__('Answers on the booking form'))
+                    ->columns(2)
+                    ->visible(fn (?Booking $record): bool => filled($record?->form_answers))
+                    ->components(fn (?Booking $record): array => self::answers($record)),
+
                 Section::make(__('Remarks'))
                     ->columns(2)
                     ->components([
@@ -128,6 +138,20 @@ class BookingResource extends Resource
                             ->rows(3),
                     ]),
             ]);
+    }
+
+    /** @return array<int, Text> one line per answer: label, then the answer */
+    private static function answers(?Booking $record): array
+    {
+        $form = Form::fixed(Form::BOOKING);
+
+        return collect((array) $record?->form_answers)
+            ->reject(fn (array $answer) => ($answer['type'] ?? null) === 'heading')
+            ->map(fn (array $answer) => Text::make(new HtmlString(
+                '<strong>'.e(FormAnswers::label($answer, $form)).'</strong><br>'.nl2br(e(FormAnswers::value($answer, $form) ?: '—'))
+            )))
+            ->values()
+            ->all();
     }
 
     public static function table(Table $table): Table

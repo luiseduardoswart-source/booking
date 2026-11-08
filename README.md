@@ -98,6 +98,11 @@ rental business.
 ### Admin panel
 
 - **Dashboard** with revenue, key figures and today's arrivals and departures.
+- **Form builder**: add your own questions to the booking form and the contact
+  form (the answers go with the booking and into the emails as merge fields),
+  or build new forms such as a group request and place them on a page.
+  Submissions are stored, emailed to the addresses you choose and marked as
+  handled in the admin.
 - **Statistics**: page views, views per property, conversion from visit to
   booking, most viewed photos and devices. Privacy-friendly, without extra
   cookies.

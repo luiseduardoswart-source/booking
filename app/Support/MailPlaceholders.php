@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Booking;
+use App\Models\Form;
 use App\Models\Property;
 use App\Models\Setting;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
@@ -19,6 +20,9 @@ final class MailPlaceholders
     /** Merge field key of an own check-in field: this prefix plus the field's fixed key. */
     public const FIELD_PREFIX = 'field_';
 
+    /** Merge field key of an own field of the booking form: this prefix plus the field's key. */
+    public const ANSWER_PREFIX = 'answer_';
+
     /**
      * Key (stored in the saved text, do not change) => label in the editor,
      * in the admin's language.
@@ -29,6 +33,10 @@ final class MailPlaceholders
     {
         $ownFields = collect(Property::checkInFieldNames())
             ->mapWithKeys(fn (string $name, string $key) => [self::FIELD_PREFIX.$key => $name])
+            ->all();
+
+        $answers = collect(Form::fixed(Form::BOOKING)->inputFields())
+            ->mapWithKeys(fn (array $field) => [self::ANSWER_PREFIX.$field['key'] => Form::text($field, 'label')])
             ->all();
 
         return [
@@ -49,6 +57,7 @@ final class MailPlaceholders
             'phone' => __('Company phone number'),
             'email' => __('Company email address'),
             ...$ownFields,
+            ...$answers,
         ];
     }
 
@@ -84,6 +93,16 @@ final class MailPlaceholders
             ->mapWithKeys(fn (string $name, string $key) => [self::FIELD_PREFIX.$key => fn () => (string) $property?->checkInValue($key)])
             ->all();
 
+        // The guest's answers to the own fields of the booking form, in the mail's language.
+        $bookingForm = Form::fixed(Form::BOOKING);
+        $answers = collect($bookingForm->inputFields())
+            ->mapWithKeys(fn (array $field) => [self::ANSWER_PREFIX.$field['key'] => function () use ($booking, $bookingForm, $field) {
+                $answer = collect((array) $booking->form_answers)->firstWhere('key', $field['key']);
+
+                return $answer === null ? '' : FormAnswers::value($answer, $bookingForm);
+            }])
+            ->all();
+
         // Only calculated if the field is in the text.
         return [
             'name' => fn () => (string) $booking->guest_name,
@@ -107,6 +126,7 @@ final class MailPlaceholders
             'phone' => fn () => (string) Setting::get('company', 'phone', ''),
             'email' => fn () => (string) Setting::get('company', 'email', ''),
             ...$ownFields,
+            ...$answers,
         ];
     }
 }

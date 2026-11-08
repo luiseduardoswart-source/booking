@@ -45,8 +45,9 @@ class BookingEngine
         ?string $acceptedTerms = null, // snapshot of the accepted terms
         ?string $couponCode = null,    // coupon code; invalid = silently ignored
         ?\App\Support\Signature $signature = null, // under the rental terms, if they apply
+        ?array $formAnswers = null, // answers to the own fields of the booking form (FormAnswers)
     ): Booking {
-        $booking = DB::transaction(function () use ($property, $arrival, $departure, $guests, $guest, $notes, $guestBreakdown, $acceptedTerms, $couponCode, $signature) {
+        $booking = DB::transaction(function () use ($property, $arrival, $departure, $guests, $guest, $notes, $guestBreakdown, $acceptedTerms, $couponCode, $signature, $formAnswers) {
             // Lock the property row so simultaneous attempts wait for each other.
             $property = Property::query()
                 ->whereKey($property->getKey())
@@ -93,6 +94,7 @@ class BookingEngine
                 'infants' => $guestBreakdown['infants'] ?? null,
                 'pets' => $guestBreakdown['pets'] ?? null,
                 'notes' => $notes,
+                'form_answers' => $formAnswers ?: null,
                 'terms_accepted_at' => $acceptedTerms !== null ? now() : null,
                 'terms_snapshot' => $acceptedTerms,
                 'price_snapshot' => $quote->toArray(),

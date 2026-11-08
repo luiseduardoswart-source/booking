@@ -8,6 +8,7 @@ use App\Support\Languages;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 /**
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'slug', 'slug_translations', 'title', 'title_translations', 'content', 'content_translations',
     'meta_title', 'meta_title_translations', 'meta_description', 'meta_description_translations',
-    'hero_images', 'published', 'in_menu', 'in_footer', 'sort',
+    'hero_images', 'published', 'in_menu', 'in_footer', 'sort', 'form_id',
 ])]
 class Page extends Model
 {
@@ -96,6 +97,12 @@ class Page extends Model
         }
 
         return $title ?: null;
+    }
+
+    /** The form shown below the content (from the form builder). */
+    public function form(): BelongsTo
+    {
+        return $this->belongsTo(Form::class);
     }
 
     public function scopePublished(Builder $query): Builder

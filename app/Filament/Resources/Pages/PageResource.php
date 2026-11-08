@@ -15,6 +15,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
@@ -112,6 +113,17 @@ class PageResource extends Resource
                     ['meta_title', 'meta_description'],
                     columns: 2,
                 )->collapsed()->columnSpanFull(),
+
+                Section::make(__('Form'))
+                    ->description(__('A form from Forms, shown below the content of this page.'))
+                    ->collapsed(fn (?Page $record): bool => $record?->form_id === null)
+                    ->components([
+                        Select::make('form_id')
+                            ->label(__('Form on this page'))
+                            ->relationship('form', 'name', fn ($query) => $query->whereNull('system'))
+                            ->placeholder(__('No form'))
+                            ->native(false),
+                    ]),
 
                 Section::make(__('Visibility'))
                     ->columns(4)

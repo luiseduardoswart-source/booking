@@ -25,7 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'identity_status', 'identity_session_id',
     'arrival_date', 'departure_date', 'guests',
     'adults', 'children', 'infants', 'pets',
-    'notes', 'internal_notes', 'terms_accepted_at', 'terms_snapshot',
+    'notes', 'form_answers', 'internal_notes', 'terms_accepted_at', 'terms_snapshot',
     'price_snapshot', 'total_cents', 'currency', 'down_payment_cents', 'deposit_cents',
     'coupon_code',
 ])]
@@ -203,6 +203,7 @@ class Booking extends Model
             'arrival_date' => 'immutable_date:Y-m-d',
             'departure_date' => 'immutable_date:Y-m-d',
             'price_snapshot' => 'array',
+            'form_answers' => 'array',
         ];
     }
 }

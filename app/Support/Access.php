@@ -77,6 +77,8 @@ final class Access
         'accommodation_types' => ['class' => PropertyTypeResource::class, 'actions' => self::ACTIONS, 'platform' => true],
         'hosts' => ['class' => HostResource::class, 'actions' => self::ACTIONS, 'platform' => true],
         'pages' => ['class' => PageResource::class, 'actions' => self::ACTIONS, 'platform' => true],
+        'forms' => ['class' => \App\Filament\Resources\Forms\FormResource::class, 'actions' => self::ACTIONS, 'platform' => true],
+        'form_submissions' => ['class' => \App\Filament\Resources\FormSubmissions\FormSubmissionResource::class, 'actions' => [self::VIEW, self::EDIT, self::DELETE], 'platform' => true],
         'media' => ['class' => MediaManager::class, 'actions' => [self::EDIT], 'platform' => true],
         'statistics' => ['class' => Statistics::class, 'actions' => [self::VIEW], 'platform' => true],
     ];

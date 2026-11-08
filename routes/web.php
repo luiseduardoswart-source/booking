@@ -78,7 +78,10 @@ Route::get('/accommodation/{slug}/book', fn (string $slug) => redirect()->route(
 
 // Contact
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
+// Own forms from the form builder, shown on a page.
+Route::post('/forms/{form}', [\App\Http\Controllers\FormController::class, 'store'])
+    ->whereNumber('form')->middleware('throttle:5,1')->name('forms.store');
 
 // AI chat on the site (can be enabled under Settings → Website → AI chat)
 Route::post('/chat', [\App\Http\Controllers\SiteChatController::class, 'question'])->middleware('throttle:20,1')->name('chat');

@@ -1627,5 +1627,12 @@
     "A form from Forms, shown below the content of this page.": "Een formulier uit Formulieren, getoond onder de inhoud van deze pagina.",
     "Form on this page": "Formulier op deze pagina",
     "No form": "Geen formulier",
-    "Not in the list yet? Add the person with the + button, for example a family member.": "Staat de persoon er nog niet tussen? Voeg hem toe met de +-knop, bijvoorbeeld een familielid."
+    "Not in the list yet? Add the person with the + button, for example a family member.": "Staat de persoon er nog niet tussen? Voeg hem toe met de +-knop, bijvoorbeeld een familielid.",
+    "Collect the deposit": "Borg innen",
+    "Right after booking": "Direct na het boeken",
+    "A number of days before arrival": "Een aantal dagen vóór aankomst",
+    "Always a separate payment, never part of the price.": "Altijd een aparte betaling, nooit onderdeel van de prijs.",
+    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": "De borg van :amount zit niet in de prijs. Je betaalt hem apart, direct na je boeking, en krijgt hem na je verblijf terug.",
+    "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} De borg van :amount zit niet in de prijs. Je betaalt hem apart op de dag van aankomst en krijgt hem na je verblijf terug.|{1} De borg van :amount zit niet in de prijs. Je betaalt hem apart, 1 dag vóór aankomst, en krijgt hem na je verblijf terug.|[2,*] De borg van :amount zit niet in de prijs. Je betaalt hem apart, :count dagen vóór aankomst, en krijgt hem na je verblijf terug.",
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "Nog één stap: de borg van :amount. Dat is een aparte betaling, geen onderdeel van de prijs, en je krijgt hem na je verblijf terug."
 }

@@ -1615,5 +1615,12 @@
     "A form from Forms, shown below the content of this page.": "来自“表单”的表单，显示在此页面内容下方。",
     "Form on this page": "此页面上的表单",
     "No form": "无表单",
-    "Not in the list yet? Add the person with the + button, for example a family member.": "列表中还没有？用 + 按钮添加此人，例如家人。"
+    "Not in the list yet? Add the person with the + button, for example a family member.": "列表中还没有？用 + 按钮添加此人，例如家人。",
+    "Collect the deposit": "收取押金",
+    "Right after booking": "预订后立即",
+    "A number of days before arrival": "抵达前若干天",
+    "Always a separate payment, never part of the price.": "始终单独支付，从不计入价格。",
+    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": ":amount 的押金不包含在价格中。您需在预订后立即单独支付，入住结束后退还。",
+    "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} :amount 的押金不包含在价格中。您需在抵达当天单独支付，入住结束后退还。|{1} :amount 的押金不包含在价格中。您需在抵达前 1 天单独支付，入住结束后退还。|[2,*] :amount 的押金不包含在价格中。您需在抵达前 :count 天单独支付，入住结束后退还。",
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "还有一步：:amount 的押金。这是一笔单独付款，不计入价格，入住结束后退还。"
 }

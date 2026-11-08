@@ -144,6 +144,18 @@
                         @endif
                     </dl>
 
+                    {{-- The deposit is never part of the price: a separate payment, with when it is due. --}}
+                    @if ($quote->depositCents > 0)
+                        @php($depositAmount = \App\Support\Money::format($quote->depositCents, $quote->currency))
+                        <p class="mt-4 rounded-lg bg-stone-50 p-3 text-xs text-stone-600">
+                            @if ($property->depositAtBooking())
+                                {{ __('The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.', ['amount' => $depositAmount]) }}
+                            @else
+                                {{ trans_choice('{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.', (int) $property->effective('deposit_days_before_arrival'), ['amount' => $depositAmount]) }}
+                            @endif
+                        </p>
+                    @endif
+
                     @if (\App\Support\Money::displayCurrencyFor($quote->currency) !== null)
                         <p class="mt-2 text-xs text-stone-400">
                             {{ __('Prices are converted at the current exchange rate; payment is made in :currency (:code).', [

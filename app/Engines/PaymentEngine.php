@@ -214,7 +214,14 @@ class PaymentEngine
 
         if ($newStatus === PaymentTransactionStatus::Paid) {
             $this->applyPaymentToBooking($payment->booking);
-            $this->notifications->send($payment->booking->refresh(), MailType::PaymentReceived, $payment);
+            $booking = $payment->booking->refresh();
+            $this->notifications->send($booking, MailType::PaymentReceived, $payment);
+
+            // Deposit right after booking: the request goes out as soon as the stay
+            // is paid for (the payment page shows the button as well).
+            if ($payment->type !== PaymentType::Deposit && $this->depositDueNow($booking)) {
+                $this->notifications->sendOnce($booking, MailType::Deposit);
+            }
         }
 
         return $payment;
@@ -296,6 +303,17 @@ class PaymentEngine
         $overview = $booking->paymentOverview();
 
         return $overview['paid'] - $overview['refunded'];
+    }
+
+    /**
+     * Should the guest pay the deposit now? When the accommodation collects it
+     * right after booking, the booking is confirmed and the deposit is still open.
+     */
+    public function depositDueNow(Booking $booking): bool
+    {
+        return $booking->property?->depositAtBooking() === true
+            && $booking->status->isConfirmed()
+            && $this->depositCents($booking) > 0;
     }
 
     /**

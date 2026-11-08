@@ -36,7 +36,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'id_required', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
     'down_payment_percentage', 'vat_percentage', 'pricing_service',
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
-    'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund',
+    'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund', 'deposit_moment',
     'balance_payment_days_before_arrival', 'checkin_days_before_arrival', 'review_days_after_departure', 'mail_texts', 'cancellation_texts',
     'address', 'postal_code', 'city', 'country', 'latitude', 'longitude',
     'max_guests', 'bedrooms', 'beds', 'sofa_beds', 'bathrooms',
@@ -66,6 +66,11 @@ class Property extends Model implements HasMedia
 
     public const DISCOUNT_FIXED = 'fixed';
 
+    /** When the guest pays the deposit: right after booking, or days before arrival. */
+    public const DEPOSIT_AT_BOOKING = 'booking';
+
+    public const DEPOSIT_BEFORE_ARRIVAL = 'before_arrival';
+
     /** Check-in: by themselves (key box, code or smart lock) or welcomed in person by a host. */
     public const CHECK_IN_SELF = 'self';
 
@@ -91,6 +96,7 @@ class Property extends Model implements HasMedia
         'deposit_days_before_arrival' => 7,
         'deposit_days_after_departure' => 3,
         'deposit_auto_refund' => false,
+        'deposit_moment' => self::DEPOSIT_BEFORE_ARRIVAL,
         'pricing_service' => PricingServices::NO,
         'dynamic_discount_kind' => self::DISCOUNT_NONE,
         'manual_prices_win' => false,
@@ -453,6 +459,12 @@ class Property extends Model implements HasMedia
         }
 
         return array_map(fn (int $cents) => max(0, (int) round($cents - $discount($cents))), $prices);
+    }
+
+    /** Does the guest pay the deposit right after booking? Own choice, otherwise the default. */
+    public function depositAtBooking(): bool
+    {
+        return $this->effective('deposit_moment') === self::DEPOSIT_AT_BOOKING;
     }
 
     /** How the guest checks in; own choice, otherwise the default. */

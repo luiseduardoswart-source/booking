@@ -1365,8 +1365,23 @@ class PropertyForm
                         self::euroInput('deposit_cents', __('Deposit')),
                         self::inheritToggle('deposit_auto_refund', __('Refund deposit automatically'), __('No = daily reminder by email'))
                             ->visible(self::withPaymentRules()),
-                        self::defaultNumber('deposit_days_before_arrival', __('Deposit request: days before arrival'))
+                        Select::make('deposit_moment')
+                            ->label(__('Collect the deposit'))
+                            ->options([
+                                Property::DEPOSIT_AT_BOOKING => __('Right after booking'),
+                                Property::DEPOSIT_BEFORE_ARRIVAL => __('A number of days before arrival'),
+                            ])
+                            ->placeholder(__('Follow the default'))
+                            ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
+                            ->required(fn (?Property $record) => (bool) $record?->is_master)
+                            ->hint(__('Always a separate payment, never part of the price.'))
+                            ->live()
+                            ->native(false)
                             ->visible(self::withPaymentRules()),
+                        self::defaultNumber('deposit_days_before_arrival', __('Deposit request: days before arrival'))
+                            // Only when the deposit is collected before arrival (own choice or the default).
+                            ->visible(fn (Get $get, ?Property $record): bool => self::withPaymentRules()($record)
+                                && ($get('deposit_moment') ?? ($record?->is_master ? null : Property::master()->deposit_moment)) !== Property::DEPOSIT_AT_BOOKING),
                         self::defaultNumber('deposit_days_after_departure', __('Refund: days after departure'))
                             ->visible(self::withPaymentRules()),
                     ]),

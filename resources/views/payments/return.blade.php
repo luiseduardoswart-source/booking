@@ -10,6 +10,8 @@
         h1 { font-size: 1.4rem; margin: 0 0 .5rem; }
         p { color: #57534e; line-height: 1.6; }
         .ok { color: #16a34a; } .wait { color: #d97706; } .fail { color: #dc2626; }
+        .deposit { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e7e5e4; }
+        .button { display: inline-block; margin-top: .75rem; padding: .75rem 1.5rem; border-radius: .75rem; background: #e11d48; color: #fff; font-weight: 600; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -21,6 +23,12 @@
             'kind' => e(mb_strtolower(__($booking->paymentKind($payment->type)))),
             'number' => $number,
         ]) !!}</p>
+        @if ($depositLink)
+            <div class="deposit">
+                <p>{{ __('One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.', ['amount' => \App\Support\Money::format($booking->deposit_cents, $booking->currency)]) }}</p>
+                <a class="button" href="{{ $depositLink }}">{{ __('Pay the deposit') }}</a>
+            </div>
+        @endif
     @elseif ($payment->status === \App\Enums\PaymentTransactionStatus::Open)
         <h1 class="wait">{{ __('Payment being processed') }}</h1>
         <p>{!! __('Your payment for booking :number is still being processed. You will be notified as soon as it is confirmed.', ['number' => $number]) !!}</p>

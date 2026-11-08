@@ -11,9 +11,13 @@ use App\Models\Property;
 use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class SendScheduledMails extends Command
 {
+    /** "Days before arrival" that covers every coming stay (deposit right after booking). */
+    private const WHOLE_FUTURE = 3650;
+
     protected $signature = 'mails:send-scheduled';
 
     protected $description = 'Sends the scheduled guest mails: balance payment, check-in, check-out and review request';
@@ -32,8 +36,14 @@ class SendScheduledMails extends Command
             ->whereDate('arrival_date', '>=', today()));
 
         // 1b. Deposit request: X days before arrival, if a deposit applies and it has
-        //     not been paid yet.
-        $sent += $this->send($notifications, MailType::Deposit, 'deposit_days_before_arrival', fn (int $days) => Booking::query()
+        //     not been paid yet. Accommodations that collect it right after booking:
+        //     every coming stay (normally the request already went out with the
+        //     first payment; this catches bookings confirmed by hand).
+        $depositMoment = Property::valuePerAccommodation('deposit_moment');
+        $depositDays = Property::valuePerAccommodation('deposit_days_before_arrival')
+            ->map(fn ($days, int $id) => $depositMoment[$id] === Property::DEPOSIT_AT_BOOKING ? self::WHOLE_FUTURE : $days);
+
+        $sent += $this->send($notifications, MailType::Deposit, $depositDays, fn (int $days) => Booking::query()
             ->whereIn('status', $active)
             ->where('deposit_cents', '>', 0)
             ->whereDate('arrival_date', '<=', today()->addDays($days))
@@ -70,13 +80,14 @@ class SendScheduledMails extends Command
      * Each accommodation can have its own number of days. One query per
      * number, not per accommodation: usually the same applies everywhere.
      *
+     * @param  string|Collection<int, mixed>  $days  the field with the days, or days per accommodation id
      * @param  Closure(int): Builder  $bookings
      */
-    private function send(NotificationEngine $notifications, MailType $type, string $field, Closure $bookings): int
+    private function send(NotificationEngine $notifications, MailType $type, string|Collection $days, Closure $bookings): int
     {
         $sent = 0;
 
-        Property::valuePerAccommodation($field)
+        (is_string($days) ? Property::valuePerAccommodation($days) : $days)
             ->groupBy(fn ($days) => (int) $days, preserveKeys: true)
             ->each(function ($accommodations, int $days) use ($notifications, $type, $bookings, &$sent) {
                 $bookings($days)

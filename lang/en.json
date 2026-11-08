@@ -1627,5 +1627,12 @@
     "A form from Forms, shown below the content of this page.": "A form from Forms, shown below the content of this page.",
     "Form on this page": "Form on this page",
     "No form": "No form",
-    "Not in the list yet? Add the person with the + button, for example a family member.": "Not in the list yet? Add the person with the + button, for example a family member."
+    "Not in the list yet? Add the person with the + button, for example a family member.": "Not in the list yet? Add the person with the + button, for example a family member.",
+    "Collect the deposit": "Collect the deposit",
+    "Right after booking": "Right after booking",
+    "A number of days before arrival": "A number of days before arrival",
+    "Always a separate payment, never part of the price.": "Always a separate payment, never part of the price.",
+    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.",
+    "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.",
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay."
 }

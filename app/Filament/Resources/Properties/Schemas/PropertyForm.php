@@ -1268,6 +1268,8 @@ class PropertyForm
                                             ->label(__('Check-out before'))
                                             ->seconds(false),
                                         ...self::checkInFields(),
+                                        // Codes and details for the check-in mails belong with the check-in, above the house rules.
+                                        self::checkInDetails()->contained(false)->columnSpanFull(),
                                         TranslationFields::languageSection(
                                             __('House rules'),
                                             __('Choose a language. Empty = the English text.'),
@@ -1275,8 +1277,6 @@ class PropertyForm
                                             ['house_rules'],
                                         )->contained(false)->columnSpanFull(),
                                     ]),
-
-                                self::checkInDetails(),
                             ]);
     }
 

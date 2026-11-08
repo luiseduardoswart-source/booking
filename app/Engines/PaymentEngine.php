@@ -44,9 +44,14 @@ class PaymentEngine
             throw new InvalidArgumentException(__('This booking has been cancelled.'));
         }
 
+        // Deposit right after booking: it goes along with the first payment of
+        // the stay, in one checkout. Its own open links then expire too, so the
+        // guest cannot pay the deposit twice.
+        $withDeposit = $type === PaymentType::DownPayment && $booking->property?->depositAtBooking() === true;
+
         // Ask the provider first: an open link may have been paid or
         // expired by now, and that determines what is left to pay.
-        $open = $this->validPayments($booking, $this->sameTarget($type));
+        $open = $this->validPayments($booking, [...$this->sameTarget($type), ...($withDeposit ? [PaymentType::Deposit] : [])]);
 
         $amountCents = match ($type) {
             PaymentType::DownPayment => $this->downPaymentCents($booking),
@@ -59,8 +64,13 @@ class PaymentEngine
             throw new InvalidArgumentException(__('There is nothing to pay for this type.'));
         }
 
+        $depositPartCents = $withDeposit ? $this->depositCents($booking) : 0;
+        $amountCents += $depositPartCents;
+
         $existing = $open->first(
-            fn (Payment $payment): bool => $payment->type === $type && $payment->amount_cents === $amountCents
+            fn (Payment $payment): bool => $payment->type === $type
+                && $payment->amount_cents === $amountCents
+                && (int) $payment->deposit_part_cents === $depositPartCents
         );
 
         $open->reject(fn (Payment $payment): bool => $payment->is($existing))
@@ -75,8 +85,11 @@ class PaymentEngine
             'type' => $type,
             'status' => PaymentTransactionStatus::Open,
             'amount_cents' => $amountCents,
+            'deposit_part_cents' => $depositPartCents,
             'provider' => $this->provider->name(),
-            'description' => "{$booking->paymentKind($type)} {$booking->booking_number}",
+            'description' => $depositPartCents > 0
+                ? "{$booking->paymentKind($type)} + ".PaymentType::Deposit->label()." {$booking->booking_number}"
+                : "{$booking->paymentKind($type)} {$booking->booking_number}",
         ]);
 
         $result = $this->provider->create(
@@ -228,15 +241,27 @@ class PaymentEngine
     }
 
     /**
-     * Refund (part of) a paid payment.
+     * Refund the deposit a payment holds: a deposit payment, or the deposit
+     * part of a first payment that included it.
      */
-    public function refund(Payment $payment, ?int $amountCents = null): Payment
+    public function refundDeposit(Payment $payment): Payment
+    {
+        return $this->refund($payment, null, deposit: true);
+    }
+
+    /**
+     * Refund (part of) a paid payment. Without $deposit only the stay part: a
+     * deposit paid along with the stay has its own refund (refundDeposit), so
+     * it is never refunded as if it were the stay, or the other way round.
+     */
+    public function refund(Payment $payment, ?int $amountCents = null, bool $deposit = false): Payment
     {
         if ($payment->status !== PaymentTransactionStatus::Paid) {
             throw new InvalidArgumentException(__('Only paid payments can be refunded.'));
         }
 
-        $maximum = $payment->remainingRefundableCents();
+        $deposit = $deposit || $payment->type === PaymentType::Deposit;
+        $maximum = $deposit ? $payment->depositHeldCents() : $payment->stayRefundableCents();
 
         if ($maximum <= 0) {
             throw new InvalidArgumentException(__('This payment has already been fully refunded.'));
@@ -255,6 +280,7 @@ class PaymentEngine
             'type' => PaymentType::Refund,
             'status' => PaymentTransactionStatus::Refunded,
             'amount_cents' => $amountCents,
+            'deposit_part_cents' => $deposit ? $amountCents : 0,
             'provider' => $this->provider->name(),
             'provider_payment_id' => $refundId,
             'refunded_payment_id' => $payment->id,
@@ -285,17 +311,12 @@ class PaymentEngine
     }
 
     /**
-     * The deposit, as long as there is no paid deposit that has not been refunded.
+     * The deposit, as long as there is no paid deposit that has not been refunded
+     * (separately or along with the stay).
      */
     private function depositCents(Booking $booking): int
     {
-        $paid = $booking->payments()
-            ->where('type', PaymentType::Deposit->value)
-            ->where('status', PaymentTransactionStatus::Paid->value)
-            ->get()
-            ->contains(fn (Payment $deposit): bool => $deposit->remainingRefundableCents() > 0);
-
-        return $paid ? 0 : $booking->deposit_cents;
+        return $booking->depositHeldCents() > 0 ? 0 : (int) $booking->deposit_cents;
     }
 
     private function paidAmountCents(Booking $booking): int

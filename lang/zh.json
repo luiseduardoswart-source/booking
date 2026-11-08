@@ -1533,7 +1533,6 @@
     "Contact the guest or the platform right away to resolve this.": "请立即联系客人或平台解决此问题。",
     "Refund deposits: :count outstanding": "退还押金：:count 笔待处理",
     "departed :date": ":date 离开",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund):": "以下押金可以退还（在管理后台 → 付款 → 退款）：",
     "Tip: turn on \":setting\" in the settings to do this automatically.": "提示：在设置中开启“:setting”即可自动处理。",
     "Discount on the dynamic price": "动态价格折扣",
     "No discount": "无折扣",
@@ -1620,7 +1619,12 @@
     "Right after booking": "预订后立即",
     "A number of days before arrival": "抵达前若干天",
     "Always a separate payment, never part of the price.": "始终单独支付，从不计入价格。",
-    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": ":amount 的押金不包含在价格中。您需在预订后立即单独支付，入住结束后退还。",
     "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} :amount 的押金不包含在价格中。您需在抵达当天单独支付，入住结束后退还。|{1} :amount 的押金不包含在价格中。您需在抵达前 1 天单独支付，入住结束后退还。|[2,*] :amount 的押金不包含在价格中。您需在抵达前 :count 天单独支付，入住结束后退还。",
-    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "还有一步：:amount 的押金。这是一笔单独付款，不计入价格，入住结束后退还。"
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "还有一步：:amount 的押金。这是一笔单独付款，不计入价格，入住结束后退还。",
+    "The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.": ":amount 的押金不包含在价格中，但需与预订一起立即支付。入住结束后退还。",
+    "To pay now": "现在应付",
+    "Deposit (refunded after your stay)": "押金（入住结束后退还）",
+    "Refund deposit": "退还押金",
+    "Refund the deposit of :amount?": "退还 :amount 的押金？",
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "以下押金可以退还（后台 → 付款 → 退还押金）："
 }

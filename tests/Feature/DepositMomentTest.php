@@ -89,24 +89,76 @@ class DepositMomentTest extends TestCase
 
         $this->get("/{$before->slug}/book{$dates}")->assertOk()
             ->assertSee(trans_choice('{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.', 7, ['amount' => '€ 250,00']));
+        // 3 nights of €100 = €300, 30% down payment = €90, plus the €250 deposit now.
         $this->get("/{$atBooking->slug}/book{$dates}")->assertOk()
-            ->assertSee(__('The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.', ['amount' => '€ 250,00']));
+            ->assertSee(__('The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.', ['amount' => '€ 250,00']))
+            ->assertSee(__('To pay now'))
+            ->assertSee('€ 340,00');
     }
 
-    public function test_right_after_booking_the_request_follows_the_first_payment(): void
+    public function test_right_after_booking_the_deposit_goes_in_the_same_checkout(): void
     {
         $booking = $this->booking($this->accommodation(['deposit_moment' => 'booking']));
 
-        $this->assertFalse($this->depositRequested($booking));
-
+        // The thank-you page names both parts of the payment.
         $this->payStay($booking)
-            ->assertSee(__('Pay the deposit'))
-            ->assertSee(e($booking->paymentLink(PaymentType::Deposit)), false);
+            ->assertDontSee(__('Pay the deposit'))
+            ->assertSee(mb_strtolower(__('Down payment').' + '.__('Deposit')));
 
-        $this->assertTrue($this->depositRequested($booking));
-        // The deposit is not part of what the stay costs.
-        $this->assertSame(PaymentTransactionStatus::Paid, $booking->payments()->where('type', PaymentType::DownPayment->value)->sole()->status);
-        $this->assertSame(0, $booking->payments()->where('type', PaymentType::Deposit->value)->count());
+        // One payment: the down payment plus the deposit.
+        $payment = $booking->payments()->sole();
+        $this->assertSame(PaymentType::DownPayment, $payment->type);
+        $this->assertSame(9000 + 25000, $payment->amount_cents);
+        $this->assertSame(25000, $payment->deposit_part_cents);
+        $this->assertSame(PaymentTransactionStatus::Paid, $payment->status);
+
+        // The deposit is not part of what the stay costs: €90 of €300 paid, €210 to go.
+        $booking->refresh();
+        $this->assertSame(['paid' => 9000, 'refunded' => 0, 'outstanding' => 21000], $booking->paymentOverview());
+        $this->assertSame(\App\Enums\PaymentStatus::DownPaymentPaid, $booking->payment_status);
+        $this->assertSame(25000, $booking->depositHeldCents());
+        // Revenue on the dashboard: only the stay.
+        $this->assertSame(['EUR' => 9000], \App\Models\Payment::revenuePerCurrency(\App\Models\Payment::query()));
+
+        // No separate deposit request any more, also not from the daily run.
+        $this->artisan('mails:send-scheduled')->assertSuccessful();
+        $this->assertFalse($this->depositRequested($booking));
+    }
+
+    public function test_the_deposit_part_is_refunded_on_its_own(): void
+    {
+        $booking = $this->booking($this->accommodation(['deposit_moment' => 'booking']));
+        $this->payStay($booking);
+        $payment = $booking->payments()->sole();
+
+        // Refunding the stay never touches the deposit, and the other way round.
+        $this->assertSame(9000, $payment->stayRefundableCents());
+
+        $refund = app(PaymentEngine::class)->refundDeposit($payment);
+
+        $this->assertSame(25000, $refund->amount_cents);
+        $this->assertSame(25000, $refund->deposit_part_cents);
+        $this->assertSame([['payment' => $payment->provider_payment_id, 'amount_cents' => 25000]], $this->provider->refunds);
+        $this->assertSame(0, $payment->refresh()->depositHeldCents());
+        $this->assertSame(9000, $payment->stayRefundableCents());
+        $this->assertSame(['paid' => 9000, 'refunded' => 0, 'outstanding' => 21000], $booking->refresh()->paymentOverview());
+        $this->assertSame(\App\Enums\PaymentStatus::DownPaymentPaid, $booking->payment_status);
+    }
+
+    public function test_after_departure_the_deposit_part_is_refunded_automatically(): void
+    {
+        $booking = $this->booking($this->accommodation(['deposit_moment' => 'booking', 'deposit_auto_refund' => true, 'deposit_days_after_departure' => 2]), 5);
+        $this->payStay($booking);
+
+        $this->travel(5 + 3 + 2)->days();
+        $this->artisan('deposits:process')->assertSuccessful();
+
+        $this->assertSame([25000], array_column($this->provider->refunds, 'amount_cents'));
+        $this->assertSame(0, $booking->refresh()->depositHeldCents());
+
+        // Once is enough.
+        $this->artisan('deposits:process')->assertSuccessful();
+        $this->assertCount(1, $this->provider->refunds);
     }
 
     public function test_before_arrival_nothing_happens_at_the_first_payment(): void

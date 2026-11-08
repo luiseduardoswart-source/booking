@@ -20,7 +20,7 @@
     @if ($payment->status === \App\Enums\PaymentTransactionStatus::Paid)
         <h1 class="ok">{{ __('Thank you, your payment has been received!') }}</h1>
         <p>{!! __('We have received your :kind for booking :number. You will receive a confirmation by email.', [
-            'kind' => e(mb_strtolower(__($booking->paymentKind($payment->type)))),
+            'kind' => e(mb_strtolower($payment->kind())),
             'number' => $number,
         ]) !!}</p>
         @if ($depositLink)

@@ -1545,7 +1545,6 @@
     "Contact the guest or the platform right away to resolve this.": "Contact the guest or the platform right away to resolve this.",
     "Refund deposits: :count outstanding": "Refund deposits: :count outstanding",
     "departed :date": "departed :date",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund):": "The following deposits are ready to be refunded (via admin → Payments → Refund):",
     "Tip: turn on \":setting\" in the settings to do this automatically.": "Tip: turn on \":setting\" in the settings to do this automatically.",
     "Discount on the dynamic price": "Discount on the dynamic price",
     "No discount": "No discount",
@@ -1632,7 +1631,12 @@
     "Right after booking": "Right after booking",
     "A number of days before arrival": "A number of days before arrival",
     "Always a separate payment, never part of the price.": "Always a separate payment, never part of the price.",
-    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.",
     "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.",
-    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay."
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.",
+    "The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.": "The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.",
+    "To pay now": "To pay now",
+    "Deposit (refunded after your stay)": "Deposit (refunded after your stay)",
+    "Refund deposit": "Refund deposit",
+    "Refund the deposit of :amount?": "Refund the deposit of :amount?",
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):"
 }

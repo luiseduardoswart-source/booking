@@ -29,11 +29,11 @@ class DepositReminderMail extends Mailable
             .e($deposit->booking->booking_number).' — '.e($deposit->booking->property->name)
             .' — '.e($deposit->booking->guest_name)
             .' — '.e(__('departed :date', ['date' => $deposit->booking->departure_date->format('d-m-Y')]))
-            .' — '.\App\Support\Money::format($deposit->amount_cents, $deposit->booking->currency)
+            .' — '.\App\Support\Money::format($deposit->depositHeldCents(), $deposit->booking->currency)
             .'</li>')->implode('');
 
         return new Content(
-            htmlString: '<p>'.e(__('The following deposits are ready to be refunded (via admin → Payments → Refund):')).'</p><ul>'.$rules.'</ul>'
+            htmlString: '<p>'.e(__('The following deposits are ready to be refunded (via admin → Payments → Refund deposit):')).'</p><ul>'.$rules.'</ul>'
                 .'<p>'.e(__('Tip: turn on ":setting" in the settings to do this automatically.', ['setting' => __('Refund deposit automatically')])).'</p>',
         );
     }

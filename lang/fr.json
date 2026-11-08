@@ -1533,7 +1533,6 @@
     "Contact the guest or the platform right away to resolve this.": "Contactez immédiatement le client ou la plateforme pour résoudre ce problème.",
     "Refund deposits: :count outstanding": "Cautions à rembourser : :count en attente",
     "departed :date": "parti le :date",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund):": "Les cautions suivantes sont prêtes à être remboursées (via administration → Paiements → Rembourser) :",
     "Tip: turn on \":setting\" in the settings to do this automatically.": "Astuce : activez « :setting » dans les paramètres pour automatiser cela.",
     "Discount on the dynamic price": "Remise sur le prix dynamique",
     "No discount": "Aucune remise",
@@ -1620,7 +1619,12 @@
     "Right after booking": "Juste après la réservation",
     "A number of days before arrival": "Quelques jours avant l'arrivée",
     "Always a separate payment, never part of the price.": "Toujours un paiement séparé, jamais compris dans le prix.",
-    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": "La caution de :amount n'est pas comprise dans le prix. Vous la payez séparément, juste après votre réservation, et elle vous est rendue après votre séjour.",
     "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} La caution de :amount n'est pas comprise dans le prix. Vous la payez séparément le jour de l'arrivée et elle vous est rendue après votre séjour.|{1} La caution de :amount n'est pas comprise dans le prix. Vous la payez séparément 1 jour avant l'arrivée et elle vous est rendue après votre séjour.|[2,*] La caution de :amount n'est pas comprise dans le prix. Vous la payez séparément :count jours avant l'arrivée et elle vous est rendue après votre séjour.",
-    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "Encore une étape : la caution de :amount. C'est un paiement séparé, non compris dans le prix, et elle vous est rendue après votre séjour."
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "Encore une étape : la caution de :amount. C'est un paiement séparé, non compris dans le prix, et elle vous est rendue après votre séjour.",
+    "The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.": "La caution de :amount n'est pas comprise dans le prix, mais vous la payez maintenant avec votre réservation. Elle vous est rendue après votre séjour.",
+    "To pay now": "À payer maintenant",
+    "Deposit (refunded after your stay)": "Caution (rendue après votre séjour)",
+    "Refund deposit": "Rembourser la caution",
+    "Refund the deposit of :amount?": "Rembourser la caution de :amount ?",
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "Les cautions suivantes sont prêtes à être remboursées (via administration → Paiements → Rembourser la caution) :"
 }

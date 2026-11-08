@@ -23,11 +23,16 @@ class ProcessDeposits extends Command
         $automatic = Property::valuePerAccommodation('deposit_auto_refund');
 
         // Paid deposits of departed guests that have not been (partly) refunded yet,
-        // once the period of their accommodation has passed.
+        // once the period of their accommodation has passed: a deposit payment, or
+        // the deposit paid along with the stay (deposit right after booking).
         $outstanding = Payment::query()
-            ->where('type', PaymentType::Deposit->value)
             ->where('status', PaymentTransactionStatus::Paid->value)
-            ->whereDoesntHave('refunds')
+            ->where(fn ($query) => $query
+                ->where(fn ($deposit) => $deposit->where('type', PaymentType::Deposit->value)->whereDoesntHave('refunds'))
+                ->orWhere(fn ($along) => $along
+                    ->where('type', '!=', PaymentType::Deposit->value)
+                    ->where('deposit_part_cents', '>', 0)
+                    ->whereDoesntHave('refunds', fn ($refund) => $refund->where('deposit_part_cents', '>', 0))))
             ->whereHas('booking', fn ($query) => $query
                 ->whereDate('departure_date', '<=', today())
                 ->whereNotIn('status', \App\Models\Booking::INACTIVE_STATUSES))
@@ -47,8 +52,8 @@ class ProcessDeposits extends Command
 
         foreach ($refund as $deposit) {
             try {
-                $payments->refund($deposit);
-                $this->info("Deposit {$deposit->booking->booking_number} refunded (".\App\Support\Money::format($deposit->amount_cents, $deposit->booking->currency).').');
+                $refund = $payments->refundDeposit($deposit);
+                $this->info("Deposit {$deposit->booking->booking_number} refunded (".\App\Support\Money::format($refund->amount_cents, $deposit->booking->currency).').');
             } catch (\Throwable $e) {
                 $this->error("Deposit {$deposit->booking->booking_number}: {$e->getMessage()}");
                 report($e);

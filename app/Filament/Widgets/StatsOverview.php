@@ -39,9 +39,13 @@ class StatsOverview extends StatsOverviewWidget
             ->withSum(['payments as paid_cents' => fn ($payments) => $payments
                 ->where('status', PaymentTransactionStatus::Paid->value)
                 ->whereIn('type', [PaymentType::DownPayment->value, PaymentType::Balance->value])], 'amount_cents')
+            // A deposit paid along with the stay does not pay for the stay.
+            ->withSum(['payments as paid_deposit_cents' => fn ($payments) => $payments
+                ->where('status', PaymentTransactionStatus::Paid->value)
+                ->whereIn('type', [PaymentType::DownPayment->value, PaymentType::Balance->value])], 'deposit_part_cents')
             ->get()
             ->groupBy('currency')
-            ->map(fn ($bookings) => $bookings->sum(fn (Booking $booking) => max(0, $booking->total_cents - (int) $booking->paid_cents)));
+            ->map(fn ($bookings) => $bookings->sum(fn (Booking $booking) => max(0, $booking->total_cents - ((int) $booking->paid_cents - (int) $booking->paid_deposit_cents))));
         $outstanding = Money::inDefaultCurrency($outstanding);
 
         $arrivalsToday = Access::restrict(Booking::query())

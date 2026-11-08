@@ -1533,7 +1533,6 @@
     "Contact the guest or the platform right away to resolve this.": "Ponte en contacto de inmediato con el huésped o la plataforma para resolverlo.",
     "Refund deposits: :count outstanding": "Devolver fianzas: :count pendientes",
     "departed :date": "salida el :date",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund):": "Las siguientes fianzas están listas para devolverse (en administración → Pagos → Reembolsar):",
     "Tip: turn on \":setting\" in the settings to do this automatically.": "Consejo: activa «:setting» en los ajustes para hacerlo automáticamente.",
     "Discount on the dynamic price": "Descuento sobre el precio dinámico",
     "No discount": "Sin descuento",
@@ -1620,7 +1619,12 @@
     "Right after booking": "Justo después de reservar",
     "A number of days before arrival": "Unos días antes de la llegada",
     "Always a separate payment, never part of the price.": "Siempre un pago aparte, nunca parte del precio.",
-    "The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.": "La fianza de :amount no está incluida en el precio. La pagas aparte, justo después de reservar, y se te devuelve tras tu estancia.",
     "{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.": "{0} La fianza de :amount no está incluida en el precio. La pagas aparte el día de llegada y se te devuelve tras tu estancia.|{1} La fianza de :amount no está incluida en el precio. La pagas aparte 1 día antes de la llegada y se te devuelve tras tu estancia.|[2,*] La fianza de :amount no está incluida en el precio. La pagas aparte :count días antes de la llegada y se te devuelve tras tu estancia.",
-    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "Un paso más: la fianza de :amount. Es un pago aparte, no forma parte del precio, y se te devuelve tras tu estancia."
+    "One more step: the deposit of :amount. It is a separate payment, not part of the price, and you get it back after your stay.": "Un paso más: la fianza de :amount. Es un pago aparte, no forma parte del precio, y se te devuelve tras tu estancia.",
+    "The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.": "La fianza de :amount no está incluida en el precio, pero la pagas ahora junto con tu reserva. Se te devuelve tras tu estancia.",
+    "To pay now": "A pagar ahora",
+    "Deposit (refunded after your stay)": "Fianza (se devuelve tras tu estancia)",
+    "Refund deposit": "Devolver fianza",
+    "Refund the deposit of :amount?": "¿Devolver la fianza de :amount?",
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "Las siguientes fianzas están listas para devolverse (en administración → Pagos → Devolver fianza):"
 }

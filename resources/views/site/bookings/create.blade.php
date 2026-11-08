@@ -105,10 +105,11 @@
 
                 <button type="submit"
                         class="w-full rounded-xl button-accent bg-gradient-to-r from-rose-600 to-pink-600 px-4 py-3 font-semibold text-white transition hover:from-rose-700 hover:to-pink-700">
+                    @php($depositNow = $property->depositAtBooking() ? $quote->depositCents : 0)
                     @if ($quote->downPaymentCents < $quote->totalCents)
-                        {{ __('Confirm and pay down payment (:amount)', ['amount' => \App\Support\Money::format($quote->downPaymentCents, $quote->currency)]) }}
+                        {{ __('Confirm and pay down payment (:amount)', ['amount' => \App\Support\Money::format($quote->downPaymentCents + $depositNow, $quote->currency)]) }}
                     @else
-                        {{ __('Confirm and pay (:amount)', ['amount' => \App\Support\Money::format($quote->totalCents, $quote->currency)]) }}
+                        {{ __('Confirm and pay (:amount)', ['amount' => \App\Support\Money::format($quote->totalCents + $depositNow, $quote->currency)]) }}
                     @endif
                 </button>
                 <p class="text-center text-xs text-stone-400">
@@ -141,6 +142,13 @@
                                 <dt>{{ __('Deposit (separate)') }}</dt>
                                 <dd>{{ \App\Support\Money::format($quote->depositCents, $quote->currency) }}</dd>
                             </div>
+                            {{-- Deposit right after booking: paid in the same checkout as the stay. --}}
+                            @if ($property->depositAtBooking())
+                                <div class="flex justify-between border-t border-stone-200 pt-2 font-semibold">
+                                    <dt>{{ __('To pay now') }}</dt>
+                                    <dd>{{ \App\Support\Money::format(min($quote->downPaymentCents, $quote->totalCents) + $quote->depositCents, $quote->currency) }}</dd>
+                                </div>
+                            @endif
                         @endif
                     </dl>
 
@@ -149,7 +157,7 @@
                         @php($depositAmount = \App\Support\Money::format($quote->depositCents, $quote->currency))
                         <p class="mt-4 rounded-lg bg-stone-50 p-3 text-xs text-stone-600">
                             @if ($property->depositAtBooking())
-                                {{ __('The deposit of :amount is not part of the price. You pay it separately, right after your booking, and get it back after your stay.', ['amount' => $depositAmount]) }}
+                                {{ __('The deposit of :amount is not part of the price, but you pay it now together with your booking. You get it back after your stay.', ['amount' => $depositAmount]) }}
                             @else
                                 {{ trans_choice('{0} The deposit of :amount is not part of the price. You pay it separately on the day of arrival and get it back after your stay.|{1} The deposit of :amount is not part of the price. You pay it separately, 1 day before arrival, and get it back after your stay.|[2,*] The deposit of :amount is not part of the price. You pay it separately, :count days before arrival, and get it back after your stay.', (int) $property->effective('deposit_days_before_arrival'), ['amount' => $depositAmount]) }}
                             @endif

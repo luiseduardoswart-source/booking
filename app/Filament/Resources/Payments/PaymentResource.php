@@ -120,40 +120,54 @@ class PaymentResource extends Resource
                         fn () => print(app(\App\Engines\DocumentEngine::class)->receipt($record)),
                         "payment_receipt-{$record->booking->booking_number}-{$record->id}.pdf",
                     )),
+                // The stay part. A deposit paid along with it has its own button.
                 Action::make('refund')
                     ->label(__('Refund'))
                     ->icon(Heroicon::OutlinedArrowUturnLeft)
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading(fn (Payment $record) => __('Refund :amount?', ['amount' => Money::format($record->remainingRefundableCents(), $record->booking?->currency)]))
+                    ->modalHeading(fn (Payment $record) => __('Refund :amount?', ['amount' => Money::format($record->stayRefundableCents(), $record->booking?->currency)]))
                     ->authorize(fn (Payment $record): bool => static::canEdit($record))
-                    ->visible(fn (Payment $record) => $record->remainingRefundableCents() > 0)
-                    ->action(function (Payment $record) {
-                        try {
-                            app(PaymentEngine::class)->refund($record);
-
-                            Notification::make()
-                                ->title(__('Refund created'))
-                                ->success()
-                                ->send();
-                        } catch (InvalidArgumentException $e) {
-                            Notification::make()
-                                ->title(__('Refund failed'))
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        } catch (\Throwable $e) {
-                            // Payment provider error: details to the log, not to the screen.
-                            report($e);
-
-                            Notification::make()
-                                ->title(__('Refund failed'))
-                                ->body(__('The payment provider declined the refund. Check the provider\'s dashboard to see whether anything has already been refunded.'))
-                                ->danger()
-                                ->send();
-                        }
-                    }),
+                    ->visible(fn (Payment $record) => $record->stayRefundableCents() > 0)
+                    ->action(fn (Payment $record) => static::runRefund(fn () => app(PaymentEngine::class)->refund($record))),
+                // The deposit: a deposit payment, or the deposit paid along with the stay.
+                Action::make('refund_deposit')
+                    ->label(__('Refund deposit'))
+                    ->icon(Heroicon::OutlinedReceiptRefund)
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Payment $record) => __('Refund the deposit of :amount?', ['amount' => Money::format($record->depositHeldCents(), $record->booking?->currency)]))
+                    ->authorize(fn (Payment $record): bool => static::canEdit($record))
+                    ->visible(fn (Payment $record) => $record->depositHeldCents() > 0)
+                    ->action(fn (Payment $record) => static::runRefund(fn () => app(PaymentEngine::class)->refundDeposit($record))),
             ]);
+    }
+
+    /** Runs a refund and tells the admin how it went; provider details go to the log. */
+    private static function runRefund(\Closure $refund): void
+    {
+        try {
+            $refund();
+
+            Notification::make()
+                ->title(__('Refund created'))
+                ->success()
+                ->send();
+        } catch (InvalidArgumentException $e) {
+            Notification::make()
+                ->title(__('Refund failed'))
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        } catch (\Throwable $e) {
+            report($e);
+
+            Notification::make()
+                ->title(__('Refund failed'))
+                ->body(__('The payment provider declined the refund. Check the provider\'s dashboard to see whether anything has already been refunded.'))
+                ->danger()
+                ->send();
+        }
     }
 
     public static function canCreate(): bool

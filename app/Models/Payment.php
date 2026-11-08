@@ -14,7 +14,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable([
-    'booking_id', 'type', 'status', 'amount_cents',
+    'booking_id', 'type', 'status', 'amount_cents', 'deposit_part_cents',
     'provider', 'provider_payment_id', 'refunded_payment_id', 'checkout_url', 'description', 'paid_at',
 ])]
 class Payment extends Model
@@ -46,7 +46,8 @@ class Payment extends Model
             ->whereIn('payments.type', [PaymentType::DownPayment->value, PaymentType::Balance->value])
             ->join('bookings', 'bookings.id', '=', 'payments.booking_id')
             ->groupBy('bookings.currency')
-            ->selectRaw('bookings.currency as currency, sum(payments.amount_cents) as cents')
+            // A deposit paid along with the stay is not revenue.
+            ->selectRaw('bookings.currency as currency, sum(payments.amount_cents - payments.deposit_part_cents) as cents')
             ->pluck('cents', 'currency')
             ->map(fn ($cents) => (int) $cents)
             ->all();
@@ -66,7 +67,45 @@ class Payment extends Model
      */
     public function kind(): string
     {
-        return __($this->booking->paymentKind($this->type));
+        $kind = __($this->booking->paymentKind($this->type));
+
+        return $this->type !== PaymentType::Deposit && $this->deposit_part_cents > 0
+            ? $kind.' + '.__(PaymentType::Deposit->label())
+            : $kind;
+    }
+
+    /**
+     * The deposit this payment still holds: paid and not refunded. All of a
+     * deposit payment, or the deposit paid along with the first payment of the
+     * stay (deposit right after booking).
+     */
+    public function depositHeldCents(): int
+    {
+        if ($this->status !== PaymentTransactionStatus::Paid || $this->type === PaymentType::Refund) {
+            return 0;
+        }
+
+        if ($this->type === PaymentType::Deposit) {
+            return $this->remainingRefundableCents();
+        }
+
+        // No query for a payment without a deposit part (most rows in the overview).
+        if ((int) $this->deposit_part_cents <= 0) {
+            return 0;
+        }
+
+        return max(0, (int) $this->deposit_part_cents - (int) $this->refunds()->sum('deposit_part_cents'));
+    }
+
+    /**
+     * What can still be refunded of the stay: everything left except the deposit
+     * this payment holds (that has its own refund). 0 for a deposit payment.
+     */
+    public function stayRefundableCents(): int
+    {
+        return $this->type === PaymentType::Deposit
+            ? 0
+            : max(0, $this->remainingRefundableCents() - $this->depositHeldCents());
     }
 
     public function hasOpenLink(): bool

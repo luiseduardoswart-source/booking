@@ -9,10 +9,12 @@ use App\Enums\PaymentTransactionStatus;
 use App\Enums\PaymentType;
 use App\Support\Signature;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
@@ -94,21 +96,43 @@ class Booking extends Model
     {
         $stay = [PaymentType::DownPayment->value, PaymentType::Balance->value];
 
+        // A deposit paid along with the stay (deposit right after booking) is
+        // not part of what the stay costs, and neither is its refund.
+        $stayPart = DB::raw('amount_cents - deposit_part_cents');
+
         $paid = (int) $this->payments()
             ->where('status', PaymentTransactionStatus::Paid->value)
             ->whereIn('type', $stay)
-            ->sum('amount_cents');
+            ->sum($stayPart);
 
         $refunded = (int) $this->payments()
             ->where('type', PaymentType::Refund->value)
             ->whereIn('refunded_payment_id', Payment::query()->select('id')->whereIn('type', $stay))
-            ->sum('amount_cents');
+            ->sum($stayPart);
 
         return [
             'paid' => $paid,
             'refunded' => $refunded,
             'outstanding' => max(0, $this->total_cents - ($paid - $refunded)),
         ];
+    }
+
+    /** The deposit the guest has paid and not got back yet (deposit payment or along with the stay). */
+    public function depositHeldCents(): int
+    {
+        return (int) $this->payments()
+            ->where('status', PaymentTransactionStatus::Paid->value)
+            ->where(fn (Builder $query) => $query->where('type', PaymentType::Deposit->value)->orWhere('deposit_part_cents', '>', 0))
+            ->get()
+            ->sum(fn (Payment $payment) => $payment->depositHeldCents());
+    }
+
+    /** Bookings without a paid deposit (separately or along with the stay). */
+    public function scopeWithoutPaidDeposit(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('payments', fn (Builder $payments) => $payments
+            ->where('status', PaymentTransactionStatus::Paid->value)
+            ->where(fn (Builder $deposit) => $deposit->where('type', PaymentType::Deposit->value)->orWhere('deposit_part_cents', '>', 0)));
     }
 
     /**

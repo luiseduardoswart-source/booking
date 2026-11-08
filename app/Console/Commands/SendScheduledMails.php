@@ -48,9 +48,7 @@ class SendScheduledMails extends Command
             ->where('deposit_cents', '>', 0)
             ->whereDate('arrival_date', '<=', today()->addDays($days))
             ->whereDate('arrival_date', '>=', today())
-            ->whereDoesntHave('payments', fn ($query) => $query
-                ->where('type', \App\Enums\PaymentType::Deposit->value)
-                ->where('status', \App\Enums\PaymentTransactionStatus::Paid->value)));
+            ->withoutPaidDeposit());
 
         // 2. Check-in instructions: X days before arrival.
         $sent += $this->send($notifications, MailType::Checkin, 'checkin_days_before_arrival', fn (int $days) => Booking::query()

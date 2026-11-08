@@ -27,8 +27,15 @@
             <tr>
                 <td>{{ __(':kind for :accommodation', ['kind' => $booking->paymentKind($payment->type), 'accommodation' => $booking->property->localized('name')]) }}
                     ({{ __(':of to :until', ['of' => $booking->arrival_date->format('d-m-Y'), 'until' => $booking->departure_date->format('d-m-Y')]) }})</td>
-                <td class="amount">{{ \App\Support\Money::format($payment->amount_cents, $payment->booking->currency) }}</td>
+                <td class="amount">{{ \App\Support\Money::format($payment->amount_cents - $payment->deposit_part_cents, $payment->booking->currency) }}</td>
             </tr>
+            {{-- Deposit paid along with the stay: its own line, refunded after the stay. --}}
+            @if ($payment->deposit_part_cents > 0)
+                <tr>
+                    <td>{{ __('Deposit (refunded after your stay)') }}</td>
+                    <td class="amount">{{ \App\Support\Money::format($payment->deposit_part_cents, $payment->booking->currency) }}</td>
+                </tr>
+            @endif
             <tr class="total">
                 <td>{{ __('Amount received') }}</td>
                 <td class="amount">{{ \App\Support\Money::format($payment->amount_cents, $payment->booking->currency) }}</td>

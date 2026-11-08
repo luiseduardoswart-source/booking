@@ -231,6 +231,30 @@ class AccommodationPhotosTest extends TestCase
             ->assertSeeHtml("['calendar', 'photos'].includes(active)");
     }
 
+    /**
+     * A Livewire update request has no ?tab= in its URL. When the starting tab
+     * came from the server, the attribute changed on every update and the
+     * morph put the save bar back on the Photos tab.
+     */
+    public function test_the_save_bar_state_does_not_depend_on_the_request(): void
+    {
+        $xData = function (Testable $page): string {
+            preg_match('/x-data="([^"]*)"[^>]*id="content\.form-actions"/', $page->html(), $match);
+
+            return html_entity_decode($match[1] ?? '', ENT_QUOTES);
+        };
+
+        $onPhotos = Livewire::withQueryParams(['tab' => 'photos'])->actingAs($this->owner())
+            ->test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()]);
+        $withoutTab = Livewire::actingAs($this->owner())
+            ->test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()]);
+
+        $this->assertNotSame('', $xData($onPhotos));
+        $this->assertSame($xData($onPhotos), $xData($withoutTab));
+        $this->assertSame($xData($onPhotos), $xData($onPhotos->call('$refresh')));
+        $this->assertStringContainsString('location.search', $xData($onPhotos));
+    }
+
     public function test_the_description_saves_inline_and_enter_sends_the_form_not(): void
     {
         $this->photo($this->accommodation);

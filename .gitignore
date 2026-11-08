@@ -18,6 +18,8 @@
 # Personal installation notes with hosting details; the general guide is in
 # README.md.
 /DEPLOYMENT.md
+# Internal build plan: for the developers, not for the public repository.
+/BUILD-PLAN.md
 /node_modules
 # /public/build IS committed on purpose: shared hosting has no Node to build the
 # frontend. Run `npm run build` before you commit.

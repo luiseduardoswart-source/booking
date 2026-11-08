@@ -147,12 +147,18 @@ class InstallationWithoutSshTest extends TestCase
     {
         $exportIgnore = fn (string $path): bool => str_ends_with(trim((string) shell_exec('git -C '.escapeshellarg(base_path()).' check-attr export-ignore -- '.escapeshellarg($path))), ': set');
 
-        foreach (['tests', 'docker', 'compose.yaml', 'phpunit.xml', 'phpunit.mysql.xml', 'BUILD-PLAN.md'] as $path) {
+        foreach (['tests', 'docker', 'compose.yaml', 'phpunit.xml', 'phpunit.mysql.xml'] as $path) {
             $this->assertTrue($exportIgnore($path), "$path does not belong in the zip package");
         }
 
         foreach (['app', 'public', '.htaccess', '.env.example', 'artisan', 'storage'] as $path) {
             $this->assertFalse($exportIgnore($path), "$path belongs in the zip package");
+        }
+
+        // Internal notes are not in the repository at all, so not in the zip either.
+        foreach (['BUILD-PLAN.md', 'DEPLOYMENT.md'] as $path) {
+            $ignored = trim((string) shell_exec('git -C '.escapeshellarg(base_path()).' check-ignore -- '.escapeshellarg($path)));
+            $this->assertSame($path, $ignored, "$path is internal and must stay out of git");
         }
 
         $workflow = File::get(base_path('.github/workflows/release.yml'));

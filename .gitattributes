@@ -17,4 +17,3 @@ CHANGELOG.md export-ignore
 /compose.yaml export-ignore
 /phpunit.xml export-ignore
 /phpunit.mysql.xml export-ignore
-/BUILD-PLAN.md export-ignore

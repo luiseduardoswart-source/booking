@@ -91,10 +91,12 @@ class SettingsPageTest extends TestCase
             'longitude' => 4.43,
         ]);
 
+        // Approximate location (the default): the circle's centre, not the house itself.
         $this->get("/{$property->slug}")
             ->assertOk()
             ->assertSee('id="map"', false)
-            ->assertSee('data-lat="52.2411000"', false);
+            ->assertSee('data-lat="'.$property->publicCoordinates()['lat'].'"', false)
+            ->assertDontSee('data-lat="52.2411000"', false);
     }
 
     public function test_no_map_without_coordinates(): void

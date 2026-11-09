@@ -1638,5 +1638,11 @@
     "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "De volgende borgen staan klaar om terug te storten (via beheer → Betalingen → Borg terugbetalen):",
     "Check-out (time)": "Check-out",
     "check-out :time": "check-out :time",
-    "Check-out: :time": "Check-out: :time"
+    "Check-out: :time": "Check-out: :time",
+    "A latitude lies between -90 and 90. Did you forget the decimal point?": "Een breedtegraad ligt tussen -90 en 90. Ben je de punt vergeten?",
+    "A longitude lies between -180 and 180. Did you forget the decimal point?": "Een lengtegraad ligt tussen -180 en 180. Ben je de punt vergeten?",
+    "Location on the map": "Locatie op de kaart",
+    "Approximately: a circle around the area": "Ongeveer: een cirkel rond de omgeving",
+    "Exactly: a pin on the address": "Exact: een speld op het adres",
+    "Approximately: the exact spot stays hidden until the guest has booked. Copy the coordinates from Google Maps (right-click on the spot).": "Ongeveer: de exacte plek blijft verborgen tot de gast geboekt heeft. Kopieer de coördinaten uit Google Maps (rechtsklik op de plek)."
 }

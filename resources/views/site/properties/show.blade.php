@@ -11,10 +11,11 @@
             "@type": "LodgingBusiness",
             "name": @json($property->localized('name')),
             "description": @json($property->localized('short_description')),
+            {{-- Approximate location: street and postal code stay out of what search engines read too. --}}
             "address": {
                 "@type": "PostalAddress",
-                "streetAddress": @json($property->address),
-                "postalCode": @json($property->postal_code),
+                "streetAddress": @json($property->showsExactLocation() ? $property->address : null),
+                "postalCode": @json($property->showsExactLocation() ? $property->postal_code : null),
                 "addressLocality": @json($property->city),
                 "addressCountry": @json($property->country)
             }@if ($property->approved_reviews_count > 0),
@@ -113,7 +114,7 @@
                             </div>
                         </div>
                     @endif
-                    @if ($property->latitude && $property->longitude)
+                    @if ($property->publicCoordinates())
                         <div class="flex items-start gap-4">
                             <x-site-icon name="map-pin" class="h-7 w-7 shrink-0 text-stone-700" />
                             <div>
@@ -296,18 +297,24 @@
             </div>
         @endif
 
-        {{-- Map: where you will stay --}}
-        @if ($property->latitude && $property->longitude)
+        {{-- Map: where you will stay. Approximately: a circle whose centre is not the
+             real spot (see Property::publicCoordinates). Exactly: a pin on the address. --}}
+        @if ($spot = $property->publicCoordinates())
             <div id="where-you-stays" class="mt-12 border-t border-stone-200 pt-8">
                 <h2 class="text-xl font-semibold text-stone-900">{{ __('Where you\'ll be staying') }}</h2>
                 <p class="mt-1 text-stone-600">
+                    @if ($property->showsExactLocation() && $property->address){{ $property->address }}, @endif
                     @if ($property->city){{ $property->city }}, {{ \App\Support\Countries::name($property->country) }}@endif
                 </p>
                 <div id="map"
-                     data-lat="{{ $property->latitude }}"
-                     data-lng="{{ $property->longitude }}"
+                     data-lat="{{ $spot['lat'] }}"
+                     data-lng="{{ $spot['lng'] }}"
+                     data-exact="{{ $property->showsExactLocation() ? '1' : '0' }}"
+                     data-radius="{{ \App\Models\Property::LOCATION_RADIUS }}"
                      class="z-0 mt-4 h-96 w-full overflow-hidden rounded-2xl"></div>
-                <p class="mt-2 text-xs text-stone-400">{{ __('You will receive the exact location after booking.') }}</p>
+                @unless ($property->showsExactLocation())
+                    <p class="mt-2 text-xs text-stone-400">{{ __('You will receive the exact location after booking.') }}</p>
+                @endunless
             </div>
         @endif
     </div>

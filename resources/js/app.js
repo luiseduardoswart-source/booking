@@ -324,7 +324,8 @@ document.querySelectorAll('[data-guests-popover]').forEach(initGuestPicker);
 document.querySelectorAll('[data-calendar-popover]').forEach(initCalendar);
 
 // ---------------------------------------------------------------------------
-// Map on the accommodation detail page (Airbnb style: circle instead of exact pin).
+// Map on the accommodation detail page: a circle around the area (the centre is
+// not the real spot), or a pin when the owner shows the exact location.
 // ---------------------------------------------------------------------------
 const mapElement = document.getElementById('map');
 
@@ -342,26 +343,33 @@ if (mapElement) {
             maxZoom: 19,
         }).addTo(map);
 
-        L.circle([lat, lng], {
-            radius: 300,
-            color: '#e11d48',
-            fillColor: '#e11d48',
-            fillOpacity: 0.2,
-            weight: 2,
-        }).addTo(map);
+        const exact = mapElement.dataset.exact === '1';
+
+        if (!exact) {
+            L.circle([lat, lng], {
+                radius: parseInt(mapElement.dataset.radius, 10) || 300,
+                color: '#e11d48',
+                fillColor: '#e11d48',
+                fillOpacity: 0.2,
+                weight: 2,
+            }).addTo(map);
+        }
 
         const houseIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:20px;height:20px">'
             + '<path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>';
 
-        L.marker([lat, lng], {
-            icon: L.divIcon({
-                className: '',
-                html: '<div style="background:#e11d48;color:#fff;border-radius:9999px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3)">'
-                    + houseIcon + '</div>',
-                iconSize: [36, 36],
-                iconAnchor: [18, 18],
-            }),
-        }).addTo(map);
+        // The pin only on the exact spot; on a circle it would give the spot away.
+        if (exact) {
+            L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div style="background:#e11d48;color:#fff;border-radius:9999px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3)">'
+                        + houseIcon + '</div>',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18],
+                }),
+            }).addTo(map);
+        }
     }
 }
 

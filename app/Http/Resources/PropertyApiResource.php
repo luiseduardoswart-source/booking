@@ -18,8 +18,9 @@ class PropertyApiResource extends JsonResource
             'description' => $this->description,
             'city' => $this->city,
             'country' => $this->country,
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
+            // Only what the site shows: the exact spot only if the owner chose that.
+            'latitude' => $this->publicCoordinates()['lat'] ?? null,
+            'longitude' => $this->publicCoordinates()['lng'] ?? null,
             'max_guests' => $this->max_guests,
             'bedrooms' => $this->bedrooms,
             'beds' => $this->beds,

@@ -38,7 +38,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
     'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund', 'deposit_moment',
     'balance_payment_days_before_arrival', 'checkin_days_before_arrival', 'review_days_after_departure', 'mail_texts', 'cancellation_texts',
-    'address', 'postal_code', 'city', 'country', 'latitude', 'longitude',
+    'address', 'postal_code', 'city', 'country', 'latitude', 'longitude', 'location_display',
     'max_guests', 'bedrooms', 'beds', 'sofa_beds', 'bathrooms',
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
     'tourist_tax_cents', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
@@ -65,6 +65,16 @@ class Property extends Model implements HasMedia
     public const DISCOUNT_PERCENT = 'percent';
 
     public const DISCOUNT_FIXED = 'fixed';
+
+    /** How the site shows the location: a circle around the area, or a pin on the exact spot. */
+    public const LOCATION_APPROXIMATE = 'approximate';
+
+    public const LOCATION_EXACT = 'exact';
+
+    /** Radius of the circle on the map, and how far its centre may lie from the real spot (metres). */
+    public const LOCATION_RADIUS = 300;
+
+    public const LOCATION_SHIFT = 150;
 
     /** When the guest pays the deposit: right after booking, or days before arrival. */
     public const DEPOSIT_AT_BOOKING = 'booking';
@@ -459,6 +469,44 @@ class Property extends Model implements HasMedia
         }
 
         return array_map(fn (int $cents) => max(0, (int) round($cents - $discount($cents))), $prices);
+    }
+
+    public function showsExactLocation(): bool
+    {
+        return $this->location_display === self::LOCATION_EXACT;
+    }
+
+    /**
+     * The coordinates the site and the API may show. Exact: the real spot.
+     * Approximate: a spot up to LOCATION_SHIFT metres away, always the same
+     * for this accommodation (derived from the app key, so it cannot be
+     * worked back). The real spot then lies inside the circle, but not in its
+     * centre. Null without coordinates.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    public function publicCoordinates(): ?array
+    {
+        if ($this->latitude === null || $this->longitude === null) {
+            return null;
+        }
+
+        $lat = (float) $this->latitude;
+        $lng = (float) $this->longitude;
+
+        if ($this->showsExactLocation()) {
+            return ['lat' => $lat, 'lng' => $lng];
+        }
+
+        $hash = hash_hmac('sha256', 'location:'.$this->id, (string) config('app.key'));
+        $angle = hexdec(substr($hash, 0, 8)) / 0xFFFFFFFF * 2 * M_PI;
+        $distance = (0.3 + 0.7 * hexdec(substr($hash, 8, 8)) / 0xFFFFFFFF) * self::LOCATION_SHIFT;
+
+        // Metres to degrees: one degree of latitude is about 111 km; longitude shrinks towards the poles.
+        $lat += ($distance * cos($angle)) / 111320;
+        $lng += ($distance * sin($angle)) / (111320 * max(cos(deg2rad($lat)), 0.01));
+
+        return ['lat' => round($lat, 6), 'lng' => round($lng, 6)];
     }
 
     /** Does the guest pay the deposit right after booking? Own choice, otherwise the default. */

@@ -129,7 +129,11 @@ class HomeFilterTest extends TestCase
         $this->assertCount(2, $data);
 
         $villa = collect($data)->firstWhere('name', 'Strandvilla');
-        $this->assertSame(52.1, $villa['lat']);
+        // Approximate location (the default): the spot near the house, not the house itself.
+        $shown = Property::query()->where('slug', 'strandvilla')->first()->publicCoordinates();
+        $this->assertSame($shown['lat'], $villa['lat']);
+        $this->assertNotSame(52.1, $villa['lat']);
+        $this->assertEqualsWithDelta(52.1, $villa['lat'], 0.002);
         $this->assertStringContainsString('300', $villa['price']);
         $this->assertStringContainsString('/strandvilla', $villa['url']);
     }

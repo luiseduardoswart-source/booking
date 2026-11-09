@@ -1451,12 +1451,35 @@ class PropertyForm
                         ->searchable()
                         ->required()
                         ->default('NL'),
+                    // Degrees with a decimal point, as Google Maps gives them. Without the
+                    // point (-755514039) the number is far outside the world and the
+                    // database cannot store it: say so instead of "saving failed".
                     TextInput::make('latitude')
                         ->label(__('Latitude'))
-                        ->numeric(),
+                        ->numeric()
+                        ->minValue(-90)
+                        ->maxValue(90)
+                        ->placeholder('10.4090553')
+                        ->validationMessages(['min' => __('A latitude lies between -90 and 90. Did you forget the decimal point?'), 'max' => __('A latitude lies between -90 and 90. Did you forget the decimal point?')]),
                     TextInput::make('longitude')
                         ->label(__('Longitude'))
-                        ->numeric(),
+                        ->numeric()
+                        ->minValue(-180)
+                        ->maxValue(180)
+                        ->placeholder('-75.5514039')
+                        ->validationMessages(['min' => __('A longitude lies between -180 and 180. Did you forget the decimal point?'), 'max' => __('A longitude lies between -180 and 180. Did you forget the decimal point?')]),
+                    Select::make('location_display')
+                        ->label(__('Location on the map'))
+                        ->options([
+                            Property::LOCATION_APPROXIMATE => __('Approximately: a circle around the area'),
+                            Property::LOCATION_EXACT => __('Exactly: a pin on the address'),
+                        ])
+                        ->default(Property::LOCATION_APPROXIMATE)
+                        ->selectablePlaceholder(false)
+                        ->required()
+                        ->native(false)
+                        ->helperText(__('Approximately: the exact spot stays hidden until the guest has booked. Copy the coordinates from Google Maps (right-click on the spot).'))
+                        ->columnSpanFull(),
                 ]),
             Select::make('hosts')
                 ->label(__('Hosts'))

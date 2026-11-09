@@ -49,7 +49,7 @@ final class MailPlaceholders
             'nights' => __('Number of nights'),
             'guests' => __('Number of guests'),
             'check_in' => __('Check-in from'),
-            'check_out' => __('Check-out before'),
+            'check_out' => __('Check-out (time)'),
             'access_code' => __('Access code'),
             'address' => __('Accommodation address'),
             'total' => __('Total amount'),

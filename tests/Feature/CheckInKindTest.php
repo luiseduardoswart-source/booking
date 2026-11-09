@@ -50,6 +50,32 @@ class CheckInKindTest extends TestCase
             ->assertSee(__('Check-in from :time', ['time' => '15:00']));
     }
 
+    /** A check-out time already means "be gone by then": no "before" in front of it. */
+    public function test_the_check_out_time_is_called_check_out(): void
+    {
+        $accommodation = $this->accommodation();
+
+        $this->withSession(['locale' => 'nl'])->get(route('properties.show', $accommodation->slug))
+            ->assertOk()
+            ->assertSee('check-out 11:00')
+            ->assertDontSee('vóór 11:00');
+
+        app()->setLocale('nl');
+        $this->assertSame('Check-out', \App\Support\MailPlaceholders::labels()['check_out']);
+
+        $booking = \App\Models\Booking::create([
+            'booking_number' => 'BK-OUT-1', 'property_id' => $accommodation->id,
+            'status' => \App\Enums\BookingStatus::Confirmed, 'payment_status' => \App\Enums\PaymentStatus::Unpaid,
+            'guest_name' => 'Jan', 'guest_email' => 'jan@example.com', 'locale' => 'nl',
+            'arrival_date' => today()->addDays(10)->toDateString(), 'departure_date' => today()->addDays(13)->toDateString(),
+            'guests' => 2, 'total_cents' => 30000, 'down_payment_cents' => 9000, 'price_snapshot' => ['lines' => []],
+        ]);
+        $mail = (new \App\Mail\BookingMail($booking, \App\Enums\MailType::Checkin))->render();
+
+        $this->assertStringContainsString('Check-out: 11:00', $mail);
+        $this->assertStringNotContainsString('vóór 11:00', $mail);
+    }
+
     public function test_the_host_who_welcomes_the_guest_is_named(): void
     {
         $maria = Host::create(['name' => 'Maria']);

@@ -235,9 +235,6 @@
     "Check-in is not possible on this day.": "该日期无法办理入住。",
     "Check-in until": "入住截止",
     "Check-out": "退房",
-    "Check-out before": "退房截止",
-    "check-out before :time": "退房时间：:time 前",
-    "Check-out before :time": "退房时间：:time 前",
     "Check-out information": "退房信息",
     "Check-out is not possible on this day.": "该日期无法办理退房。",
     "Children": "儿童",
@@ -1626,5 +1623,8 @@
     "Deposit (refunded after your stay)": "押金（入住结束后退还）",
     "Refund deposit": "退还押金",
     "Refund the deposit of :amount?": "退还 :amount 的押金？",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "以下押金可以退还（后台 → 付款 → 退还押金）："
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "以下押金可以退还（后台 → 付款 → 退还押金）：",
+    "Check-out (time)": "退房时间",
+    "check-out :time": "退房 :time",
+    "Check-out: :time": "退房：:time"
 }

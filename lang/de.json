@@ -235,9 +235,6 @@
     "Check-in is not possible on this day.": "Anreise ist an diesem Tag nicht möglich.",
     "Check-in until": "Check-in bis",
     "Check-out": "Abreise",
-    "Check-out before": "Check-out vor",
-    "check-out before :time": "Check-out vor :time",
-    "Check-out before :time": "Check-out vor :time",
     "Check-out information": "Check-out-Informationen",
     "Check-out is not possible on this day.": "Abreise ist an diesem Tag nicht möglich.",
     "Children": "Kinder",
@@ -1626,5 +1623,8 @@
     "Deposit (refunded after your stay)": "Kaution (Rückzahlung nach Ihrem Aufenthalt)",
     "Refund deposit": "Kaution zurückzahlen",
     "Refund the deposit of :amount?": "Die Kaution von :amount zurückzahlen?",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "Die folgenden Kautionen können zurückgezahlt werden (über Verwaltung → Zahlungen → Kaution zurückzahlen):"
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "Die folgenden Kautionen können zurückgezahlt werden (über Verwaltung → Zahlungen → Kaution zurückzahlen):",
+    "Check-out (time)": "Check-out",
+    "check-out :time": "Check-out :time",
+    "Check-out: :time": "Check-out: :time"
 }

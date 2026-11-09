@@ -237,9 +237,6 @@
     "Check-in is not possible on this day.": "Check-in is not possible on this day.",
     "Check-in until": "Check-in until",
     "Check-out": "Check-out",
-    "Check-out before": "Check-out before",
-    "check-out before :time": "check-out before :time",
-    "Check-out before :time": "Check-out before :time",
     "Check-out information": "Check-out information",
     "Check-out is not possible on this day.": "Check-out is not possible on this day.",
     "Children": "Children",
@@ -1638,5 +1635,8 @@
     "Deposit (refunded after your stay)": "Deposit (refunded after your stay)",
     "Refund deposit": "Refund deposit",
     "Refund the deposit of :amount?": "Refund the deposit of :amount?",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):"
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):",
+    "Check-out (time)": "Check-out",
+    "check-out :time": "check-out :time",
+    "Check-out: :time": "Check-out: :time"
 }

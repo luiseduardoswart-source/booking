@@ -20,7 +20,7 @@
 **{{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}**@if ($property->effective('check_in_until')) ({{ __('until :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_until'))->format('H:i')]) }})@endif
 @endif
 @if ($property->effective('check_out_until'))
-**{{ __('Check-out before :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}**
+**{{ __('Check-out: :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}**
 @endif
 
 @if ($property->effectiveLocalized('house_rules'))

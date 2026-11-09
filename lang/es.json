@@ -235,9 +235,6 @@
     "Check-in is not possible on this day.": "No es posible llegar este día.",
     "Check-in until": "Check-in hasta",
     "Check-out": "Salida",
-    "Check-out before": "Check-out antes de",
-    "check-out before :time": "check-out antes de las :time",
-    "Check-out before :time": "Check-out antes de las :time",
     "Check-out information": "Información de check-out",
     "Check-out is not possible on this day.": "No es posible salir este día.",
     "Children": "Niños",
@@ -1626,5 +1623,8 @@
     "Deposit (refunded after your stay)": "Fianza (se devuelve tras tu estancia)",
     "Refund deposit": "Devolver fianza",
     "Refund the deposit of :amount?": "¿Devolver la fianza de :amount?",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "Las siguientes fianzas están listas para devolverse (en administración → Pagos → Devolver fianza):"
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "Las siguientes fianzas están listas para devolverse (en administración → Pagos → Devolver fianza):",
+    "Check-out (time)": "Check-out",
+    "check-out :time": "check-out :time",
+    "Check-out: :time": "Check-out: :time"
 }

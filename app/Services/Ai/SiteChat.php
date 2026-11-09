@@ -198,7 +198,7 @@ final class SiteChat
                     ($price = $accommodation->basePrice()) > 0 ? 'Price per night from: '.Money::format($price, $accommodation->priceCurrency()).' (the actual price depends on the dates)' : null,
                     ($min = $accommodation->effective('min_stay_nights')) ? "Minimum number of nights: {$min}" : null,
                     ($in = $time($accommodation->effective('check_in_from'))) ? "Check-in from: {$in}" : null,
-                    ($out = $time($accommodation->effective('check_out_until'))) ? "Check-out before: {$out}" : null,
+                    ($out = $time($accommodation->effective('check_out_until'))) ? "Check-out: {$out}" : null,
                     'Pets: '.($accommodation->petsAllowed() ? 'allowed' : 'not allowed'),
                     $accommodation->amenities->isNotEmpty() ? 'Amenities: '.$accommodation->amenities->map->localizedName()->implode(', ') : null,
                     $accommodation->localized('short_description'),

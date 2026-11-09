@@ -237,9 +237,6 @@
     "Check-in is not possible on this day.": "Aankomst is op deze dag niet mogelijk.",
     "Check-in until": "Check-in tot",
     "Check-out": "Vertrek",
-    "Check-out before": "Check-out vóór",
-    "check-out before :time": "check-out vóór :time",
-    "Check-out before :time": "Check-out vóór :time",
     "Check-out information": "Check-out-informatie",
     "Check-out is not possible on this day.": "Vertrek is op deze dag niet mogelijk.",
     "Children": "Kinderen",
@@ -1638,5 +1635,8 @@
     "Deposit (refunded after your stay)": "Borg (terug na je verblijf)",
     "Refund deposit": "Borg terugbetalen",
     "Refund the deposit of :amount?": "De borg van :amount terugbetalen?",
-    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "De volgende borgen staan klaar om terug te storten (via beheer → Betalingen → Borg terugbetalen):"
+    "The following deposits are ready to be refunded (via admin → Payments → Refund deposit):": "De volgende borgen staan klaar om terug te storten (via beheer → Betalingen → Borg terugbetalen):",
+    "Check-out (time)": "Check-out",
+    "check-out :time": "check-out :time",
+    "Check-out: :time": "Check-out: :time"
 }

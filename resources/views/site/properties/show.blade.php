@@ -107,7 +107,7 @@
                                 </p>
                                 @if ($property->effective('check_in_from'))
                                     <p class="text-sm text-stone-500">
-                                        {{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}@if ($property->effective('check_out_until')), {{ __('check-out before :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}@endif
+                                        {{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}@if ($property->effective('check_out_until')), {{ __('check-out :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}@endif
                                     </p>
                                 @endif
                             </div>

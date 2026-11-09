@@ -1265,7 +1265,7 @@ class PropertyForm
                                             ->label(__('Check-in until'))
                                             ->seconds(false),
                                         TimePicker::make('check_out_until')
-                                            ->label(__('Check-out before'))
+                                            ->label(__('Check-out (time)'))
                                             ->seconds(false),
                                         ...self::checkInFields(),
                                         // Codes and details for the check-in mails belong with the check-in, above the house rules.

@@ -1629,8 +1629,13 @@
     "Check-out: :time": "Check-out: :time",
     "A latitude lies between -90 and 90. Did you forget the decimal point?": "Ein Breitengrad liegt zwischen -90 und 90. Haben Sie den Dezimalpunkt vergessen?",
     "A longitude lies between -180 and 180. Did you forget the decimal point?": "Ein Längengrad liegt zwischen -180 und 180. Haben Sie den Dezimalpunkt vergessen?",
-    "Location on the map": "Lage auf der Karte",
     "Approximately: a circle around the area": "Ungefähr: ein Kreis um die Gegend",
     "Exactly: a pin on the address": "Genau: eine Markierung auf der Adresse",
-    "Approximately: the exact spot stays hidden until the guest has booked. Copy the coordinates from Google Maps (right-click on the spot).": "Ungefähr: Der genaue Ort bleibt verborgen, bis der Gast gebucht hat. Kopieren Sie die Koordinaten aus Google Maps (Rechtsklick auf den Ort)."
+    "Approximately: the exact spot stays hidden until the guest has booked. Copy the coordinates from Google Maps (right-click on the spot).": "Ungefähr: Der genaue Ort bleibt verborgen, bis der Gast gebucht hat. Kopieren Sie die Koordinaten aus Google Maps (Rechtsklick auf den Ort).",
+    "Map on the accommodation page": "Karte auf der Unterkunftsseite",
+    "Map on the overview page": "Karte auf der Übersichtsseite",
+    "No map": "Keine Karte",
+    "Not on the map": "Nicht auf der Karte",
+    "Approximately: a pin near the area": "Ungefähr: eine Markierung in der Nähe",
+    "With a decimal point, as Google Maps gives it": "Mit Dezimalpunkt, wie Google Maps ihn angibt"
 }

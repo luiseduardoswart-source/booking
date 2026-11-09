@@ -38,7 +38,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
     'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund', 'deposit_moment',
     'balance_payment_days_before_arrival', 'checkin_days_before_arrival', 'review_days_after_departure', 'mail_texts', 'cancellation_texts',
-    'address', 'postal_code', 'city', 'country', 'latitude', 'longitude', 'location_display',
+    'address', 'postal_code', 'city', 'country', 'latitude', 'longitude', 'location_display', 'overview_location_display',
     'max_guests', 'bedrooms', 'beds', 'sofa_beds', 'bathrooms',
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
     'tourist_tax_cents', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
@@ -67,9 +67,16 @@ class Property extends Model implements HasMedia
     public const DISCOUNT_FIXED = 'fixed';
 
     /** How the site shows the location: a circle around the area, or a pin on the exact spot. */
+    public const LOCATION_NONE = 'none';
+
     public const LOCATION_APPROXIMATE = 'approximate';
 
     public const LOCATION_EXACT = 'exact';
+
+    /** The two maps on the site: the accommodation's own page and the overview page. */
+    public const MAP_PAGE = 'page';
+
+    public const MAP_OVERVIEW = 'overview';
 
     /** Radius of the circle on the map, and how far its centre may lie from the real spot (metres). */
     public const LOCATION_RADIUS = 300;
@@ -471,30 +478,43 @@ class Property extends Model implements HasMedia
         return array_map(fn (int $cents) => max(0, (int) round($cents - $discount($cents))), $prices);
     }
 
+    /**
+     * How a map shows this accommodation: none, approximately or exactly.
+     * $map: MAP_PAGE (its own page, also the API) or MAP_OVERVIEW (the overview
+     * page with all accommodations).
+     */
+    public function locationDisplay(string $map = self::MAP_PAGE): string
+    {
+        $value = $map === self::MAP_OVERVIEW ? $this->overview_location_display : $this->location_display;
+
+        return in_array($value, [self::LOCATION_NONE, self::LOCATION_EXACT], true) ? $value : self::LOCATION_APPROXIMATE;
+    }
+
+    /** Does the accommodation's own page show the exact spot (pin and street)? */
     public function showsExactLocation(): bool
     {
-        return $this->location_display === self::LOCATION_EXACT;
+        return $this->locationDisplay() === self::LOCATION_EXACT;
     }
 
     /**
-     * The coordinates the site and the API may show. Exact: the real spot.
-     * Approximate: a spot up to LOCATION_SHIFT metres away, always the same
-     * for this accommodation (derived from the app key, so it cannot be
-     * worked back). The real spot then lies inside the circle, but not in its
-     * centre. Null without coordinates.
+     * The coordinates a map may show. Exact: the real spot. Approximate: a
+     * spot up to LOCATION_SHIFT metres away, always the same for this
+     * accommodation (derived from the app key, so it cannot be worked back);
+     * the real spot lies inside the circle, but not in its centre. Null
+     * without coordinates, or when that map should not show it at all.
      *
      * @return array{lat: float, lng: float}|null
      */
-    public function publicCoordinates(): ?array
+    public function publicCoordinates(string $map = self::MAP_PAGE): ?array
     {
-        if ($this->latitude === null || $this->longitude === null) {
+        if ($this->latitude === null || $this->longitude === null || $this->locationDisplay($map) === self::LOCATION_NONE) {
             return null;
         }
 
         $lat = (float) $this->latitude;
         $lng = (float) $this->longitude;
 
-        if ($this->showsExactLocation()) {
+        if ($this->locationDisplay($map) === self::LOCATION_EXACT) {
             return ['lat' => $lat, 'lng' => $lng];
         }
 

@@ -58,6 +58,11 @@ class LocationDisplayTest extends TestCase
 
         Livewire::actingAs(User::factory()->create(['role' => UserRole::Administrator]))
             ->test(EditProperty::class, ['record' => $accommodation->getKey()])
+            // Empty fields look empty: no grey example number that looks filled in.
+            ->assertDontSeeHtml('placeholder="10.4090553"')
+            ->assertDontSeeHtml('placeholder="-75.5514039"')
+            ->assertSee(__('With a decimal point, as Google Maps gives it'))
+            ->assertDontSee('52.3676')
             ->fillForm(['latitude' => '10.4090553', 'longitude' => '-755514039'])
             ->call('save')
             ->assertHasFormErrors(['longitude'])
@@ -114,6 +119,54 @@ class LocationDisplayTest extends TestCase
 
         $this->getJson("/api/v1/properties/{$exact->id}")->assertOk()
             ->assertJsonPath('data.latitude', 10.42);
+    }
+
+    /** The overview map data on the homepage, by accommodation name. */
+    private function overviewPins(): array
+    {
+        preg_match('/<script type="application\/json" id="explore-map-data">(.*?)<\/script>/s', $this->get('/')->getContent(), $match);
+
+        return collect(json_decode(html_entity_decode($match[1] ?? '[]'), true))->keyBy('name')->all();
+    }
+
+    public function test_the_two_maps_have_their_own_choice(): void
+    {
+        // The overview map only appears with more than one accommodation.
+        $this->accommodation(['name' => 'Casa Getsemaní']);
+
+        // Own page: no map. Overview: exactly.
+        $accommodation = $this->accommodation([
+            'location_display' => Property::LOCATION_NONE,
+            'overview_location_display' => Property::LOCATION_EXACT,
+        ]);
+
+        $this->get(route('properties.show', $accommodation->slug))->assertOk()
+            ->assertDontSee('id="map"', false)
+            ->assertDontSee(__('View on the map'));
+        $this->getJson("/api/v1/properties/{$accommodation->id}")->assertJsonPath('data.latitude', null);
+
+        $this->assertSame(self::LAT, $this->overviewPins()['Casa Cartagena']['lat']);
+
+        // Own page: exactly. Overview: not on the map.
+        $accommodation->update(['location_display' => Property::LOCATION_EXACT, 'overview_location_display' => Property::LOCATION_NONE]);
+
+        $this->get(route('properties.show', $accommodation->slug))->assertOk()->assertSee('data-exact="1"', false);
+        $this->assertArrayNotHasKey('Casa Cartagena', $this->overviewPins());
+    }
+
+    public function test_both_choices_are_saved_from_the_admin(): void
+    {
+        $accommodation = $this->accommodation();
+
+        Livewire::actingAs(User::factory()->create(['role' => UserRole::Administrator]))
+            ->test(EditProperty::class, ['record' => $accommodation->getKey()])
+            ->fillForm(['location_display' => Property::LOCATION_NONE, 'overview_location_display' => Property::LOCATION_EXACT])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $accommodation->refresh();
+        $this->assertSame(Property::LOCATION_NONE, $accommodation->location_display);
+        $this->assertSame(Property::LOCATION_EXACT, $accommodation->overview_location_display);
     }
 
     public function test_without_coordinates_there_is_no_map(): void

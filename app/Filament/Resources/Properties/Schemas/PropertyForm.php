@@ -1459,26 +1459,40 @@ class PropertyForm
                         ->numeric()
                         ->minValue(-90)
                         ->maxValue(90)
-                        ->placeholder('10.4090553')
+                        // A hint below, no placeholder: a grey number in the field looks filled in.
+                        ->helperText(__('With a decimal point, as Google Maps gives it'))
                         ->validationMessages(['min' => __('A latitude lies between -90 and 90. Did you forget the decimal point?'), 'max' => __('A latitude lies between -90 and 90. Did you forget the decimal point?')]),
                     TextInput::make('longitude')
                         ->label(__('Longitude'))
                         ->numeric()
                         ->minValue(-180)
                         ->maxValue(180)
-                        ->placeholder('-75.5514039')
+                        ->helperText(__('With a decimal point, as Google Maps gives it'))
                         ->validationMessages(['min' => __('A longitude lies between -180 and 180. Did you forget the decimal point?'), 'max' => __('A longitude lies between -180 and 180. Did you forget the decimal point?')]),
+                    // Two maps on the site, each with its own choice.
                     Select::make('location_display')
-                        ->label(__('Location on the map'))
+                        ->label(__('Map on the accommodation page'))
                         ->options([
+                            Property::LOCATION_NONE => __('No map'),
                             Property::LOCATION_APPROXIMATE => __('Approximately: a circle around the area'),
                             Property::LOCATION_EXACT => __('Exactly: a pin on the address'),
                         ])
                         ->default(Property::LOCATION_APPROXIMATE)
                         ->selectablePlaceholder(false)
                         ->required()
-                        ->native(false)
-                        ->helperText(__('Approximately: the exact spot stays hidden until the guest has booked. Copy the coordinates from Google Maps (right-click on the spot).'))
+                        ->native(false),
+                    Select::make('overview_location_display')
+                        ->label(__('Map on the overview page'))
+                        ->options([
+                            Property::LOCATION_NONE => __('Not on the map'),
+                            Property::LOCATION_APPROXIMATE => __('Approximately: a pin near the area'),
+                            Property::LOCATION_EXACT => __('Exactly: a pin on the address'),
+                        ])
+                        ->default(Property::LOCATION_APPROXIMATE)
+                        ->selectablePlaceholder(false)
+                        ->required()
+                        ->native(false),
+                    Text::make(__('Approximately: the exact spot stays hidden until the guest has booked. Copy the coordinates from Google Maps (right-click on the spot).'))
                         ->columnSpanFull(),
                 ]),
             Select::make('hosts')

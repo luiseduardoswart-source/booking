@@ -101,11 +101,11 @@ class SiteController extends Controller
         // Map data for the "explore the map" view (only properties
         // with coordinates; compact price for the price label on the map).
         $mapData = $properties
-            ->filter(fn (Property $property) => $property->publicCoordinates() !== null)
+            ->filter(fn (Property $property) => $property->publicCoordinates(Property::MAP_OVERVIEW) !== null)
             ->map(fn (Property $property) => [
                 'name' => $property->localized('name'),
                 // Approximately located accommodations do not give away their spot here either.
-                ...$property->publicCoordinates(),
+                ...$property->publicCoordinates(Property::MAP_OVERVIEW),
                 'url' => route('properties.show', array_merge(['property' => $property->slugFor()], array_filter([
                     'arrival' => $arrival?->toDateString(),
                     'departure' => $departure?->toDateString(),

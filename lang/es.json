@@ -1637,5 +1637,9 @@
     "No map": "Sin mapa",
     "Not on the map": "No en el mapa",
     "Approximately: a pin near the area": "Aproximada: un marcador cerca de la zona",
-    "With a decimal point, as Google Maps gives it": "Con punto decimal, tal como lo da Google Maps"
+    "With a decimal point, as Google Maps gives it": "Con punto decimal, tal como lo da Google Maps",
+    "From media library": "De la biblioteca de medios",
+    "Source code": "Código fuente",
+    "Source code (HTML)": "Código fuente (HTML)",
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "Las etiquetas que el editor no admite, como scripts e iframes, se eliminan."
 }

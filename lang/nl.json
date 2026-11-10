@@ -1649,5 +1649,9 @@
     "No map": "Geen kaart",
     "Not on the map": "Niet op de kaart",
     "Approximately: a pin near the area": "Ongeveer: een speld in de buurt",
-    "With a decimal point, as Google Maps gives it": "Met een punt, zoals Google Maps hem geeft"
+    "With a decimal point, as Google Maps gives it": "Met een punt, zoals Google Maps hem geeft",
+    "From media library": "Uit de mediabibliotheek",
+    "Source code": "Broncode",
+    "Source code (HTML)": "Broncode (HTML)",
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "Onderdelen die de editor niet kent, zoals scripts en iframes, worden verwijderd."
 }

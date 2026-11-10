@@ -47,6 +47,50 @@ class SiteEditorToolbarTest extends TestCase
         $page->assertDontSeeHtml('data-rich-editor-tool="textColor"');
     }
 
+    private function accommodation(): Property
+    {
+        return Property::create([
+            'name' => 'Strandhuis', 'slug' => 'strandhuis-'.uniqid(), 'type' => 'holiday_home',
+            'max_guests' => 4, 'active' => true, 'base_price_cents' => 10000,
+        ]);
+    }
+
+    /** The description editor in the source language. */
+    private const DESCRIPTION = 'translations_name_short_description_description.name_short_description_description_en.description';
+
+    public function test_media_library_and_source_code_buttons_and_uploads_into_the_media_library(): void
+    {
+        Livewire::actingAs($this->owner())
+            ->test(EditProperty::class, ['record' => $this->accommodation()->getKey()])
+            ->assertSeeHtml('data-rich-editor-tool="mediaLibrary"')
+            ->assertSeeHtml('data-rich-editor-tool="sourceCode"')
+            ->assertSeeHtml('window.pickMedia')
+            ->assertFormFieldExists(self::DESCRIPTION, 'form', fn ($editor): bool => $editor->getFileAttachmentsDiskName() === 'public'
+                && $editor->getFileAttachmentsDirectory() === 'media/content');
+    }
+
+    public function test_without_media_access_there_is_no_media_library_button(): void
+    {
+        $staff = User::factory()->create(['role' => UserRole::Staff, 'permissions' => ['accommodations' => \App\Support\Access::ACTIONS]]);
+
+        Livewire::actingAs($staff)
+            ->test(EditProperty::class, ['record' => $this->accommodation()->getKey()])
+            ->assertDontSeeHtml('data-rich-editor-tool="mediaLibrary"')
+            ->assertSeeHtml('data-rich-editor-tool="sourceCode"');
+    }
+
+    public function test_the_source_code_window_shows_and_replaces_the_html(): void
+    {
+        Livewire::actingAs($this->owner())
+            ->test(EditProperty::class, ['record' => $this->accommodation()->getKey()])
+            ->mountAction(TestAction::make('sourceCode')->schemaComponent(self::DESCRIPTION, schema: 'form')->arguments(['html' => '<p>Old</p>']))
+            ->assertActionDataSet(['html' => '<p>Old</p>'])
+            ->setActionData(['html' => '<p>New</p><ul><li><p>One</p></li></ul>'])
+            ->callMountedAction()
+            ->assertDispatched('run-rich-editor-commands', fn (string $event, array $params): bool => $params['commands'][0]['name'] === 'setContent'
+                && $params['commands'][0]['arguments'][0] === '<p>New</p><ul><li><p>One</p></li></ul>');
+    }
+
     public function test_the_page_editor_has_the_extra_buttons(): void
     {
         // The page form is in the "create" popup: check the editor's toolbar itself.

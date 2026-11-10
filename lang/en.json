@@ -1649,5 +1649,9 @@
     "No map": "No map",
     "Not on the map": "Not on the map",
     "Approximately: a pin near the area": "Approximately: a pin near the area",
-    "With a decimal point, as Google Maps gives it": "With a decimal point, as Google Maps gives it"
+    "With a decimal point, as Google Maps gives it": "With a decimal point, as Google Maps gives it",
+    "From media library": "From media library",
+    "Source code": "Source code",
+    "Source code (HTML)": "Source code (HTML)",
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "Tags the editor does not support, such as scripts and iframes, are removed."
 }

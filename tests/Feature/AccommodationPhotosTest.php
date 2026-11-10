@@ -228,7 +228,7 @@ class AccommodationPhotosTest extends TestCase
         Livewire::actingAs($this->owner())
             ->test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()])
             ->assertSeeHtml('data-tab-key="photos"')
-            ->assertSeeHtml("['calendar', 'photos'].includes(active)");
+            ->assertSeeHtml("['calendar', 'photos'].includes(\$store.accommodationTab?.active)");
     }
 
     /**
@@ -238,21 +238,27 @@ class AccommodationPhotosTest extends TestCase
      */
     public function test_the_save_bar_state_does_not_depend_on_the_request(): void
     {
-        $xData = function (Testable $page): string {
-            preg_match('/x-data="([^"]*)"[^>]*id="content\.form-actions"/', $page->html(), $match);
+        // The tab state (x-init) and the sticky bar (x-data) of the save bar element.
+        $attribute = function (Testable $page, string $name): string {
+            preg_match('/<div[^>]*id="content\.form-actions"[^>]*>/', $page->html(), $tag);
+            preg_match('/'.preg_quote($name, '/').'="([^"]*)"/', $tag[0] ?? '', $match);
 
             return html_entity_decode($match[1] ?? '', ENT_QUOTES);
         };
+        $xInit = fn (Testable $page) => $attribute($page, 'x-init');
 
         $onPhotos = Livewire::withQueryParams(['tab' => 'photos'])->actingAs($this->owner())
             ->test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()]);
         $withoutTab = Livewire::actingAs($this->owner())
             ->test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()]);
 
-        $this->assertNotSame('', $xData($onPhotos));
-        $this->assertSame($xData($onPhotos), $xData($withoutTab));
-        $this->assertSame($xData($onPhotos), $xData($onPhotos->call('$refresh')));
-        $this->assertStringContainsString('location.search', $xData($onPhotos));
+        $this->assertNotSame('', $xInit($onPhotos));
+        $this->assertSame($xInit($onPhotos), $xInit($withoutTab));
+        $this->assertSame($xInit($onPhotos), $xInit($onPhotos->call('$refresh')));
+        $this->assertStringContainsString('location.search', $xInit($onPhotos));
+
+        // Filament's own x-data stays: it keeps the bar at the bottom of the screen.
+        $this->assertSame('filamentActionsSchemaComponent()', $attribute($onPhotos, 'x-data'));
     }
 
     public function test_the_description_saves_inline_and_enter_sends_the_form_not(): void

@@ -12,6 +12,17 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Texts from the editor (description, pages): bullets and numbers as dark as
+   the text. The typography default (stone-300) is nearly invisible on white,
+   so a list looked like indented text only.
+   --------------------------------------------------------------------------- */
+.prose.prose-stone,
+.prose {
+    --tw-prose-bullets: currentColor;
+    --tw-prose-counters: currentColor;
+}
+
+/* ---------------------------------------------------------------------------
    Map popup: strip Leaflet's default bubble so our own card with
    photo, price and button runs neatly into the corners.
    --------------------------------------------------------------------------- */

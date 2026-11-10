@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Support\Languages;
+use App\Support\RichText;
 
 /**
  * Translatable fields on a model. For each field the source text is in the column itself (e.g. `bio`) and the translations in a JSON column next to it
@@ -26,7 +27,8 @@ trait HasTranslations
         $locale ??= app()->getLocale();
         $custom = $this->{"{$field}_translations"}[$locale] ?? null;
 
-        if (filled($custom)) {
+        // An emptied text editor ("<p></p>") is no translation: show the source text.
+        if (is_string($custom) ? RichText::filled($custom) : filled($custom)) {
             return $custom;
         }
 

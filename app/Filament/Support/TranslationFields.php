@@ -6,6 +6,7 @@ use App\Support\DocumentNotReadable;
 use App\Support\DocumentText;
 use App\Support\Slugs;
 use App\Support\Languages;
+use App\Support\RichText;
 use App\Support\Translations;
 use Closure;
 use Filament\Actions\Action;
@@ -13,6 +14,7 @@ use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Component;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -77,11 +79,22 @@ class TranslationFields
             ->headerActions([static::fillFormAction($translatable, $source)])
             ->components([
                 static::languageTabs($key, fn (string $locale) => collect($fields)
-                    ->map(fn (Closure $make, string $field) => $make(static::path($field, $locale, $source), $locale))
+                    ->map(fn (Closure $make, string $field) => static::emptyAsNull($make(static::path($field, $locale, $source), $locale)))
                     ->values()
                     ->all(), $source, $columns),
                 ...static::hidden($paths, $source),
             ]);
+    }
+
+    /**
+     * An emptied text editor stores "<p></p>"; save it as empty, so the
+     * English text (or the default's) keeps applying in that language.
+     */
+    private static function emptyAsNull(Field $field): Field
+    {
+        return $field instanceof RichEditor
+            ? $field->dehydrateStateUsing(fn ($state) => static::textOrNull($state))
+            : $field;
     }
 
     /**
@@ -221,9 +234,7 @@ class TranslationFields
             return null;
         }
 
-        $visible = trim(html_entity_decode(strip_tags($content)), " \u{00A0}\t\n\r");
-
-        return $visible !== '' || str_contains($content, 'data-type="mergeTag"') ? $content : null;
+        return RichText::filled($content) ? $content : null;
     }
 
     /**

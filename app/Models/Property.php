@@ -9,6 +9,7 @@ use App\Models\Concerns\HasTranslatedSlug;
 use App\Models\Concerns\HasTranslations;
 use App\Services\PricingServices;
 use App\Support\Money;
+use App\Support\RichText;
 use App\Support\Access;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -292,7 +293,8 @@ class Property extends Model implements HasMedia
 
     public function effectiveLocalized(string $field): ?string
     {
-        $source = $this->is_master || filled($this->{$field}) ? $this : static::master();
+        // An emptied text editor ("<p></p>") is no own text: the default's text applies.
+        $source = $this->is_master || RichText::filled($this->{$field}) ? $this : static::master();
 
         return $source->localized($field);
     }

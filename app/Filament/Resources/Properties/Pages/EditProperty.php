@@ -45,13 +45,17 @@ class EditProperty extends EditRecord
      * server: a Livewire update request has no ?tab=, so a server-side value
      * would change the attribute on every update and the morph would reset
      * the state (the bar came back on the Photos tab).
+     *
+     * The active tab lives in an Alpine store, not in x-data: the bar is sticky
+     * (see AdminPanelProvider) and Filament's own x-data on this element
+     * makes it stay at the bottom of the screen.
      */
     public function getFormActionsContentComponent(): Component
     {
         return parent::getFormActionsContentComponent()->extraAttributes([
-            'x-data' => "{ active: new URLSearchParams(window.location.search).get('tab') }",
-            'x-on:click.window' => "let t = \$event.target.closest ? \$event.target.closest('[data-tab-key]') : null; if (t) active = t.dataset.tabKey",
-            'x-show' => "! ['calendar', 'photos'].includes(active)",
+            'x-init' => "Alpine.store('accommodationTab') || Alpine.store('accommodationTab', { active: new URLSearchParams(window.location.search).get('tab') })",
+            'x-on:click.window' => "let t = \$event.target.closest ? \$event.target.closest('[data-tab-key]') : null; if (t) \$store.accommodationTab.active = t.dataset.tabKey",
+            'x-show' => "! ['calendar', 'photos'].includes(\$store.accommodationTab?.active)",
         ]);
     }
 }

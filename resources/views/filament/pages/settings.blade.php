@@ -9,7 +9,7 @@
              x-intersect:leave="enableSticky"
              x-bind:class="{ 'fi-sticky': isSticky }"
              class="fi-sc-actions">
-            <div x-bind:style="isSticky ? `width: ${width}px;` : ''" class="fi-ac fi-align-start">
+            <div x-bind:style="isSticky ? `width: ${width}px;` : ''" class="fi-ac fi-align-center">
                 <x-filament::button type="submit">
                     {{ __('Save') }}
                 </x-filament::button>

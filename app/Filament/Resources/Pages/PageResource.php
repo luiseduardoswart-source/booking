@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Pages;
 
 use App\Filament\Concerns\WithAccess;
+use App\Filament\Support\RichEditors;
 use App\Filament\Support\Switches;
 use App\Filament\Support\TranslationFields;
 use App\Filament\Resources\Pages\Pages\ManagePages;
@@ -84,7 +85,7 @@ class PageResource extends Resource
                             }),
                         'slug' => fn (string $path, string $locale) => TranslationFields::slugField($path, $locale)
                             ->helperText(__('The page will live on your domain as /slug.')),
-                        'content' => fn (string $path) => RichEditor::make($path)
+                        'content' => fn (string $path) => RichEditors::forSite(RichEditor::make($path))
                             ->label(__('Content'))
                             ->columnSpanFull(),
                     ],

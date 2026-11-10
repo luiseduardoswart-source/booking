@@ -33,8 +33,10 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         // The save bar stays at the bottom of the screen on every edit page:
-        // no scrolling down a long form to save.
+        // no scrolling down a long form to save. Centred, so the button is
+        // equally close from anywhere on the screen.
         BasePage::stickyFormActions();
+        BasePage::alignFormActionsCenter();
 
         return $panel
             ->default()

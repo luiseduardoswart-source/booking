@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Properties\Schemas;
 use App\Enums\CancellationPolicy;
 use App\Filament\Forms\Components\AmenitiesPicker;
 use App\Filament\Resources\Properties\PropertyResource;
+use App\Filament\Support\RichEditors;
 use App\Filament\Support\Switches;
 use App\Filament\Support\TranslationFields;
 use App\Livewire\NightlyPricesCalendar;
@@ -616,7 +617,7 @@ class PropertyForm
                     ->hintIcon(Heroicon::OutlinedInformationCircle, self::shortDescriptionExplanation())
                     ->maxLength(255)
                     ->columnSpanFull(),
-                'description' => fn (string $path, string $locale) => RichEditor::make($path)
+                'description' => fn (string $path, string $locale) => RichEditors::forSite(RichEditor::make($path))
                     ->label(__('Description'))
                     ->when($locale === Languages::SOURCE, fn (RichEditor $field) => $field
                         ->hint(__('Let AI write the texts based on the filled-in fields'))

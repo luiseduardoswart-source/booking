@@ -22,6 +22,19 @@
     --tw-prose-counters: currentColor;
 }
 
+/* Every list item from the editor is its own paragraph; without this the
+   paragraph spacing puts a gap between the items. Items sit close together,
+   like lines, each with its own bullet. */
+.prose :where(li) {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+}
+
+.prose :where(li > p) {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 /* ---------------------------------------------------------------------------
    Map popup: strip Leaflet's default bubble so our own card with
    photo, price and button runs neatly into the corners.

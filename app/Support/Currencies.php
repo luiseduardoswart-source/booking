@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Setting;
 use App\Services\ExchangeRates;
 
 /**
@@ -20,8 +21,29 @@ class Currencies
         'ZAR', 'TRY', 'AED', 'INR', 'IDR', 'THB', 'SGD', 'HKD', 'KRW',
     ];
 
-    /** The most used currencies: at the top of every list, in this order. */
-    public const POPULAR = ['EUR', 'USD', 'JPY', 'GBP'];
+    /**
+     * The currencies at the top of every list, in this order, until the owner
+     * chooses their own (Settings > Website > Currency).
+     */
+    public const POPULAR = ['EUR', 'USD', 'JPY', 'GBP', 'COP'];
+
+    /**
+     * The currencies at the top: the owner's choice, otherwise POPULAR.
+     *
+     * @return string[]
+     */
+    public static function popular(): array
+    {
+        $saved = Setting::get('site', 'currency_popular');
+        $codes = $saved === null ? self::POPULAR : explode(',', $saved);
+
+        return collect($codes)
+            ->map(fn (string $code) => strtoupper(trim($code)))
+            ->filter(fn (string $code) => preg_match('/^[A-Z]{3}$/', $code) === 1)
+            ->unique()
+            ->values()
+            ->all();
+    }
 
     /**
      * All available currency codes: the popular ones first, then alphabetical.
@@ -45,8 +67,8 @@ class Currencies
             ->values()
             ->all();
 
-        // Only popular currencies that have a rate (EUR always).
-        $popular = array_values(array_intersect(self::POPULAR, $codes));
+        // Only popular currencies that have a rate (EUR always has one).
+        $popular = array_values(array_intersect(self::popular(), $codes));
 
         return [...$popular, ...array_values(array_diff($codes, $popular))];
     }

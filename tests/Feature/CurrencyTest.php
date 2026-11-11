@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
+use App\Filament\Pages\Settings;
 use App\Models\Property;
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\Currencies;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class CurrencyTest extends TestCase
@@ -135,12 +139,13 @@ class CurrencyTest extends TestCase
         ]);
         Setting::set('site', 'currency_picker', '1');
 
-        $this->assertSame(['EUR', 'USD', 'JPY', 'GBP', 'AED', 'ARS', 'COP'], Currencies::codes());
+        // Default: EUR, USD, JPY, GBP and COP (this site is for Colombia).
+        $this->assertSame(['EUR', 'USD', 'JPY', 'GBP', 'COP', 'AED', 'ARS'], Currencies::codes());
 
         $this->get("/{$this->property()->slug}")->assertOk()
             ->assertSeeInOrder([
                 route('currency.switch', 'EUR'), route('currency.switch', 'USD'), route('currency.switch', 'JPY'),
-                route('currency.switch', 'GBP'), 'data-currency-divider', route('currency.switch', 'AED'),
+                route('currency.switch', 'GBP'), route('currency.switch', 'COP'), 'data-currency-divider', route('currency.switch', 'AED'),
             ], false);
     }
 
@@ -149,5 +154,33 @@ class CurrencyTest extends TestCase
         $this->enableCurrency(); // USD, GBP and COP, no JPY
 
         $this->assertSame(['EUR', 'USD', 'GBP', 'COP'], Currencies::codes());
+    }
+
+    public function test_the_owner_chooses_the_currencies_at_the_top_in_settings(): void
+    {
+        $this->enableCurrency(); // USD, GBP and COP
+
+        Livewire::actingAs(User::factory()->create(['role' => UserRole::Administrator]))
+            ->test(Settings::class)
+            ->assertFormSet(['site_currency_popular' => Currencies::POPULAR])
+            ->fillForm(['company_name' => 'Casa Cartagena', 'site_currency_popular' => ['COP', 'USD']])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        // In the order of choosing; EUR is now just one of the others.
+        $this->assertSame('COP,USD', Setting::get('site', 'currency_popular'));
+        $this->assertSame(['COP', 'USD', 'EUR', 'GBP'], Currencies::codes());
+
+        $this->get("/{$this->property()->slug}")->assertOk()
+            ->assertSeeInOrder([route('currency.switch', 'COP'), route('currency.switch', 'USD'), 'data-currency-divider', route('currency.switch', 'EUR')], false);
+    }
+
+    public function test_no_currencies_at_the_top_means_alphabetical_without_a_line(): void
+    {
+        $this->enableCurrency();
+        Setting::set('site', 'currency_popular', '');
+
+        $this->assertSame(['COP', 'EUR', 'GBP', 'USD'], Currencies::codes());
+        $this->get("/{$this->property()->slug}")->assertOk()->assertDontSee('data-currency-divider', false);
     }
 }

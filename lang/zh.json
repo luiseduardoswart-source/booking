@@ -353,6 +353,8 @@
     "Default (Instrument Sans)": "默认（Instrument Sans）",
     "Default accommodation settings": "默认住宿设置",
     "Default currency": "默认货币",
+    "Currencies at the top": "置顶货币",
+    "In the order you choose them. The other currencies follow alphabetically below a line. Also the order in the currency lists in the admin.": "按您选择的顺序排列。其他货币按字母顺序列在分隔线下方。这也是后台货币列表中的顺序。",
     "Default language of the admin": "后台默认语言",
     "Default language of the website": "网站默认语言",
     "Default order": "默认顺序",

@@ -353,6 +353,8 @@
     "Default (Instrument Sans)": "Par défaut (Instrument Sans)",
     "Default accommodation settings": "Paramètres par défaut des hébergements",
     "Default currency": "Devise par défaut",
+    "Currencies at the top": "Devises en haut",
+    "In the order you choose them. The other currencies follow alphabetically below a line. Also the order in the currency lists in the admin.": "Dans l'ordre où vous les choisissez. Les autres devises suivent par ordre alphabétique sous une ligne. C'est aussi l'ordre des listes de devises dans l'administration.",
     "Default language of the admin": "Langue par défaut de l'administration",
     "Default language of the website": "Langue par défaut du site",
     "Default order": "Ordre par défaut",

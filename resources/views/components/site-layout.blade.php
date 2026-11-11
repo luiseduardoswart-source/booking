@@ -111,6 +111,7 @@
             @php
                 $currencyPickerOn = \App\Models\Setting::get('site', 'currency_picker', '0') === '1';
                 $availableCurrencies = $currencyPickerOn ? \App\Support\Money::availableCurrencies() : [];
+                $popularCurrencies = $currencyPickerOn ? \App\Support\Currencies::popular() : [];
                 $activeCurrency = strtoupper((string) (session('currency') ?: \App\Models\Setting::get('site', 'currency_default', 'EUR')));
                 $activeCurrency = in_array($activeCurrency, $availableCurrencies, true) ? $activeCurrency : 'EUR';
             @endphp
@@ -125,7 +126,7 @@
                     <div class="absolute right-0 z-50 mt-2 flex max-h-[min(20rem,60vh)] w-44 flex-col overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-white p-1 shadow-xl">
                         @foreach ($availableCurrencies as $currencyCode)
                             {{-- A line between the most used currencies and the rest --}}
-                            @if (! $loop->first && ! in_array($currencyCode, \App\Support\Currencies::POPULAR, true) && in_array($availableCurrencies[$loop->index - 1], \App\Support\Currencies::POPULAR, true))
+                            @if (! $loop->first && ! in_array($currencyCode, $popularCurrencies, true) && in_array($availableCurrencies[$loop->index - 1], $popularCurrencies, true))
                                 <hr class="my-1 border-stone-200" data-currency-divider>
                             @endif
                             <a href="{{ route('currency.switch', $currencyCode) }}"

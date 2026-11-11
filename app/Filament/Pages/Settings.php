@@ -118,6 +118,7 @@ class Settings extends Page implements HasActions, HasForms
             'site_single_accommodation_direct' => ['site', 'single_accommodation_direct'],
             'site_currency_picker' => ['site', 'currency_picker'],
             'site_currency_default' => ['site', 'currency_default'],
+            'site_currency_popular' => ['site', 'currency_popular'],
             'security_two_step_required' => ['security', 'two_step_required'],
             'prices_pricelabs_api_key' => ['prices', 'pricelabs_api_key'],
             'prices_beyond_api_key' => ['prices', 'beyond_api_key'],
@@ -219,6 +220,7 @@ class Settings extends Page implements HasActions, HasForms
         $values['admin_default_language'] = AdminLanguages::default();
         $values['site_currency_picker'] = ($values['site_currency_picker'] ?? '0') === '1';
         $values['site_currency_default'] = $values['site_currency_default'] ?? 'EUR';
+        $values['site_currency_popular'] = Currencies::popular();
         $values['reviews_auto_approve_from'] = $values['reviews_auto_approve_from'] ?? '4';
         $values['cookie_on'] = ($values['cookie_on'] ?? '0') === '1';
         $values['cookie_marketing_on'] = ($values['cookie_marketing_on'] ?? '0') === '1';
@@ -576,6 +578,16 @@ class Settings extends Page implements HasActions, HasForms
                                             ->searchable()
                                             ->hint(__('The currency visitors see before making their own choice'))
                                             ->visible(fn (callable $get) => (bool) $get('site_currency_picker')),
+                                        // Stored as "EUR,USD,…"; the order of choosing is the order on the site.
+                                        Select::make('site_currency_popular')
+                                            ->label(__('Currencies at the top'))
+                                            ->helperText(__('In the order you choose them. The other currencies follow alphabetically below a line. Also the order in the currency lists in the admin.'))
+                                            ->multiple()
+                                            ->options(fn () => Currencies::options())
+                                            ->searchable()
+                                            ->dehydrateStateUsing(fn (?array $state): string => implode(',', $state ?? []))
+                                            ->visible(fn (callable $get) => (bool) $get('site_currency_picker'))
+                                            ->columnSpanFull(),
                                     ]),
 
                                 Section::make(__('Import listing'))

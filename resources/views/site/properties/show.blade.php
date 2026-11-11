@@ -29,7 +29,7 @@
         </script>
     </x-slot:head>
 
-    @php $photos = $property->getMedia('photos'); @endphp
+    @php $photos = $property->gallery(); @endphp
 
     {{-- Photo presentation: can be overridden per layout template --}}
     @include('site.properties.partials.hero')
@@ -137,7 +137,7 @@
 
                 {{-- Description --}}
                 @if ($property->localized('description'))
-                    <div class="prose prose-stone mt-6 max-w-none whitespace-pre-line">{!! $property->localized('description') !!}</div>
+                    <div class="prose prose-stone mt-6 max-w-none whitespace-pre-line">{!! \App\Support\RichText::render($property->localized('description')) !!}</div>
                 @endif
 
                 {{-- Amenities --}}

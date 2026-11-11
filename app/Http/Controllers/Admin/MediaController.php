@@ -616,8 +616,8 @@ class MediaController extends Controller implements HasMiddleware
         foreach ($request->file('files') as $file) {
             $ext = strtolower($file->getClientOriginalExtension());
 
-            // A property only shows images, no documents or video.
-            if (! in_array($ext, self::IMAGES)) {
+            // A property shows images and videos (mp4, webm), no documents.
+            if (! in_array($ext, [...self::IMAGES, ...Property::VIDEO_EXTENSIONS])) {
                 continue;
             }
 

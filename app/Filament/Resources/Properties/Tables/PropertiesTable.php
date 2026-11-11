@@ -28,6 +28,8 @@ class PropertiesTable
                     ->label(__('Photo'))
                     ->collection('photos')
                     ->conversion('thumb')
+                    // The main photo, never a video (that has no thumbnail).
+                    ->filterMediaUsing(fn (\Illuminate\Support\Collection $media) => $media->reject(fn ($item) => \App\Models\Property::isVideo($item)))
                     ->limit(1),
                 TextColumn::make('name')
                     ->label(__('Name'))

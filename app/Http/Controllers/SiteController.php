@@ -115,7 +115,7 @@ class SiteController extends Controller
                 'price_full' => Money::format($property->basePrice(), $property->priceCurrency()),
                 'city' => collect([$property->city, $property->country ? \App\Support\Countries::name($property->country) : null])
                     ->filter()->implode(', '),
-                'photo' => $property->getFirstMediaUrl('photos', 'large') ?: null,
+                'photo' => $property->coverPhotoUrl('large') ?: null,
             ])
             ->values();
 

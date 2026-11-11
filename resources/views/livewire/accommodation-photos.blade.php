@@ -23,9 +23,9 @@
             x-on:dragleave.prevent="erboven = false"
             x-on:drop.prevent="erboven = false; send($event.dataTransfer.files)"
         >
-            <input type="file" accept="image/*" multiple class="sr-only" x-on:change="send($event.target.files); $event.target.value = ''" />
+            <input type="file" accept="image/*,{{ implode(',', \App\Models\Property::VIDEO_MIMES) }}" multiple class="sr-only" x-on:change="send($event.target.files); $event.target.value = ''" />
             <x-filament::icon icon="heroicon-o-arrow-up-tray" class="h-5 w-5" />
-            <span x-show="! busy">{{ __("Drag photos here or click to choose") }}</span>
+            <span x-show="! busy">{{ __('Drag photos or videos here or click to choose') }}</span>
             <span x-show="busy" x-cloak>{{ __('Working…') }}</span>
         </label>
 
@@ -53,7 +53,7 @@
 
     @if ($photos->isNotEmpty())
         <p class="text-sm text-gray-500 dark:text-gray-400">
-            {{ __('The first photo is the main photo. Drag to reorder. Max. 25 MB per photo.') }}
+            {{ \App\Models\Property::photoHint() }}
             {{ __('Give a photo a label (e.g. Bedroom, Kitchen, Pool). It appears in the top-left corner of the photo on the website. Empty = no label.') }}
             @if ($languages !== [])
                 <x-filament::link tag="button" type="button" icon="heroicon-o-language" wire:click="translateLabels" wire:target="translateLabels">
@@ -78,12 +78,28 @@
                         'space-y-2' => ! $list,
                     ])
                 >
-                    <div wire:sort:handle @class(['cursor-move', 'shrink-0' => $list])>
-                        <img
-                            src="{{ $photo->getUrl('thumb') }}?v={{ $photo->updated_at?->timestamp }}"
-                            alt=""
-                            @class(['rounded-md object-cover', 'h-24 w-36' => $list, 'aspect-[4/3] w-full' => ! $list])
-                        />
+                    @php($isVideo = \App\Models\Property::isVideo($photo))
+                    <div wire:sort:handle @class(['relative cursor-move', 'shrink-0' => $list])>
+                        @if ($isVideo)
+                            {{-- No resized version for a video: the browser shows the first frame. --}}
+                            <video
+                                src="{{ $photo->getUrl() }}#t=0.1"
+                                preload="metadata"
+                                muted
+                                playsinline
+                                data-video="{{ $photo->id }}"
+                                @class(['pointer-events-none rounded-md bg-gray-900 object-cover', 'h-24 w-36' => $list, 'aspect-[4/3] w-full' => ! $list])
+                            ></video>
+                            <span class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                <x-filament::icon icon="heroicon-s-play-circle" class="h-10 w-10 text-white drop-shadow" />
+                            </span>
+                        @else
+                            <img
+                                src="{{ $photo->getUrl('thumb') }}?v={{ $photo->updated_at?->timestamp }}"
+                                alt=""
+                                @class(['rounded-md object-cover', 'h-24 w-36' => $list, 'aspect-[4/3] w-full' => ! $list])
+                            />
+                        @endif
                     </div>
 
                     <div @class(['space-y-2', 'min-w-0 flex-1' => $list]) x-data="{ translate: false }">
@@ -104,7 +120,7 @@
                             />
                         @endif
 
-                        @if ($mayPhotosEdit)
+                        @if ($mayPhotosEdit && ! $isVideo)
                             <x-filament::icon-button
                                 icon="heroicon-o-pencil-square"
                                 color="gray"

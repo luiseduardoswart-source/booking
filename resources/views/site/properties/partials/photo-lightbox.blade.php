@@ -1,4 +1,4 @@
-{{-- Lightbox with all photos (shared by all layouts; expects $property and $fotos) --}}
+{{-- Lightbox with all photos and videos (shared by all layouts; expects $property and $photos) --}}
 <dialog id="photo_dialog" data-property="{{ $property->id }}" class="m-auto w-full max-w-3xl rounded-2xl p-0 backdrop:bg-black/70">
     <div class="sticky top-0 flex items-center justify-between bg-white px-4 py-3">
         <strong>{{ $property->localized('name') }}</strong>
@@ -9,7 +9,8 @@
     <div class="space-y-2 p-4 pt-0">
         @foreach ($photos as $photo)
             <div class="relative">
-                <img src="{{ $photo->getUrl('large') }}" alt="{{ $property->localized('name') }}" data-photo-track="{{ $photo->id }}" class="w-full rounded-xl" loading="lazy">
+                <x-property-media :media="$photo" conversion="large" :alt="$property->localized('name')" :controls="true"
+                                  data-photo-track="{{ $photo->id }}" class="w-full rounded-xl" loading="lazy" />
                 <x-photo-label :photo="$photo" />
             </div>
         @endforeach

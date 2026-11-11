@@ -55,6 +55,13 @@ class Property extends Model implements HasMedia
 
     public const MAX_PHOTO_KB = 25 * 1024;
 
+    /** Videos between the photos: only formats that every browser plays (no .mov). */
+    public const MAX_VIDEO_KB = 100 * 1024;
+
+    public const VIDEO_EXTENSIONS = ['mp4', 'webm'];
+
+    public const VIDEO_MIMES = ['video/mp4', 'video/webm'];
+
     /** Weekend adjustment: a fixed weekend price per night, or a percentage on the nightly price. */
     public const WEEKEND_FIXED = 'fixed';
 
@@ -790,6 +797,55 @@ class Property extends Model implements HasMedia
             ->toMediaCollection('photos');
     }
 
+    /** A video between the photos. It has no resized versions (no ffmpeg on the server): the site plays the original. */
+    public static function isVideo(Media $media): bool
+    {
+        return str_starts_with((string) $media->mime_type, 'video/');
+    }
+
+    /** The explanation above the photos, with the limits from the constants above. */
+    public static function photoHint(): string
+    {
+        return __('The first photo is the main photo; a video never is. Drag to reorder. Max. :photo MB per photo, :video MB per video (mp4 or webm).', [
+            'photo' => self::MAX_PHOTO_KB / 1024,
+            'video' => self::MAX_VIDEO_KB / 1024,
+        ]);
+    }
+
+    /** The main photo: the first photo that is not a video. A video never becomes the main photo. */
+    public function coverPhoto(): ?Media
+    {
+        return $this->getMedia('photos')->first(fn (Media $media): bool => ! self::isVideo($media));
+    }
+
+    /** The url of the main photo in a resized version, or '' without a photo (like getFirstMediaUrl). */
+    public function coverPhotoUrl(string $conversion = 'large'): string
+    {
+        $photo = $this->coverPhoto();
+
+        if ($photo === null) {
+            return '';
+        }
+
+        return $photo->hasGeneratedConversion($conversion) ? $photo->getUrl($conversion) : $photo->getUrl();
+    }
+
+    /**
+     * The photos and videos for the site in the owner's order, but with the
+     * main photo first: at the top of the page there is always a photo.
+     *
+     * @return \Illuminate\Support\Collection<int, Media>
+     */
+    public function gallery(): \Illuminate\Support\Collection
+    {
+        $media = $this->getMedia('photos');
+        $cover = $this->coverPhoto();
+
+        return $cover === null
+            ? $media->values()
+            : $media->reject(fn (Media $item): bool => $item->is($cover))->prepend($cover)->values();
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photos')
@@ -797,7 +853,8 @@ class Property extends Model implements HasMedia
             ->registerMediaConversions(function (?Media $media) {
                 // The original is kept (source), but the site always serves
                 // these resized + compressed versions — never the full
-                // upload. Good quality, much smaller file.
+                // upload. Good quality, much smaller file. Videos are
+                // skipped (Spatie has no generator for them without ffmpeg).
                 $this->addMediaConversion('thumb')
                     ->width(400)
                     ->height(300)

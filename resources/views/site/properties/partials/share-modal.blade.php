@@ -13,7 +13,7 @@
         <h2 class="mt-2 text-2xl font-semibold text-stone-900">{{ __('Share this place') }}</h2>
 
         <div class="mt-6 flex items-center gap-4">
-            @if ($thumb = $property->getFirstMediaUrl('photos', 'thumb'))
+            @if ($thumb = $property->coverPhotoUrl('thumb'))
                 <img src="{{ $thumb }}" alt="{{ $property->localized('name') }}" class="h-16 w-16 rounded-xl object-cover">
             @endif
             <p class="text-stone-700">

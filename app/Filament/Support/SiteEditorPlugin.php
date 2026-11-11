@@ -2,6 +2,7 @@
 
 namespace App\Filament\Support;
 
+use App\Models\Property;
 use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\RichEditor\EditorCommand;
@@ -10,13 +11,15 @@ use Filament\Forms\Components\RichEditor\RichEditorTool;
 use Filament\Forms\Components\Textarea;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Js;
 
 /**
  * Two buttons for the editors of site texts (see RichEditors):
  *
  * - "From media library": opens the media library (the same picker as for the
  *   hero photos, pickMedia) and inserts the chosen photo with its alt text,
- *   or a link for another file type. Like the image button in devsite.
+ *   a video as a video block (VideoBlock), or a link for another file type.
+ *   Like the image button in devsite.
  * - "Source code": the HTML of the text in a window, to view or adjust, as
  *   in TinyMCE. The editor keeps only what it knows (no scripts or iframes).
  */
@@ -44,16 +47,36 @@ class SiteEditorPlugin implements RichContentPlugin
                 ->label(__('From media library'))
                 ->icon(Heroicon::OutlinedPhoto)
                 // pickMedia comes with the media assets (AppServiceProvider); a photo
-                // becomes an image, another file a link to it.
-                ->jsHandler(<<<'JS'
+                // becomes an image, a video a video block, another file a link to it.
+                ->jsHandler(strtr(<<<'JS'
                     window.pickMedia && window.pickMedia((file) => {
-                        const isImage = /\.(jpe?g|png|gif|webp|avif|svg)$/i.test(file.url);
-                        $getEditor().chain().focus().insertContent(isImage
-                            ? { type: 'image', attrs: { src: file.url, alt: file.alt || null } }
-                            : { type: 'text', text: file.url.split('/').pop(), marks: [{ type: 'link', attrs: { href: file.url } }] }
-                        ).run();
+                        const extension = (file.url.split('?')[0].split('.').pop() || '').toLowerCase();
+                        let content = { type: 'text', text: file.url.split('/').pop(), marks: [{ type: 'link', attrs: { href: file.url } }] };
+
+                        if (/^(jpe?g|png|gif|webp|avif|svg)$/.test(extension)) {
+                            content = { type: 'image', attrs: { src: file.url, alt: file.alt || null } };
+                        } else if (__VIDEO_EXTENSIONS__.includes(extension)) {
+                            const src = file.url.replace(/&/g, '&amp;').replace(/\x22/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            const preview = __VIDEO_PREVIEW__.replace('/__SRC__', src);
+                            content = { type: 'customBlock', attrs: {
+                                id: __VIDEO_ID__,
+                                config: { src: file.url },
+                                label: __VIDEO_LABEL__,
+                                preview: btoa(String.fromCharCode(...new TextEncoder().encode(preview))),
+                                shouldApplyProseStylingToPreview: false,
+                            } };
+                        }
+
+                        $getEditor().chain().focus().insertContent(content).run();
                     })
-                    JS),
+                    JS, [
+                    // The same preview as the server makes (VideoBlock), with the address filled in here.
+                    // Js::from and no double quotes: Filament puts this script unescaped in an attribute.
+                    '__VIDEO_EXTENSIONS__' => Js::from(Property::VIDEO_EXTENSIONS),
+                    '__VIDEO_PREVIEW__' => Js::from(VideoBlock::toPreviewHtml(['src' => '/__SRC__'])),
+                    '__VIDEO_ID__' => Js::from(VideoBlock::getId()),
+                    '__VIDEO_LABEL__' => Js::from(VideoBlock::getLabel()),
+                ])),
             RichEditorTool::make('sourceCode')
                 ->label(__('Source code'))
                 ->icon(Heroicon::OutlinedCodeBracket)

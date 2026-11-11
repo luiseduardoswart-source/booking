@@ -1,6 +1,6 @@
 {{-- Layout "Fullscreen magazine": full-page hero + accommodations as large rows. --}}
 <x-site-layout :metaDescription="\App\Models\Setting::localized('company', 'slogan')">
-    @php $heroPhoto = $properties->first(fn ($p) => $p->getFirstMediaUrl('photos', 'large') !== '')?->getFirstMediaUrl('photos', 'large'); @endphp
+    @php $heroPhoto = $properties->first(fn ($p) => $p->coverPhotoUrl('large') !== '')?->coverPhotoUrl('large'); @endphp
 
     <section class="relative flex min-h-[calc(100vh-4.5rem)] items-center justify-center overflow-hidden" data-layout="fullscreen">
         @if ($heroPhoto)
@@ -99,7 +99,7 @@
                 @php $link = route('properties.show', array_merge(['property' => $property->slugFor()], array_filter($filters))); @endphp
                 <article class="group flex flex-col gap-6 md:items-center {{ $loop->even ? 'md:flex-row-reverse' : 'md:flex-row' }}">
                     <a href="{{ $link }}" class="block overflow-hidden rounded-3xl md:w-3/5">
-                        @if ($photo = $property->getFirstMediaUrl('photos', 'large'))
+                        @if ($photo = $property->coverPhotoUrl('large'))
                             <img src="{{ $photo }}" alt="{{ $property->localized('name') }}"
                                  class="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
                         @else

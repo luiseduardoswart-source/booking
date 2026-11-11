@@ -3,6 +3,7 @@
 namespace App\Filament\Support;
 
 use App\Filament\Pages\MediaManager;
+use App\Support\RichText;
 use Filament\Forms\Components\RichEditor;
 
 /**
@@ -38,6 +39,8 @@ final class RichEditors
 
         return $editor
             ->plugins([SiteEditorPlugin::make()])
+            // The video block (inserted via the media library); no separate blocks button.
+            ->customBlocks(RichText::BLOCKS)
             ->toolbarButtons($toolbar)
             ->fileAttachmentsDisk('public')
             ->fileAttachmentsDirectory(self::ATTACHMENTS_DIRECTORY)

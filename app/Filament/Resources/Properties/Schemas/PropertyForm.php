@@ -829,11 +829,19 @@ class PropertyForm
                         ->multiple()
                         ->reorderable()
                         ->appendFiles()
-                        ->image()
+                        ->acceptedFileTypes(['image/*', ...Property::VIDEO_MIMES])
                         ->maxFiles(Property::MAX_PHOTOS)
-                        ->maxSize(Property::MAX_PHOTO_KB)
+                        ->maxSize(Property::MAX_VIDEO_KB)
+                        // The upper limit above is the video one; a photo keeps its own limit.
+                        ->rule(fn (): Closure => function (string $attribute, mixed $file, Closure $fail): void {
+                            if ($file instanceof \Illuminate\Http\UploadedFile
+                                && ! str_starts_with((string) $file->getMimeType(), 'video/')
+                                && $file->getSize() > Property::MAX_PHOTO_KB * 1024) {
+                                $fail(__('validation.max.file', ['attribute' => $file->getClientOriginalName(), 'max' => Property::MAX_PHOTO_KB]));
+                            }
+                        })
                         ->panelLayout('grid')
-                        ->hint(__('The first photo is the main photo. Drag to reorder. Max. 25 MB per photo.')),
+                        ->hint(Property::photoHint()),
                 ]),
 
             Step::make(__('Price'))

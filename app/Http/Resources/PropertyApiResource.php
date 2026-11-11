@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -31,10 +32,14 @@ class PropertyApiResource extends JsonResource
             'cleaning_fee_cents' => (int) $this->effectiveAmount('cleaning_fee_cents'),
             'deposit_cents' => (int) $this->effectiveAmount('deposit_cents'),
             'amenities' => $this->whenLoaded('amenities', fn () => $this->amenities->pluck('name')),
-            'photos' => $this->getMedia('photos')->map(fn ($media) => [
+            // Photos (main photo first) and videos apart: a video has no resized versions.
+            'photos' => $this->gallery()->reject(fn ($media) => Property::isVideo($media))->map(fn ($media) => [
                 'thumb' => $media->getUrl('thumb'),
                 'large' => $media->getUrl('large'),
-            ]),
+            ])->values(),
+            'videos' => $this->gallery()->filter(fn ($media) => Property::isVideo($media))->map(fn ($media) => [
+                'url' => $media->getUrl(),
+            ])->values(),
         ];
     }
 }

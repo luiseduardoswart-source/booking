@@ -17,7 +17,9 @@ rental business.
 ### For your guests
 
 - **A modern website** with a home page, search bar and a page per property with
-  photos, highlights, amenities, house rules, a map, reviews and the host(s).
+  photos and videos, highlights, amenities, house rules, a map, reviews and
+  the host(s). At the top there is always a photo; videos (mp4 or webm, up to
+  100 MB) play between the photos and in the texts.
 - **Search** by dates, number of guests and pets, with search suggestions as you
   type.
 - **Live prices**: the guest sees the total and a full breakdown (nights,
@@ -143,6 +145,10 @@ way; only the names of the menus differ.
 - **A mailbox** for the website, for example `bookings@yourdomain.com` (on
   Hostinger: **Emails**). The website sends emails to guests and to you from
   this address.
+- **Upload limits of at least 128 MB** if you want to add videos (up to 100 MB
+  each): set `upload_max_filesize` and `post_max_size` to `128M` (on Hostinger:
+  **Advanced → PHP Configuration → PHP options**). For photos only, 32 MB is
+  enough.
 
 ### Step 1: Create a database
 

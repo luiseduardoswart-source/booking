@@ -1,6 +1,7 @@
 {{-- Title + photo mosaic (default layout). Layout templates can override this
      file for their own photo presentation; the lightbox and
-     share modal are separate partials and stay shared. Expects $property and $photos. --}}
+     share modal are separate partials and stay shared. Expects $property and $photos
+     ($property->gallery(): the main photo first, videos in between). --}}
 <div class="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
     {{-- Title above the photos, like Airbnb — with a share button on the right --}}
     <div class="flex items-start justify-between gap-4">
@@ -28,13 +29,13 @@
         <div class="relative mt-4">
             <div class="grid gap-2 overflow-hidden rounded-2xl sm:grid-cols-4 sm:grid-rows-2">
                 <button onclick="photo_dialog.showModal()" class="sm:col-span-2 sm:row-span-2">
-                    <img src="{{ $photos->first()->getUrl('large') }}" alt="{{ $property->localized('name') }}"
-                         class="aspect-[4/3] h-full w-full cursor-pointer object-cover transition hover:brightness-90">
+                    <x-property-media :media="$photos->first()" conversion="large" :alt="$property->localized('name')"
+                         class="aspect-[4/3] h-full w-full cursor-pointer object-cover transition hover:brightness-90" />
                 </button>
                 @foreach ($photos->skip(1)->take(4) as $photo)
                     <button onclick="photo_dialog.showModal()" class="hidden sm:block">
-                        <img src="{{ $photo->getUrl('thumb') }}" alt="{{ $property->localized('name') }}"
-                             class="aspect-[4/3] h-full w-full cursor-pointer object-cover transition hover:brightness-90">
+                        <x-property-media :media="$photo" conversion="thumb" :alt="$property->localized('name')"
+                             class="aspect-[4/3] h-full w-full cursor-pointer object-cover transition hover:brightness-90" />
                     </button>
                 @endforeach
             </div>

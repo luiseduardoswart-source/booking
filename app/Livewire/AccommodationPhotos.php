@@ -49,8 +49,14 @@ class AccommodationPhotos extends Component
     {
         $this->checkPermission();
 
+        // A video (mp4 or webm, max 100 MB) or a photo (max 25 MB). Another
+        // video format, such as .mov from an iPhone, is refused by the video rule.
+        $isVideo = str_starts_with((string) $this->upload?->getMimeType(), 'video/');
+
         $this->validate(
-            ['upload' => ['required', File::image()->max(Property::MAX_PHOTO_KB)]],
+            ['upload' => ['required', $isVideo
+                ? File::types(Property::VIDEO_EXTENSIONS)->max(Property::MAX_VIDEO_KB)
+                : File::image()->max(Property::MAX_PHOTO_KB)]],
             attributes: ['upload' => $this->upload?->getClientOriginalName() ?? __('Photo')],
         );
 

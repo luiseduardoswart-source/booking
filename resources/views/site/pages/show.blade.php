@@ -15,7 +15,7 @@
 
         @if ($page->localized('content'))
             {{-- Content comes from the RichEditor in the admin (trusted admin). --}}
-            <div class="prose prose-stone mt-8 max-w-none">{!! $page->localized('content') !!}</div>
+            <div class="prose prose-stone mt-8 max-w-none">{!! \App\Support\RichText::render($page->localized('content')) !!}</div>
         @endif
 
         {{-- A form from the form builder (Pages → Form) --}}

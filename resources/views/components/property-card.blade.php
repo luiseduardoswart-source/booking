@@ -2,7 +2,7 @@
 
 <a href="{{ route('properties.show', array_merge(['property' => $property->slugFor()], $query)) }}" class="group">
     <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-stone-100">
-        @if ($photo = $property->getFirstMediaUrl('photos', 'thumb'))
+        @if ($photo = $property->coverPhotoUrl('thumb'))
             <img src="{{ $photo }}" alt="{{ $property->localized('name') }}"
                  class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
         @else

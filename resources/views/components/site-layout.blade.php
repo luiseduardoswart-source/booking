@@ -124,6 +124,10 @@
                     {{-- Height follows the screen: never past the bottom edge, always scrollable --}}
                     <div class="absolute right-0 z-50 mt-2 flex max-h-[min(20rem,60vh)] w-44 flex-col overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-white p-1 shadow-xl">
                         @foreach ($availableCurrencies as $currencyCode)
+                            {{-- A line between the most used currencies and the rest --}}
+                            @if (! $loop->first && ! in_array($currencyCode, \App\Support\Currencies::POPULAR, true) && in_array($availableCurrencies[$loop->index - 1], \App\Support\Currencies::POPULAR, true))
+                                <hr class="my-1 border-stone-200" data-currency-divider>
+                            @endif
                             <a href="{{ route('currency.switch', $currencyCode) }}"
                                class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-stone-100 {{ $activeCurrency === $currencyCode ? 'font-bold text-rose-600' : 'text-stone-700' }}">
                                 <span>{{ $currencyCode }} {{ $symbolFor($currencyCode) }}</span>

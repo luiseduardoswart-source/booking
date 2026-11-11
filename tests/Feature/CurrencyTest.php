@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Property;
 use App\Models\Setting;
+use App\Support\Currencies;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -122,5 +123,31 @@ class CurrencyTest extends TestCase
         $this->get("/{$property->slug}")
             ->assertOk()
             ->assertDontSee(route('currency.switch', 'USD'));
+    }
+
+    public function test_the_most_used_currencies_are_at_the_top_then_a_line_then_alphabetical(): void
+    {
+        Http::fake([
+            'open.er-api.com/*' => Http::response(['result' => 'success', 'rates' => [
+                'AED' => 4.0, 'ARS' => 1000.0, 'COP' => 4500.0, 'GBP' => 0.85, 'JPY' => 160.0, 'USD' => 1.10,
+            ]]),
+            'cdn.jsdelivr.net/*' => Http::response(null, 500),
+        ]);
+        Setting::set('site', 'currency_picker', '1');
+
+        $this->assertSame(['EUR', 'USD', 'JPY', 'GBP', 'AED', 'ARS', 'COP'], Currencies::codes());
+
+        $this->get("/{$this->property()->slug}")->assertOk()
+            ->assertSeeInOrder([
+                route('currency.switch', 'EUR'), route('currency.switch', 'USD'), route('currency.switch', 'JPY'),
+                route('currency.switch', 'GBP'), 'data-currency-divider', route('currency.switch', 'AED'),
+            ], false);
+    }
+
+    public function test_a_popular_currency_without_a_rate_is_left_out(): void
+    {
+        $this->enableCurrency(); // USD, GBP and COP, no JPY
+
+        $this->assertSame(['EUR', 'USD', 'GBP', 'COP'], Currencies::codes());
     }
 }

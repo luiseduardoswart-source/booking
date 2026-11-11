@@ -20,8 +20,11 @@ class Currencies
         'ZAR', 'TRY', 'AED', 'INR', 'IDR', 'THB', 'SGD', 'HKD', 'KRW',
     ];
 
+    /** The most used currencies: at the top of every list, in this order. */
+    public const POPULAR = ['EUR', 'USD', 'JPY', 'GBP'];
+
     /**
-     * All available currency codes (EUR first, then alphabetical).
+     * All available currency codes: the popular ones first, then alphabetical.
      *
      * @return string[]
      */
@@ -42,7 +45,10 @@ class Currencies
             ->values()
             ->all();
 
-        return ['EUR', ...array_values(array_diff($codes, ['EUR']))];
+        // Only popular currencies that have a rate (EUR always).
+        $popular = array_values(array_intersect(self::POPULAR, $codes));
+
+        return [...$popular, ...array_values(array_diff($codes, $popular))];
     }
 
     /**

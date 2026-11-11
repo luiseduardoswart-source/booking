@@ -1644,5 +1644,17 @@
     "From media library": "从媒体库选择",
     "Source code": "源代码",
     "Source code (HTML)": "源代码（HTML）",
-    "Tags the editor does not support, such as scripts and iframes, are removed.": "编辑器不支持的标签（如脚本和 iframe）将被移除。"
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "编辑器不支持的标签（如脚本和 iframe）将被移除。",
+    "Check-out email: days before departure": "退房邮件：离店前天数",
+    "When does each email go out?": "每封邮件何时发送？",
+    "When it is sent": "发送时间",
+    "Right after each payment": "每次付款后立即",
+    "The number of days before arrival set here, if only the down payment has been paid": "此处设置的入住前天数（仅已支付定金时）",
+    "Right after booking, or the number of days before arrival set in the Payments tab under Deposit": "预订后立即，或按“付款”标签页“押金”下设置的入住前天数",
+    "When you send it from a booking": "当您从预订中发送时",
+    "Right after a successful identity check": "身份验证成功后立即",
+    "The number of days before arrival set here": "此处设置的入住前天数",
+    "The number of days before departure set here": "此处设置的离店前天数",
+    "The number of days after departure set here": "此处设置的离店后天数",
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "带天数的邮件每天检查一次，每个预订只发送一次。已取消、未入住或尚未确认的预订不会发送。"
 }

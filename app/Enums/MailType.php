@@ -28,4 +28,24 @@ enum MailType: string
             self::Review => 'Review request',
         };
     }
+
+    /**
+     * When the guest receives this email, as the owner reads it in the
+     * "Automatic emails" tab. Keep in line with SendScheduledMails and the
+     * places that send the email right away.
+     */
+    public function moment(): string
+    {
+        return match ($this) {
+            self::Confirmation => 'Right after booking',
+            self::PaymentReceived => 'Right after each payment',
+            self::BalancePayment => 'The number of days before arrival set here, if only the down payment has been paid',
+            self::Deposit => 'Right after booking, or the number of days before arrival set in the Payments tab under Deposit',
+            self::PaymentRequest => 'When you send it from a booking',
+            self::Verified => 'Right after a successful identity check',
+            self::Checkin => 'The number of days before arrival set here',
+            self::Checkout => 'The number of days before departure set here',
+            self::Review => 'The number of days after departure set here',
+        };
+    }
 }

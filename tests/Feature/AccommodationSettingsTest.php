@@ -193,6 +193,42 @@ class AccommodationSettingsTest extends TestCase
         $this->assertTrue($this->sentFor($earlier, MailType::Checkin));
     }
 
+    public function test_checkout_mail_goes_exactly_on_the_day_of_the_accommodation(): void
+    {
+        Property::master()->update(['checkout_days_before_departure' => 1]);
+        $departureIn = fn (int $days) => [
+            'arrival_date' => today()->subDays(2)->toDateString(),
+            'departure_date' => today()->addDays($days)->toDateString(),
+        ];
+
+        $default = $this->booking($this->accommodation(), $departureIn(1));
+        $earlier = $this->booking($this->accommodation(['checkout_days_before_departure' => 3]), $departureIn(3));
+        $notYet = $this->booking($this->accommodation(['checkout_days_before_departure' => 3]), $departureIn(4));
+        $tooLate = $this->booking($this->accommodation(['checkout_days_before_departure' => 3]), $departureIn(1));
+
+        $this->artisan('mails:send-scheduled')->assertSuccessful();
+
+        $this->assertTrue($this->sentFor($default, MailType::Checkout));
+        $this->assertTrue($this->sentFor($earlier, MailType::Checkout));
+        $this->assertFalse($this->sentFor($notYet, MailType::Checkout));
+        $this->assertFalse($this->sentFor($tooLate, MailType::Checkout));
+    }
+
+    public function test_the_mails_tab_explains_when_each_email_goes_out(): void
+    {
+        Livewire::actingAs($this->owner())
+            ->test(EditDefaults::class)
+            ->assertSee(__('When does each email go out?'));
+
+        $html = view('filament.properties.mail-schedule')->render();
+
+        foreach (MailType::cases() as $type) {
+            $this->assertStringContainsString("data-mail-type=\"{$type->value}\"", $html);
+            $this->assertStringContainsString(e(__($type->label())), $html);
+            $this->assertStringContainsString(e(__($type->moment())), $html);
+        }
+    }
+
     public function test_deposit_request_follows_the_days_of_the_accommodation(): void
     {
         Property::master()->update(['deposit_days_before_arrival' => 7]);
@@ -377,7 +413,7 @@ class AccommodationSettingsTest extends TestCase
                 'payment_method' => 'down_payment', 'down_payment_percentage' => 25, 'vat_percentage' => 21,
                 'deposit_days_before_arrival' => 8, 'deposit_days_after_departure' => 4, 'deposit_auto_refund' => '1',
                 'pricing_service' => 'beyond', 'balance_payment_days_before_arrival' => 20,
-                'checkin_days_before_arrival' => 2, 'review_days_after_departure' => 6,
+                'checkin_days_before_arrival' => 2, 'checkout_days_before_departure' => 2, 'review_days_after_departure' => 6,
                 'mail_texts.review.nl' => 'Bedankt!',
             ])
             ->call('save')
@@ -393,6 +429,7 @@ class AccommodationSettingsTest extends TestCase
         $this->assertSame('beyond', $master->pricing_service);
         $this->assertSame(20, $master->balance_payment_days_before_arrival);
         $this->assertSame(2, $master->checkin_days_before_arrival);
+        $this->assertSame(2, $master->checkout_days_before_departure);
         $this->assertSame(6, $master->review_days_after_departure);
         // The mail texts come from a text editor and are stored as HTML.
         $this->assertSame('<p>Bedankt!</p>', $master->mail_texts['review']['nl']);

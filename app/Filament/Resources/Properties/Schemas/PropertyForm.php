@@ -1408,10 +1408,22 @@ class PropertyForm
             ->visible(self::withPaymentRules())
             ->components([
                 Section::make(__('Schedule'))
-                    ->columns(3)
+                    ->columns(4)
+                    ->headerActions([
+                        Action::make('mail_schedule_info')
+                            ->label(__('When does each email go out?'))
+                            ->icon(Heroicon::OutlinedInformationCircle)
+                            ->color('gray')
+                            ->link()
+                            ->modalHeading(__('When does each email go out?'))
+                            ->modalContent(view('filament.properties.mail-schedule'))
+                            ->modalSubmitAction(false)
+                            ->modalCancelActionLabel(__('Close')),
+                    ])
                     ->components([
                         self::defaultNumber('balance_payment_days_before_arrival', __('Balance payment: days before arrival')),
                         self::defaultNumber('checkin_days_before_arrival', __('Check-in email: days before arrival')),
+                        self::defaultNumber('checkout_days_before_departure', __('Check-out email: days before departure')),
                         self::defaultNumber('review_days_after_departure', __('Review request: days after departure')),
                     ]),
 

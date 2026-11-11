@@ -1644,5 +1644,17 @@
     "From media library": "Depuis la médiathèque",
     "Source code": "Code source",
     "Source code (HTML)": "Code source (HTML)",
-    "Tags the editor does not support, such as scripts and iframes, are removed.": "Les balises que l'éditeur ne prend pas en charge, comme les scripts et les iframes, sont supprimées."
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "Les balises que l'éditeur ne prend pas en charge, comme les scripts et les iframes, sont supprimées.",
+    "Check-out email: days before departure": "E-mail de départ : jours avant le départ",
+    "When does each email go out?": "Quand chaque e-mail est-il envoyé ?",
+    "When it is sent": "Quand il est envoyé",
+    "Right after each payment": "Juste après chaque paiement",
+    "The number of days before arrival set here, if only the down payment has been paid": "Le nombre de jours avant l'arrivée indiqué ici, si seul l'acompte a été payé",
+    "Right after booking, or the number of days before arrival set in the Payments tab under Deposit": "Juste après la réservation, ou le nombre de jours avant l'arrivée défini dans l'onglet Paiements sous Caution",
+    "When you send it from a booking": "Quand vous l'envoyez depuis une réservation",
+    "Right after a successful identity check": "Juste après une vérification d'identité réussie",
+    "The number of days before arrival set here": "Le nombre de jours avant l'arrivée indiqué ici",
+    "The number of days before departure set here": "Le nombre de jours avant le départ indiqué ici",
+    "The number of days after departure set here": "Le nombre de jours après le départ indiqué ici",
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Les e-mails avec un nombre de jours sont vérifiés une fois par jour et envoyés une fois par réservation. Pas pour les réservations annulées, non présentées ou pas encore confirmées."
 }

@@ -1656,5 +1656,17 @@
     "From media library": "Uit de mediabibliotheek",
     "Source code": "Broncode",
     "Source code (HTML)": "Broncode (HTML)",
-    "Tags the editor does not support, such as scripts and iframes, are removed.": "Onderdelen die de editor niet kent, zoals scripts en iframes, worden verwijderd."
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "Onderdelen die de editor niet kent, zoals scripts en iframes, worden verwijderd.",
+    "Check-out email: days before departure": "Check-outmail: dagen vóór vertrek",
+    "When does each email go out?": "Wanneer gaat welke mail eruit?",
+    "When it is sent": "Wanneer verstuurd",
+    "Right after each payment": "Direct na elke betaling",
+    "The number of days before arrival set here, if only the down payment has been paid": "Het aantal dagen vóór aankomst dat hier staat, als alleen de aanbetaling is betaald",
+    "Right after booking, or the number of days before arrival set in the Payments tab under Deposit": "Direct na het boeken, of het aantal dagen vóór aankomst uit het tabblad Betalingen onder Borg",
+    "When you send it from a booking": "Als jij hem verstuurt vanuit een boeking",
+    "Right after a successful identity check": "Direct na een geslaagde identiteitscontrole",
+    "The number of days before arrival set here": "Het aantal dagen vóór aankomst dat hier staat",
+    "The number of days before departure set here": "Het aantal dagen vóór vertrek dat hier staat",
+    "The number of days after departure set here": "Het aantal dagen na vertrek dat hier staat",
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Mails met een aantal dagen worden één keer per dag gecontroleerd en gaan één keer per boeking uit. Niet bij boekingen die geannuleerd, een no-show of nog niet bevestigd zijn."
 }

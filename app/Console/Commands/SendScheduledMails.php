@@ -56,13 +56,10 @@ class SendScheduledMails extends Command
             ->whereDate('arrival_date', '<=', today()->addDays($days))
             ->whereDate('arrival_date', '>=', today()));
 
-        // 3. Check-out information: 1 day before departure.
-        Booking::query()
+        // 3. Check-out information: exactly X days before departure.
+        $sent += $this->send($notifications, MailType::Checkout, 'checkout_days_before_departure', fn (int $days) => Booking::query()
             ->whereIn('status', $active)
-            ->whereDate('departure_date', today()->addDay())
-            ->each(function (Booking $booking) use ($notifications, &$sent) {
-                $sent += (int) $notifications->sendOnce($booking, MailType::Checkout);
-            });
+            ->whereDate('departure_date', today()->addDays($days)));
 
         // 4. Review request: X days after departure.
         $sent += $this->send($notifications, MailType::Review, 'review_days_after_departure', fn (int $days) => Booking::query()

@@ -1656,5 +1656,17 @@
     "From media library": "From media library",
     "Source code": "Source code",
     "Source code (HTML)": "Source code (HTML)",
-    "Tags the editor does not support, such as scripts and iframes, are removed.": "Tags the editor does not support, such as scripts and iframes, are removed."
+    "Tags the editor does not support, such as scripts and iframes, are removed.": "Tags the editor does not support, such as scripts and iframes, are removed.",
+    "Check-out email: days before departure": "Check-out email: days before departure",
+    "When does each email go out?": "When does each email go out?",
+    "When it is sent": "When it is sent",
+    "Right after each payment": "Right after each payment",
+    "The number of days before arrival set here, if only the down payment has been paid": "The number of days before arrival set here, if only the down payment has been paid",
+    "Right after booking, or the number of days before arrival set in the Payments tab under Deposit": "Right after booking, or the number of days before arrival set in the Payments tab under Deposit",
+    "When you send it from a booking": "When you send it from a booking",
+    "Right after a successful identity check": "Right after a successful identity check",
+    "The number of days before arrival set here": "The number of days before arrival set here",
+    "The number of days before departure set here": "The number of days before departure set here",
+    "The number of days after departure set here": "The number of days after departure set here",
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed."
 }

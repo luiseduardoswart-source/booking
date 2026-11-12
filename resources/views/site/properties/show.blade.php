@@ -201,7 +201,9 @@
 
             {{-- Right column: sticky booking card --}}
             <div>
-                <div class="sticky top-24 rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
+                {{-- z-10: sticky makes its own layer; without a z-index the map further down
+                     (Leaflet, z-0) lies over the calendar that opens downwards on mobile. --}}
+                <div id="booking_card" class="sticky top-24 z-10 scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6 shadow-xl">
                     <p class="text-xl">
                         <span class="font-semibold text-stone-900">{{ \App\Support\Money::format($property->basePrice(), $property->priceCurrency()) }}</span>
                         <span class="text-base text-stone-500">{{ __('per night') }}</span>
@@ -318,6 +320,47 @@
             </div>
         @endif
     </div>
+
+    {{-- Mobile: the booking card is far down the page. A bar at the bottom takes
+         the guest there; it hides while the card itself is in view. --}}
+    <div id="book_bar" class="fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 bg-white/95 px-4 py-3 backdrop-blur transition-transform duration-200 lg:hidden">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
+            <p>
+                <span class="font-semibold text-stone-900">{{ \App\Support\Money::format($property->basePrice(), $property->priceCurrency()) }}</span>
+                <span class="text-sm text-stone-500">{{ __('per night') }}</span>
+            </p>
+            <a href="#booking_card" data-book-bar-link
+               class="rounded-xl button-accent bg-gradient-to-r from-rose-600 to-pink-600 px-6 py-3 font-semibold text-white transition hover:from-rose-700 hover:to-pink-700">
+                {{ __('Reserve') }}
+            </a>
+        </div>
+    </div>
+    <style>
+        /* Room for the bar under the footer, and the chat button above the bar instead
+           of on top of the Reserve button (body: wins over the chat's own later styles). */
+        @media (max-width: 1023.98px) {
+            body { padding-bottom: 5rem; }
+            body .sc-button { bottom: 5.5rem; }
+            body .sc-panel { bottom: 10rem; max-height: calc(100vh - 12rem); }
+        }
+    </style>
+    <script>
+        (function () {
+            const bar = document.getElementById('book_bar');
+            const card = document.getElementById('booking_card');
+
+            if (!bar || !card) return;
+
+            bar.querySelector('[data-book-bar-link]').addEventListener('click', function (event) {
+                event.preventDefault();
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
+            new IntersectionObserver(([entry]) => {
+                bar.classList.toggle('translate-y-full', entry.isIntersecting);
+            }).observe(card);
+        })();
+    </script>
 
     <script>
         // Share modal: copy, embed code and native share.

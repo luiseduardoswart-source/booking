@@ -68,6 +68,20 @@ class SocialLinksTest extends TestCase
             ->assertSee('https://facebook.com/company', false);
     }
 
+    public function test_the_links_come_after_the_house_rules_and_the_cancellation_policy(): void
+    {
+        $property = $this->property([
+            'social_links' => ['instagram' => 'https://instagram.com/this-house'],
+            'house_rules' => 'Geen feesten',
+            'cancellation_policy' => 'moderate',
+        ]);
+
+        $this->withSession(['locale' => 'nl'])
+            ->get("/{$property->slug}")
+            ->assertOk()
+            ->assertSeeInOrder([__('House rules'), __('Cancellation policy'), __('Follow us')]);
+    }
+
     public function test_no_links_no_heading(): void
     {
         $property = $this->property();

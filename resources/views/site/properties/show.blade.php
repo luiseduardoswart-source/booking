@@ -170,16 +170,6 @@
                     </div>
                 @endif
 
-                {{-- Social media of this accommodation --}}
-                @if ($socialLinks = $property->socialLinks())
-                    <div class="mt-8 border-t border-stone-200 pt-8">
-                        <h2 class="text-xl font-semibold text-stone-900">{{ __('Follow us') }}</h2>
-                        <div class="mt-4">
-                            @include('site.partials.social-links', ['links' => $socialLinks])
-                        </div>
-                    </div>
-                @endif
-
                 {{-- Cancellation policy --}}
                 @if ($property->cancellationPolicyLines() !== [])
                     <div class="mt-8 border-t border-stone-200 pt-8">
@@ -195,6 +185,16 @@
                                 </li>
                             @endforeach
                         </ul>
+                    </div>
+                @endif
+
+                {{-- Social media of this accommodation: after the rules, at the end --}}
+                @if ($socialLinks = $property->socialLinks())
+                    <div class="mt-8 border-t border-stone-200 pt-8">
+                        <h2 class="text-xl font-semibold text-stone-900">{{ __('Follow us') }}</h2>
+                        <div class="mt-4">
+                            @include('site.partials.social-links', ['links' => $socialLinks])
+                        </div>
                     </div>
                 @endif
             </div>

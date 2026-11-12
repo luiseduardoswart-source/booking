@@ -1656,5 +1656,7 @@
     "The number of days before arrival set here": "此处设置的入住前天数",
     "The number of days before departure set here": "此处设置的离店前天数",
     "The number of days after departure set here": "此处设置的离店后天数",
-    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "带天数的邮件每天检查一次，每个预订只发送一次。已取消、未入住或尚未确认的预订不会发送。"
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "带天数的邮件每天检查一次，每个预订只发送一次。已取消、未入住或尚未确认的预订不会发送。",
+    "Delete all": "全部删除",
+    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "删除此住宿的全部 :count 张照片和视频？此操作无法撤销。"
 }

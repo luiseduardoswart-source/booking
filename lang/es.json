@@ -1656,5 +1656,7 @@
     "The number of days before arrival set here": "El número de días antes de la llegada indicado aquí",
     "The number of days before departure set here": "El número de días antes de la salida indicado aquí",
     "The number of days after departure set here": "El número de días después de la salida indicado aquí",
-    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Los correos con un número de días se comprueban una vez al día y se envían una vez por reserva. No para reservas canceladas, no presentadas o aún no confirmadas."
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Los correos con un número de días se comprueban una vez al día y se envían una vez por reserva. No para reservas canceladas, no presentadas o aún no confirmadas.",
+    "Delete all": "Eliminar todo",
+    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "¿Eliminar las :count fotos y vídeos de este alojamiento? Esto no se puede deshacer."
 }

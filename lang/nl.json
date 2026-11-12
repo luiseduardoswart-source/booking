@@ -1668,5 +1668,7 @@
     "The number of days before arrival set here": "Het aantal dagen vóór aankomst dat hier staat",
     "The number of days before departure set here": "Het aantal dagen vóór vertrek dat hier staat",
     "The number of days after departure set here": "Het aantal dagen na vertrek dat hier staat",
-    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Mails met een aantal dagen worden één keer per dag gecontroleerd en gaan één keer per boeking uit. Niet bij boekingen die geannuleerd, een no-show of nog niet bevestigd zijn."
+    "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Mails met een aantal dagen worden één keer per dag gecontroleerd en gaan één keer per boeking uit. Niet bij boekingen die geannuleerd, een no-show of nog niet bevestigd zijn.",
+    "Delete all": "Alles verwijderen",
+    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "Alle :count foto's en video's van deze accommodatie verwijderen? Dit kan niet ongedaan worden gemaakt."
 }

@@ -160,6 +160,51 @@ class AccommodationPhotosTest extends TestCase
         Storage::disk('public')->assertExists($stays->getPathRelativeToRoot());
     }
 
+    public function test_delete_all_removes_every_photo_of_this_accommodation_only(): void
+    {
+        $first = $this->photo($this->accommodation, 'a.jpg');
+        $second = $this->photo($this->accommodation, 'b.jpg');
+        $foreign = $this->photo($this->makeAccommodation('Stadshuis'));
+
+        $this->photos()
+            ->assertSeeHtml('wire:click="deleteAll"')
+            ->call('deleteAll')
+            ->assertDontSeeHtml('wire:click="deleteAll"');
+
+        $this->assertSame([], $this->fileNames());
+        Storage::disk('public')->assertMissing($first->getPathRelativeToRoot());
+        Storage::disk('public')->assertMissing($second->getPathRelativeToRoot());
+        $this->assertNotNull(Media::find($foreign->id));
+        Storage::disk('public')->assertExists($foreign->getPathRelativeToRoot());
+    }
+
+    public function test_delete_all_is_hidden_without_photos(): void
+    {
+        $this->photos()->assertDontSeeHtml('wire:click="deleteAll"');
+    }
+
+    public function test_a_host_of_a_other_accommodation_can_not_delete_all(): void
+    {
+        $custom = $this->photo($this->accommodation);
+        $foreign = Host::create(['name' => 'Vreemd']);
+        $foreign->properties()->attach($this->makeAccommodation('Stadshuis'));
+        $user = User::factory()->create([
+            'role' => UserRole::Host, 'host_id' => $foreign->id, 'permissions' => ['accommodations' => Access::ACTIONS],
+        ]);
+        $part = $this->photos()->instance();
+
+        $this->actingAs($user);
+
+        try {
+            $part->deleteAll();
+            $this->fail('A host of another accommodation may not delete its photos.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
+
+        $this->assertNotNull(Media::find($custom->id));
+    }
+
     public function test_a_photo_of_a_other_accommodation_stays_outside_scope(): void
     {
         $foreign = $this->photo($this->makeAccommodation('Stadshuis'));

@@ -55,12 +55,26 @@
         <p class="text-sm text-gray-500 dark:text-gray-400">
             {{ \App\Models\Property::photoHint() }}
             {{ __('Give a photo a label (e.g. Bedroom, Kitchen, Pool). It appears in the top-left corner of the photo on the website. Empty = no label.') }}
+        </p>
+
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
             @if ($languages !== [])
                 <x-filament::link tag="button" type="button" icon="heroicon-o-language" wire:click="translateLabels" wire:target="translateLabels">
                     {{ __('Translate empty languages') }}
                 </x-filament::link>
             @endif
-        </p>
+            <x-filament::link
+                tag="button"
+                type="button"
+                color="danger"
+                icon="heroicon-o-trash"
+                wire:click="deleteAll"
+                wire:target="deleteAll"
+                wire:confirm="{{ __('Delete all :count photos and videos of this accommodation? This cannot be undone.', ['count' => $photos->count()]) }}"
+            >
+                {{ __('Delete all') }}
+            </x-filament::link>
+        </div>
 
         {{-- forceFallback: drag with the mouse instead of browser dragging, otherwise the box above reacts too. --}}
         <div

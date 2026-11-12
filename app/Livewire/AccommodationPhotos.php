@@ -140,6 +140,14 @@ class AccommodationPhotos extends Component
         $this->photo($mediaId)?->delete();
     }
 
+    /** All photos and videos of this accommodation at once, after one confirmation. */
+    public function deleteAll(): void
+    {
+        $this->checkPermission();
+
+        $this->property->unsetRelation('media')->clearMediaCollection('photos');
+    }
+
     private function checkPermission(): void
     {
         abort_unless(PropertyResource::canEdit($this->property), 403);

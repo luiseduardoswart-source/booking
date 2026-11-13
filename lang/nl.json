@@ -1672,5 +1672,5 @@
     "Delete all": "Alles verwijderen",
     "Delete all :count photos and videos of this accommodation? This cannot be undone.": "Alle :count foto's en video's van deze accommodatie verwijderen? Dit kan niet ongedaan worden gemaakt.",
     "Order on the page": "Volgorde op de pagina",
-    "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\".": "Sleep om de volgorde te wijzigen. De eerste :count staan op de pagina, de rest onder \"Toon alle faciliteiten\"."
+    "Drag to reorder. The first :count, with a coloured border, appear on the page; the rest under \"Show all amenities\".": "Sleep om de volgorde te wijzigen. De eerste :count, met een gekleurde rand, staan op de pagina; de rest onder \"Toon alle faciliteiten\"."
 }

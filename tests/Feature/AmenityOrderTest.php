@@ -133,6 +133,23 @@ class AmenityOrderTest extends TestCase
         $this->assertSame(['Wifi', 'Air conditioning'], $this->order());
     }
 
+    public function test_the_list_is_collapsed_and_marks_the_ones_on_the_page(): void
+    {
+        $ids = Amenity::query()->orderBy('id')->limit(Amenity::ON_THE_PAGE + 5)->pluck('id')->all();
+        $this->accommodation->syncAmenities($ids);
+
+        $html = Livewire::actingAs($this->owner())
+            ->test(AccommodationAmenities::class, ['property' => $this->accommodation])
+            ->html();
+
+        // Closed until the owner opens it, with the count in the heading.
+        $this->assertStringContainsString('x-data="{ open: false }"', $html);
+        $this->assertStringContainsString('data-amenities-toggle', $html);
+        $this->assertStringContainsString('('.count($ids).')', $html);
+        $this->assertSame(count($ids), substr_count($html, 'wire:sort:item='));
+        $this->assertSame(Amenity::ON_THE_PAGE, substr_count($html, 'data-on-page'));
+    }
+
     public function test_the_order_list_is_on_the_edit_page(): void
     {
         Livewire::actingAs($this->owner())

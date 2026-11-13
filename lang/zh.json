@@ -1660,5 +1660,5 @@
     "Delete all": "全部删除",
     "Delete all :count photos and videos of this accommodation? This cannot be undone.": "删除此住宿的全部 :count 张照片和视频？此操作无法撤销。",
     "Order on the page": "页面上的顺序",
-    "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\".": "拖动以调整顺序。前 :count 项显示在页面上，其余在“显示全部设施”中。"
+    "Drag to reorder. The first :count, with a coloured border, appear on the page; the rest under \"Show all amenities\".": "拖动以调整顺序。前 :count 项（彩色边框）显示在页面上，其余在“显示全部设施”中。"
 }

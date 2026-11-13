@@ -1660,5 +1660,5 @@
     "Delete all": "Alle löschen",
     "Delete all :count photos and videos of this accommodation? This cannot be undone.": "Alle :count Fotos und Videos dieser Unterkunft löschen? Dies kann nicht rückgängig gemacht werden.",
     "Order on the page": "Reihenfolge auf der Seite",
-    "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\".": "Zum Sortieren ziehen. Die ersten :count stehen auf der Seite, der Rest unter \"Alle Ausstattungsmerkmale anzeigen\"."
+    "Drag to reorder. The first :count, with a coloured border, appear on the page; the rest under \"Show all amenities\".": "Zum Sortieren ziehen. Die ersten :count, mit farbigem Rand, stehen auf der Seite; der Rest unter \"Alle Ausstattungsmerkmale anzeigen\"."
 }

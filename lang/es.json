@@ -1658,5 +1658,7 @@
     "The number of days after departure set here": "El número de días después de la salida indicado aquí",
     "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Los correos con un número de días se comprueban una vez al día y se envían una vez por reserva. No para reservas canceladas, no presentadas o aún no confirmadas.",
     "Delete all": "Eliminar todo",
-    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "¿Eliminar las :count fotos y vídeos de este alojamiento? Esto no se puede deshacer."
+    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "¿Eliminar las :count fotos y vídeos de este alojamiento? Esto no se puede deshacer.",
+    "Order on the page": "Orden en la página",
+    "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\".": "Arrastra para reordenar. Los primeros :count aparecen en la página, el resto en \"Mostrar los servicios\"."
 }

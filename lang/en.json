@@ -1670,5 +1670,7 @@
     "The number of days after departure set here": "The number of days after departure set here",
     "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.",
     "Delete all": "Delete all",
-    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "Delete all :count photos and videos of this accommodation? This cannot be undone."
+    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "Delete all :count photos and videos of this accommodation? This cannot be undone.",
+    "Order on the page": "Order on the page",
+    "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\".": "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\"."
 }

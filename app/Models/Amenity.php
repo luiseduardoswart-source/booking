@@ -256,8 +256,9 @@ class Amenity extends Model
     public const ON_THE_PAGE = 10;
 
     /**
-     * Amenities per category, in the picker's order and with the
-     * names alphabetical in the current language. Empty categories are dropped.
+     * Amenities per category, in the picker's order of categories; within a
+     * category in the order given (the accommodation's own order, see
+     * Property::amenities()). Empty categories are dropped.
      *
      * @param  iterable<Amenity>  $amenities
      * @return array<string, \Illuminate\Support\Collection<int, Amenity>> label => amenities
@@ -269,7 +270,7 @@ class Amenity extends Model
 
         foreach (self::categoryOptions() as $key => $label) {
             if ($groups->has($key)) {
-                $perCategory[$label] = $groups[$key]->sortBy(fn (Amenity $amenity) => $amenity->localizedName(), SORT_NATURAL | SORT_FLAG_CASE)->values();
+                $perCategory[$label] = $groups[$key]->values();
             }
         }
 

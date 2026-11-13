@@ -1658,5 +1658,7 @@
     "The number of days after departure set here": "此处设置的离店后天数",
     "Emails with a number of days are checked once a day and go out once per booking. Not for bookings that are cancelled, a no-show or not yet confirmed.": "带天数的邮件每天检查一次，每个预订只发送一次。已取消、未入住或尚未确认的预订不会发送。",
     "Delete all": "全部删除",
-    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "删除此住宿的全部 :count 张照片和视频？此操作无法撤销。"
+    "Delete all :count photos and videos of this accommodation? This cannot be undone.": "删除此住宿的全部 :count 张照片和视频？此操作无法撤销。",
+    "Order on the page": "页面上的顺序",
+    "Drag to reorder. The first :count appear on the page, the rest under \"Show all amenities\".": "拖动以调整顺序。前 :count 项显示在页面上，其余在“显示全部设施”中。"
 }

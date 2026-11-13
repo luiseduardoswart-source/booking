@@ -7,6 +7,7 @@ use App\Filament\Forms\Components\AmenitiesPicker;
 use App\Filament\Resources\Properties\PropertyResource;
 use App\Filament\Support\RichEditors;
 use App\Filament\Support\Switches;
+use App\Livewire\AccommodationAmenities;
 use App\Filament\Support\TranslationFields;
 use App\Livewire\NightlyPricesCalendar;
 use App\Models\Amenity;
@@ -135,7 +136,10 @@ class PropertyForm
             return false;
         }
 
-        $livewire->getRecord()->amenities()->sync(Amenity::query()->whereKey($chosen)->pluck('id'));
+        // In the order they were ticked; the order list below the picker shows the change.
+        $livewire->getRecord()->syncAmenities(Amenity::query()->whereKey($chosen)->pluck('id')
+            ->sortBy(fn (int $id) => array_search((string) $id, array_map('strval', $chosen), true))->values()->all());
+        $livewire->dispatch(AccommodationAmenities::CHANGED);
 
         return true;
     }
@@ -679,6 +683,10 @@ class PropertyForm
                                     ->label(__('Bathrooms'))
                                     ->numeric(),
                                 self::amenitiesPicker(),
+                                LivewireComponent::make(AccommodationAmenities::class, fn (Property $record) => ['property' => $record])
+                                    ->key('amenities_order')
+                                    ->visible(fn (?Property $record) => $record !== null && ! $record->is_master)
+                                    ->columnSpanFull(),
                                 ...self::locationHostFields(),
                             ]),
 

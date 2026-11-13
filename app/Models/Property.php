@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -645,9 +646,74 @@ class Property extends Model implements HasMedia
         'photo' => 'Photo',
     ];
 
+    /**
+     * In the order the owner dragged them (Amenities on the accommodation); one
+     * without a position yet (just added via Create or a seeder) comes last.
+     */
     public function amenities(): BelongsToMany
     {
-        return $this->belongsToMany(Amenity::class);
+        return $this->belongsToMany(Amenity::class)
+            ->withPivot('position')
+            ->orderByRaw('amenity_property.position is null')
+            ->orderBy('amenity_property.position')
+            ->orderBy('amenities.id');
+    }
+
+    /**
+     * Saves the chosen amenities: the ones that stay keep their place, new ones
+     * are added at the end.
+     *
+     * @param  array<int, int>  $amenityIds
+     */
+    public function syncAmenities(array $amenityIds): void
+    {
+        $current = $this->amenities()->pluck('amenities.id')->all();
+        $order = [
+            ...array_values(array_intersect($current, $amenityIds)),
+            ...array_values(array_diff($amenityIds, $current)),
+        ];
+
+        $this->amenities()->sync($order);
+        $this->orderAmenities($order);
+    }
+
+    /**
+     * Puts one amenity of this accommodation at a new place (0 = first).
+     */
+    public function moveAmenity(int $amenityId, int $position): void
+    {
+        $order = $this->amenities()->pluck('amenities.id')->all();
+
+        if (! in_array($amenityId, $order, true)) {
+            return;
+        }
+
+        $order = array_values(array_diff($order, [$amenityId]));
+        array_splice($order, max(0, $position), 0, [$amenityId]);
+
+        $this->orderAmenities($order);
+    }
+
+    /**
+     * Positions 1, 2, 3 … in one query.
+     *
+     * @param  array<int, int>  $amenityIds  already linked to this accommodation
+     */
+    private function orderAmenities(array $amenityIds): void
+    {
+        if ($amenityIds === []) {
+            return;
+        }
+
+        DB::table('amenity_property')->upsert(
+            array_map(fn (int $id, int $index) => [
+                'property_id' => $this->getKey(), 'amenity_id' => $id, 'position' => $index + 1,
+            ], $amenityIds, array_keys($amenityIds)),
+            ['property_id', 'amenity_id'],
+            ['position'],
+        );
+
+        $this->unsetRelation('amenities');
     }
 
     public function rateSeasons(): HasMany

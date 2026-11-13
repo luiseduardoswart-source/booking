@@ -81,7 +81,8 @@ class AmenitiesOnThePageTest extends TestCase
     public function test_the_window_groups_per_category_in_the_fixed_order(): void
     {
         $names = ['Wifi', 'Shampoo', 'Hair dryer', 'Kitchen', 'Smoke detector'];
-        $amenities = Amenity::query()->whereIn('name', $names)->get();
+        $amenities = Amenity::query()->whereIn('name', $names)->get()
+            ->sortBy(fn (Amenity $amenity) => array_search($amenity->name, $names, true))->values();
         $this->assertCount(count($names), $amenities);
 
         app()->setLocale('nl');
@@ -89,8 +90,9 @@ class AmenitiesOnThePageTest extends TestCase
 
         // Bathroom, Safety, Internet, Kitchen: as in the picker in the admin.
         $this->assertSame([__('Bathroom'), __('Home safety'), __('Internet and office'), __('Kitchen and dining')], array_keys($groups));
+        // Within a category the given order (the accommodation's own), not the alphabet.
         $this->assertSame(
-            ['Haardroger', 'Shampoo'],
+            ['Shampoo', 'Haardroger'],
             $groups[__('Bathroom')]->map->localizedName()->all(),
         );
     }

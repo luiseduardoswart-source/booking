@@ -37,12 +37,12 @@ enum MailType: string
     public function moment(): string
     {
         return match ($this) {
-            self::Confirmation => 'Right after booking',
-            self::PaymentReceived => 'Right after each payment',
+            self::Confirmation => 'After the first successful payment, which it names; right away for a booking made in the admin or without online payment',
+            self::PaymentReceived => 'After each later payment, such as the balance or a separately paid deposit',
             self::BalancePayment => 'The number of days before arrival set here, if only the down payment has been paid',
-            self::Deposit => 'Right after booking, or the number of days before arrival set in the Payments tab under Deposit',
+            self::Deposit => 'The number of days before arrival set in the Payments tab under Deposit. Collected right after booking: paid along with the first payment, so only for bookings you make or confirm yourself',
             self::PaymentRequest => 'When you send it from a booking',
-            self::Verified => 'Right after a successful identity check',
+            self::Verified => 'After a successful identity check, with the payment link, if the guest left the site before paying',
             self::Checkin => 'The number of days before arrival set here',
             self::Checkout => 'The number of days before departure set here',
             self::Review => 'The number of days after departure set here',

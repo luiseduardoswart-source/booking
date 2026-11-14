@@ -8,6 +8,11 @@
 {{ $extraText }}
 
 @endif
+{{-- Sent after the first payment: that payment, so no separate "payment received". --}}
+@if ($payment)
+{{ __('We have received your payment:') }} **{{ $payment->kind() }}** — {{ \App\Support\Money::format($payment->amount_cents, $booking->currency) }}
+
+@endif
 **{{ $property->localized('name') }}**<br>
 {{ __('Check-in') }}: **{{ $booking->arrival_date->translatedFormat('l j F Y') }}**<br>
 {{ __('Check-out') }}: **{{ $booking->departure_date->translatedFormat('l j F Y') }}**<br>

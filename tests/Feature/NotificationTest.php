@@ -54,31 +54,134 @@ class NotificationTest extends TestCase
         );
     }
 
-    public function test_new_booking_sends_confirmation_mail(): void
+    private function confirmationsFor(Booking $booking): int
+    {
+        return Mail::queued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::Confirmation
+            && $mail->booking->is($booking))->count();
+    }
+
+    private function pay(Booking $booking, PaymentType $type): void
+    {
+        $engine = app(PaymentEngine::class);
+        $payment = $engine->createPayment($booking->refresh(), $type);
+        $this->provider->setStatus($payment->provider_payment_id, ProviderPaymentStatus::Paid);
+        $engine->syncFromProvider($payment);
+    }
+
+    public function test_the_confirmation_goes_out_once_the_payment_has_succeeded(): void
     {
         $booking = $this->makeBooking();
 
-        Mail::assertQueued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::Confirmation
-            && $mail->booking->is($booking)
-            && $mail->hasTo('jan@example.com'));
+        // Booked but not paid (and, if required, not verified yet): no confirmation.
+        $this->assertSame(0, $this->confirmationsFor($booking));
 
+        $this->pay($booking, PaymentType::DownPayment);
+
+        $this->assertSame(1, $this->confirmationsFor($booking));
+        Mail::assertQueued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::Confirmation
+            && $mail->hasTo('jan@example.com'));
         $this->assertDatabaseHas('sent_mails', [
             'booking_id' => $booking->id,
             'mail_type' => MailType::Confirmation->value,
             'status' => 'sent',
         ]);
+
+        // The balance later: no second confirmation.
+        $this->pay($booking, PaymentType::Balance);
+        $this->assertSame(1, $this->confirmationsFor($booking));
     }
 
-    public function test_payment_sends_payment_received_mail(): void
+    public function test_with_nothing_to_pay_online_the_confirmation_goes_out_right_away(): void
+    {
+        // A provider that cannot make a payment: the guest lands on the confirmation page.
+        $this->app->instance(PaymentProvider::class, new class extends FakeProvider
+        {
+            public function create(\App\Models\Payment $payment, string $redirectUrl): \App\Payments\ProviderPaymentResult
+            {
+                throw new \RuntimeException('No payments possible');
+            }
+        });
+        $booking = $this->makeBooking();
+
+        $url = app(PaymentEngine::class)->checkoutOrConfirmationUrl($booking);
+
+        $this->assertStringContainsString('/confirmation', $url);
+        $this->assertSame(1, $this->confirmationsFor($booking));
+
+        // Back on the page again: not twice.
+        app(PaymentEngine::class)->checkoutOrConfirmationUrl($booking);
+        $this->assertSame(1, $this->confirmationsFor($booking));
+    }
+
+    public function test_a_cancelled_booking_gets_no_confirmation(): void
     {
         $booking = $this->makeBooking();
-        $engine = app(PaymentEngine::class);
-        $payment = $engine->createPayment($booking, PaymentType::DownPayment);
+        $booking->update(['status' => BookingStatus::Cancelled]);
 
-        $this->provider->setStatus($payment->provider_payment_id, ProviderPaymentStatus::Paid);
-        $engine->syncFromProvider($payment);
+        app(PaymentEngine::class)->checkoutOrConfirmationUrl($booking);
 
-        Mail::assertQueued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::PaymentReceived);
+        $this->assertSame(0, $this->confirmationsFor($booking));
+    }
+
+    public function test_a_booking_made_in_the_admin_still_gets_its_confirmation_at_once(): void
+    {
+        $property = Property::create([
+            'name' => 'Beheerhuis', 'slug' => 'beheerhuis', 'type' => 'holiday_home', 'max_guests' => 4,
+            'active' => true, 'base_price_cents' => 10000,
+        ]);
+        \Livewire\Livewire::actingAs(User::factory()->create(['role' => \App\Enums\UserRole::Administrator]));
+
+        \Livewire\Livewire::test(\App\Filament\Resources\Bookings\Pages\CreateBooking::class)
+            ->fillForm([
+                'property_id' => $property->id,
+                'arrival_date' => today()->addDays(10)->toDateString(),
+                'departure_date' => today()->addDays(13)->toDateString(),
+                'guests' => 2,
+                'guest_name' => 'Piet Telefoon',
+                'guest_email' => 'piet@example.com',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $booking = Booking::query()->where('guest_email', 'piet@example.com')->firstOrFail();
+        $this->assertSame(1, $this->confirmationsFor($booking));
+    }
+
+    public function test_the_first_payment_is_in_the_confirmation_and_later_ones_get_their_own_email(): void
+    {
+        $booking = $this->makeBooking();
+
+        // First payment: one email, the confirmation, that names the payment and carries both PDFs.
+        $this->pay($booking, PaymentType::DownPayment);
+
+        Mail::assertQueued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::Confirmation
+            && $mail->payment?->type === PaymentType::DownPayment);
+        Mail::assertNotQueued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::PaymentReceived);
+
+        $confirmation = Mail::queued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::Confirmation)->first();
+        $this->assertSame(
+            ["confirmation-{$booking->booking_number}.pdf", "payment_receipt-{$booking->booking_number}.pdf"],
+            array_map(fn ($attachment) => $attachment->as, $confirmation->attachments()),
+        );
+        $html = $confirmation->locale('en')->render();
+        $this->assertStringContainsString('We have received your payment:', $html);
+        $this->assertStringContainsString(\App\Support\Money::format($booking->refresh()->down_payment_cents, $booking->currency), $html);
+
+        // The balance later: "payment received", no second confirmation.
+        $this->pay($booking, PaymentType::Balance);
+
+        Mail::assertQueued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::PaymentReceived
+            && $mail->payment?->type === PaymentType::Balance);
+        $this->assertSame(1, $this->confirmationsFor($booking));
+    }
+
+    public function test_a_confirmation_without_a_payment_names_none_and_carries_only_its_own_pdf(): void
+    {
+        $booking = $this->makeBooking();
+        $mail = new BookingMail($booking, MailType::Confirmation);
+
+        $this->assertCount(1, $mail->attachments());
+        $this->assertStringNotContainsString('We have received your payment:', $mail->locale('en')->render());
     }
 
     public function test_scheduled_command_sends_checkin_mail_and_is_idempotent(): void

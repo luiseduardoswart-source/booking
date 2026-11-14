@@ -35,6 +35,12 @@ class AiChatTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * The button itself. Not the bare class name: the accommodation page always
+     * has a style rule for it (lifting it above the mobile Reserve bar).
+     */
+    private const CHAT_BUTTON = 'id="sc-button"';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -83,16 +89,16 @@ class AiChatTest extends TestCase
     public function test_there_is_no_chat_without_switch_or_key(): void
     {
         $this->accommodation();
-        $this->get('/beach-house')->assertOk()->assertDontSee('sc-button');
+        $this->get('/beach-house')->assertOk()->assertDontSee(self::CHAT_BUTTON, false);
         $this->question([['role' => 'user', 'content' => 'Hoi']])->assertNotFound();
 
         Setting::set('chat', 'on', '1');
         Setting::set('chat', 'service', 'claude');
-        $this->get('/beach-house')->assertDontSee('sc-button');
+        $this->get('/beach-house')->assertDontSee(self::CHAT_BUTTON, false);
         $this->question([['role' => 'user', 'content' => 'Hoi']])->assertNotFound();
 
         Setting::set('ai', 'claude_api_key', 'test-key');
-        $this->get('/beach-house')->assertSee('sc-button')->assertSee(json_encode(route('chat')), false);
+        $this->get('/beach-house')->assertSee(self::CHAT_BUTTON, false)->assertSee(json_encode(route('chat')), false);
     }
 
     public function test_the_chat_answers_with_knowledge_of_the_site_and_records_the_costs(): void
@@ -187,15 +193,15 @@ class AiChatTest extends TestCase
         Setting::set('chat', 'monthly_limit', '5');
         AiUsage::create(['feature' => 'chat', 'provider' => 'claude', 'model' => 'x', 'cost_eur' => 4.99]);
 
-        $this->get('/beach-house')->assertSee('sc-button');
+        $this->get('/beach-house')->assertSee(self::CHAT_BUTTON, false);
 
         AiUsage::create(['feature' => 'chat', 'provider' => 'claude', 'model' => 'x', 'cost_eur' => 0.02]);
-        $this->get('/beach-house')->assertDontSee('sc-button');
+        $this->get('/beach-house')->assertDontSee(self::CHAT_BUTTON, false);
         $this->question([['role' => 'user', 'content' => 'Hoi']])->assertNotFound();
 
         // Last month does not count.
         AiUsage::query()->update(['created_at' => now()->subMonthNoOverflow()->startOfMonth()]);
-        $this->get('/beach-house')->assertSee('sc-button');
+        $this->get('/beach-house')->assertSee(self::CHAT_BUTTON, false);
     }
 
     public function test_openai_and_gemini_get_the_conversation_in_their_own_form(): void

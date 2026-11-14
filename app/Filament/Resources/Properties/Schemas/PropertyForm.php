@@ -1207,7 +1207,7 @@ class PropertyForm
 
                                 Section::make(__('ID verification'))
                                     ->components([
-                                        self::inheritToggle('id_required', __('Ask guests to verify their identity after booking'), __('Via Stripe Identity — requires a Stripe secret key; cost per verification')),
+                                        self::inheritToggle('id_required', __('Ask guests to verify their identity'), __('Via Stripe Identity — requires a Stripe secret key; cost per verification')),
                                     ]),
 
                                 Section::make(__('Cancellation policy'))
@@ -1465,6 +1465,11 @@ class PropertyForm
                         fn (string $path, string $locale) => RichEditor::make($path)
                             ->label(__(self::MAIL_TEXTS[explode('.', $path)[1]]))
                             ->hintAction(self::standardMailAction(MailType::from(explode('.', $path)[1]), $locale))
+                            // Deposit with the first payment: this email is then only the fallback.
+                            ->helperText(fn (?Property $record): ?string => explode('.', $path)[1] === MailType::Deposit->value
+                                && ($record ?? self::default())->depositAtBooking()
+                                    ? __('The deposit is paid along with the first payment, so this email only goes to bookings you make or confirm yourself.')
+                                    : null)
                             ->toolbarButtons([['bold', 'italic', 'link'], ['bulletList', 'orderedList'], ['mergeTags'], ['undo', 'redo']])
                             ->mergeTags(fn (): array => MailPlaceholders::labels())
                             // Empty stays empty, so the default's text keeps applying.

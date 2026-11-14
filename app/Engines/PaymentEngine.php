@@ -179,6 +179,12 @@ class PaymentEngine
                 report($e);
             }
 
+            // No online payment now: the booking stands as it is, so the guest
+            // gets the confirmation here. Not for a cancelled booking.
+            if ($booking->status !== BookingStatus::Cancelled) {
+                $this->notifications->sendOnce($booking, MailType::Confirmation);
+            }
+
             return URL::signedRoute('bookings.confirmation', $booking);
         }
     }
@@ -228,7 +234,17 @@ class PaymentEngine
         if ($newStatus === PaymentTransactionStatus::Paid) {
             $this->applyPaymentToBooking($payment->booking);
             $booking = $payment->booking->refresh();
-            $this->notifications->send($booking, MailType::PaymentReceived, $payment);
+
+            // The first paid stay payment confirms the booking: only now the
+            // confirmation goes out (any ID check came before the payment), and
+            // it names this payment and carries its receipt. Later payments
+            // get their own "payment received", so one email per payment.
+            $confirmed = $payment->type !== PaymentType::Deposit
+                && $this->notifications->sendOnce($booking, MailType::Confirmation, $payment);
+
+            if (! $confirmed) {
+                $this->notifications->send($booking, MailType::PaymentReceived, $payment);
+            }
 
             // Deposit right after booking: the request goes out as soon as the stay
             // is paid for (the payment page shows the button as well).

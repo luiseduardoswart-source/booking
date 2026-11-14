@@ -155,6 +155,30 @@ class StandardMailTest extends TestCase
             ->assertMountedActionModalSeeHtml(e($this->previewUrl(Property::master(), 'review', 'en')));
     }
 
+    public function test_the_deposit_text_says_when_it_still_goes_out_if_collected_with_the_first_payment(): void
+    {
+        Livewire::actingAs(User::factory()->create(['role' => UserRole::Administrator]));
+        $field = 'own_texts.mail_texts_nl.mail_texts.deposit.nl';
+        $note = __('The deposit is paid along with the first payment, so this email only goes to bookings you make or confirm yourself.');
+
+        $this->accommodation->update(['deposit_moment' => Property::DEPOSIT_AT_BOOKING]);
+        Livewire::test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()])
+            ->assertFormFieldExists($field)
+            ->assertSee($note);
+
+        // Before arrival: the email is the normal way to collect it, no note.
+        $this->accommodation->update(['deposit_moment' => Property::DEPOSIT_BEFORE_ARRIVAL]);
+        Livewire::test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()])
+            ->assertFormFieldExists($field)
+            ->assertDontSee($note);
+
+        // Empty on the accommodation: it follows the default.
+        Property::master()->update(['deposit_moment' => Property::DEPOSIT_AT_BOOKING]);
+        $this->accommodation->update(['deposit_moment' => null]);
+        Livewire::test(EditProperty::class, ['record' => $this->accommodation->getRouteKey()])
+            ->assertSee($note);
+    }
+
     public function test_the_preview_is_the_email_with_its_markdown_worked_out(): void
     {
         $this->actingAs(User::factory()->create(['role' => UserRole::Administrator]));

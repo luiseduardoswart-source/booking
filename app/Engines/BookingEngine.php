@@ -5,7 +5,6 @@ namespace App\Engines;
 use App\Engines\Exceptions\InvalidStatusTransitionException;
 use App\Engines\Exceptions\UnavailableForBookingException;
 use App\Enums\BookingStatus;
-use App\Enums\MailType;
 use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\Property;
@@ -28,7 +27,6 @@ class BookingEngine
     public function __construct(
         private readonly AvailabilityEngine $availability,
         private readonly PricingEngine $pricing,
-        private readonly NotificationEngine $notifications,
     ) {}
 
     /**
@@ -120,8 +118,9 @@ class BookingEngine
             return $booking;
         });
 
-        // Outside the transaction: the confirmation mail to the guest.
-        $this->notifications->send($booking, MailType::Confirmation);
+        // No confirmation mail here: a guest on the site gets it once the
+        // payment has succeeded (PaymentEngine), so after any ID check that
+        // comes before it. A booking made in the admin sends it itself.
 
         return $booking;
     }

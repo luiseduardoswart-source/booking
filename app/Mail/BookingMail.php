@@ -52,12 +52,21 @@ class BookingMail extends Mailable implements ShouldQueue
     }
 
     /**
-     * PDF attachments: the confirmation with the booking mail, the proof of
+     * PDF attachments: the confirmation with the booking mail (plus the receipt
+     * when it comes with the first payment), the proof of
      * payment with the payment mail.
      */
     public function attachments(): array
     {
         $documents = app(\App\Engines\DocumentEngine::class);
+
+        // The confirmation that comes with the first payment carries its receipt too.
+        $receipt = $this->payment === null ? [] : [
+            \Illuminate\Mail\Mailables\Attachment::fromData(
+                fn () => $documents->receipt($this->payment),
+                "payment_receipt-{$this->booking->booking_number}.pdf",
+            )->withMime('application/pdf'),
+        ];
 
         return match ($this->type) {
             MailType::Confirmation => [
@@ -65,13 +74,9 @@ class BookingMail extends Mailable implements ShouldQueue
                     fn () => $documents->confirmation($this->booking),
                     "confirmation-{$this->booking->booking_number}.pdf",
                 )->withMime('application/pdf'),
+                ...$receipt,
             ],
-            MailType::PaymentReceived => $this->payment === null ? [] : [
-                \Illuminate\Mail\Mailables\Attachment::fromData(
-                    fn () => $documents->receipt($this->payment),
-                    "payment_receipt-{$this->booking->booking_number}.pdf",
-                )->withMime('application/pdf'),
-            ],
+            MailType::PaymentReceived => $receipt,
             default => [],
         };
     }

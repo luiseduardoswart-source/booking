@@ -93,7 +93,8 @@ final class MailPreview
     private static function examplePayment(Booking $booking, MailType $type): ?Payment
     {
         $paymentType = match ($type) {
-            MailType::PaymentReceived, MailType::Verified => PaymentType::DownPayment,
+            // The confirmation goes out with the first payment and names it.
+            MailType::Confirmation, MailType::PaymentReceived, MailType::Verified => PaymentType::DownPayment,
             MailType::PaymentRequest => $booking->paysInFull() ? PaymentType::DownPayment : PaymentType::Balance,
             default => null,
         };

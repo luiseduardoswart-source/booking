@@ -35,7 +35,7 @@ class PaymentEngineTest extends TestCase
         parent::setUp();
         $this->provider = new FakeProvider;
         $notifications = new \App\Engines\NotificationEngine;
-        $this->bookings = new BookingEngine(new AvailabilityEngine, new PricingEngine, $notifications);
+        $this->bookings = new BookingEngine(new AvailabilityEngine, new PricingEngine);
         $this->engine = new PaymentEngine($this->provider, $this->bookings, $notifications);
     }
 

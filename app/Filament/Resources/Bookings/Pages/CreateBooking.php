@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Bookings\Pages;
 
 use App\Engines\BookingEngine;
 use App\Engines\Exceptions\UnavailableForBookingException;
+use App\Engines\NotificationEngine;
+use App\Enums\MailType;
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Models\Property;
 use Carbon\CarbonImmutable;
@@ -23,7 +25,7 @@ class CreateBooking extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         try {
-            return app(BookingEngine::class)->create(
+            $booking = app(BookingEngine::class)->create(
                 property: Property::findOrFail($data['property_id']),
                 arrival: CarbonImmutable::parse($data['arrival_date']),
                 departure: CarbonImmutable::parse($data['departure_date']),
@@ -39,6 +41,12 @@ class CreateBooking extends CreateRecord
                 ],
                 notes: $data['notes'] ?? null,
             );
+
+            // Made by the admin (e.g. by phone): the guest is told straight away;
+            // any payment is arranged separately.
+            app(NotificationEngine::class)->send($booking, MailType::Confirmation);
+
+            return $booking;
         } catch (UnavailableForBookingException $e) {
             Notification::make()
                 ->title(__('Not available'))

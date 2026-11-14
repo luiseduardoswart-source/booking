@@ -23,7 +23,7 @@ class BookingEngineTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->engine = new BookingEngine(new AvailabilityEngine, new PricingEngine, new \App\Engines\NotificationEngine);
+        $this->engine = new BookingEngine(new AvailabilityEngine, new PricingEngine);
     }
 
     private function makeProperty(array $overrides = []): Property

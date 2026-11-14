@@ -197,4 +197,14 @@ class IdentityVerificationTest extends TestCase
         $mailWithout = new BookingMail($booking->refresh(), MailType::Confirmation);
         $this->assertStringNotContainsString('/verification', $mailWithout->render());
     }
+
+    public function test_the_setting_asks_plainly_whether_guests_verify_their_identity(): void
+    {
+        \Livewire\Livewire::actingAs(\App\Models\User::factory()->create(['role' => \App\Enums\UserRole::Administrator]));
+
+        // Yes or no: not "after booking", because it happens before the payment.
+        \Livewire\Livewire::test(\App\Filament\Resources\Properties\Pages\EditDefaults::class)
+            ->assertSee(__('Ask guests to verify their identity'))
+            ->assertDontSee('verify their identity after booking');
+    }
 }

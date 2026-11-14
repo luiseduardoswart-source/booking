@@ -662,12 +662,6 @@ class PropertyForm
                                         && PropertyResource::canEdit($livewire->getRecord())
                                         && $livewire->getRecord()->update(['active' => $on]),
                                 ),
-                                TextInput::make('max_guests')
-                                    ->label(__('Max. guests'))
-                                    ->required()
-                                    ->numeric()
-                                    ->minValue(1)
-                                    ->default(2),
                                 TextInput::make('bedrooms')
                                     ->label(__('Bedrooms'))
                                     ->numeric(),
@@ -911,7 +905,11 @@ class PropertyForm
                                             ->label(__('Guests included in the price'))
                                             ->numeric()
                                             ->minValue(1)
-                                            ->hint(__('Empty = no extra guest fee')),
+                                            // On an accommodation empty follows the default; only without a default there is no fee.
+                                            ->placeholder(fn (?Property $record) => $record?->is_master ? null : self::default()->included_guests)
+                                            ->hint(fn (?Property $record) => $record?->is_master || self::default()->included_guests === null
+                                                ? __('Empty = no extra guest fee')
+                                                : __('Empty = follow the default')),
                                         self::euroInput('extra_guest_fee_cents', __('Fee per extra guest per night')),
                                         self::euroInput('pet_fee_cents', __('Pet fee'))
                                             ->hint(__('One-time, per pet')),
@@ -1110,6 +1108,19 @@ class PropertyForm
                                             ->minValue(1)
                                             ->suffix(__('months'))
                                             ->visible(fn (callable $get) => $get('booking_window_preference') === 'adjusted'),
+                                    ]),
+
+                                // What the house sleeps: its own number, so not on the defaults screen.
+                                Section::make(__('Guests'))
+                                    ->visible(fn (?Property $record) => ! $record?->is_master)
+                                    ->columns(3)
+                                    ->components([
+                                        TextInput::make('max_guests')
+                                            ->label(__('Max. guests'))
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->default(2),
                                     ]),
 
                                 Section::make(__('Pets and infants'))

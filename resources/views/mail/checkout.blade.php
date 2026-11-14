@@ -4,7 +4,10 @@
 
 {{ __('Dear :name,', ['name' => $guestName]) }}
 
-{{ __('Tomorrow your stay at :accommodation comes to an end.', ['accommodation' => $property->localized('name')]) }}
+{{ __('Your stay at :accommodation ends on :date.', [
+    'accommodation' => $property->localized('name'),
+    'date' => $booking->departure_date->translatedFormat('l j F Y'),
+]) }}
 
 @if (!empty($extraText))
 {{ $extraText }}

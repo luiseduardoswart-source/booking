@@ -4,12 +4,12 @@
 
 {{ __('Dear :name,', ['name' => $guestName]) }}
 
-{{ __('We have received your payment:') }}
-
 @if (!empty($extraText))
 {{ $extraText }}
 
 @endif
+{{ __('We have received your payment:') }}
+
 @if ($payment)
 **{{ $payment->kind() }}** — {{ \App\Support\Money::format($payment->amount_cents, $booking->currency) }}
 @endif

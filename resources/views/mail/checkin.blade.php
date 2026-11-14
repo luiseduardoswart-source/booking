@@ -13,14 +13,18 @@
 {{ $extraText }}
 
 @endif
+{{-- Each on a paragraph of its own: Markdown joins lines that follow each other. --}}
 @if ($property->address)
 **{{ __('Address') }}:** {{ $property->address }}, {{ $property->postal_code }} {{ $property->city }}
+
 @endif
 @if ($property->effective('check_in_from'))
-**{{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}**@if ($property->effective('check_in_until')) ({{ __('until :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_until'))->format('H:i')]) }})@endif
+**{{ __('Check-in from :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_from'))->format('H:i')]) }}**{{ $property->effective('check_in_until') ? ' ('.__('until :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_in_until'))->format('H:i')]).')' : '' }}
+
 @endif
 @if ($property->effective('check_out_until'))
 **{{ __('Check-out: :time', ['time' => \Illuminate\Support\Carbon::parse($property->effective('check_out_until'))->format('H:i')]) }}**
+
 @endif
 
 @if ($property->effectiveLocalized('house_rules'))

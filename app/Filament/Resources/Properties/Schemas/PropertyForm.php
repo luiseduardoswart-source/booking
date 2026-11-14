@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Properties\Schemas;
 
 use App\Enums\CancellationPolicy;
+use App\Enums\MailType;
 use App\Filament\Forms\Components\AmenitiesPicker;
 use App\Filament\Resources\Properties\PropertyResource;
 use App\Filament\Support\RichEditors;
@@ -1461,14 +1462,39 @@ class PropertyForm
                     ->components(self::languageLists(
                         'mail_texts',
                         array_map(fn (string $type) => "mail_texts.{$type}", array_keys(self::MAIL_TEXTS)),
-                        fn (string $path) => RichEditor::make($path)
+                        fn (string $path, string $locale) => RichEditor::make($path)
                             ->label(__(self::MAIL_TEXTS[explode('.', $path)[1]]))
+                            ->hintAction(self::standardMailAction(MailType::from(explode('.', $path)[1]), $locale))
                             ->toolbarButtons([['bold', 'italic', 'link'], ['bulletList', 'orderedList'], ['mergeTags'], ['undo', 'redo']])
                             ->mergeTags(fn (): array => MailPlaceholders::labels())
                             // Empty stays empty, so the default's text keeps applying.
                             ->dehydrateStateUsing(fn ($state) => TranslationFields::textOrNull($state)),
                     )),
             ]);
+    }
+
+    /**
+     * Info button at a custom mail text: the standard email in the language of
+     * the tab, for an example booking, with a marker where the custom text goes.
+     */
+    private static function standardMailAction(MailType $type, string $locale): Action
+    {
+        return Action::make('standard_mail')
+            ->label(__('Show the standard email'))
+            ->icon(Heroicon::OutlinedInformationCircle)
+            ->color('gray')
+            ->link()
+            ->modalHeading(fn () => __(self::MAIL_TEXTS[$type->value]))
+            ->modalDescription(__('What the guest receives without own text, for an example booking. Your own text goes where the marker is.'))
+            ->modalContent(fn (?Property $record) => view('filament.properties.standard-mail', [
+                'url' => route('filament.admin.mail-preview', [
+                    'property' => ($record ?? self::default())->getKey(),
+                    'type' => $type->value,
+                    'locale' => $locale,
+                ]),
+            ]))
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel(__('Close'));
     }
 
     /** @return array<int, Section|Select> */

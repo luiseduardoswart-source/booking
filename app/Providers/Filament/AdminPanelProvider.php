@@ -87,7 +87,12 @@ class AdminPanelProvider extends PanelProvider
                         ->url(fn () => route('filament.admin.language', $locale)))
                     ->all()
             ))
-            ->authenticatedRoutes(fn () => Route::get('language/{locale}', AdminLanguageController::class)->name('language'))
+            ->authenticatedRoutes(function () {
+                Route::get('language/{locale}', AdminLanguageController::class)->name('language');
+                Route::get('mail-preview/{property}/{type}/{locale}', \App\Http\Controllers\Admin\MailPreviewController::class)
+                    ->whereNumber('property')
+                    ->name('mail-preview');
+            })
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

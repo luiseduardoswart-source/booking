@@ -8,9 +8,9 @@
 {{ $extraText }}
 
 @endif
-**{{ $property->localized('name') }}**
-{{ __('Check-in') }}: **{{ $booking->arrival_date->translatedFormat('l j F Y') }}**
-{{ __('Check-out') }}: **{{ $booking->departure_date->translatedFormat('l j F Y') }}**
+**{{ $property->localized('name') }}**<br>
+{{ __('Check-in') }}: **{{ $booking->arrival_date->translatedFormat('l j F Y') }}**<br>
+{{ __('Check-out') }}: **{{ $booking->departure_date->translatedFormat('l j F Y') }}**<br>
 {{ __('Guests') }}: **{{ $booking->guests }}**
 
 ## {{ __('Price breakdown') }}

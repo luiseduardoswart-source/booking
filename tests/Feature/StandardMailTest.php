@@ -93,6 +93,28 @@ class StandardMailTest extends TestCase
         $this->assertMatchesRegularExpression('#</strong><br>\s*Guests: <strong[^>]*>2</strong>#', $html);
     }
 
+    public function test_the_emails_carry_the_uploaded_logo_and_the_company_name(): void
+    {
+        \App\Models\Setting::set('company', 'name', 'Casa Cartagena');
+        \App\Models\Setting::set('branding', 'logo', 'branding/logo.png');
+
+        $html = MailPreview::html($this->accommodation, MailType::Confirmation, 'en');
+
+        $this->assertMatchesRegularExpression('#<img src="'.preg_quote(\Illuminate\Support\Facades\Storage::disk('public')->url('branding/logo.png'), '#').'"[^>]*alt="Casa Cartagena"#', $html);
+        $this->assertStringContainsString('© '.date('Y').' Casa Cartagena.', $html);
+        $this->assertStringNotContainsString('laravel.com', $html);
+    }
+
+    public function test_without_a_logo_the_emails_show_the_company_name(): void
+    {
+        \App\Models\Setting::set('company', 'name', 'Casa Cartagena');
+
+        $html = MailPreview::html($this->accommodation, MailType::Confirmation, 'en');
+
+        $this->assertMatchesRegularExpression('#<td class="header"[^>]*>\s*<a [^>]*>\s*Casa Cartagena\s*</a>#', $html);
+        $this->assertStringNotContainsString('<img', $html);
+    }
+
     public function test_every_standard_email_shows_with_a_marker_and_nothing_is_saved(): void
     {
         $this->accommodation->update(['mail_texts' => ['checkin' => ['nl' => '<p>Sleutelkluis 1234</p>']]]);

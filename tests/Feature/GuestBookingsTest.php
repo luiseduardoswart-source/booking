@@ -284,9 +284,17 @@ class GuestBookingsTest extends TestCase
         $this->assertSame(0, GuestLogin::count());
     }
 
-    public function test_my_bookings_is_in_the_footer_and_reserved_as_an_address(): void
+    public function test_my_bookings_is_an_icon_at_the_top_right_and_reserved_as_an_address(): void
     {
-        $this->get('/')->assertSee(route('guest.bookings'), false)->assertSee(__('My bookings'));
+        $html = $this->get('/')->assertOk()->getContent();
+        [$header, $footer] = explode('<footer', $html, 2);
+
+        // In the header, after the language picker, as an icon with its name for screen readers.
+        $this->assertMatchesRegularExpression('#<a href="'.preg_quote(route('guest.bookings'), '#').'" title="'.preg_quote(__('My bookings'), '#').'" aria-label="'.preg_quote(__('My bookings'), '#').'" data-my-bookings#', $header);
+        $this->assertGreaterThan(strpos($header, route('locale.switch', 'en')), strpos($header, 'data-my-bookings'));
+        // No longer in the footer.
+        $this->assertStringNotContainsString(route('guest.bookings'), $footer);
+
         $this->assertContains('my-bookings', \App\Support\Slugs::RESERVED);
     }
 }

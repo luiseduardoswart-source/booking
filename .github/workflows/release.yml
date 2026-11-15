@@ -37,11 +37,13 @@ jobs:
       # the app out of reach of visitors.
       # git archive leaves out everything marked export-ignore in .gitattributes
       # (tests, docker, ...). The built frontend (public/build) is in the repo.
+      # VERSION makes the site clear its caches once after an update (App\Support\Release).
       - name: Build the zip
         run: |
           mkdir -p package/booking
           git archive HEAD | tar -x -C package/booking
           cp -r vendor package/booking/
+          echo "${{ github.event.release.tag_name || github.sha }}" > package/booking/VERSION
           mv package/booking/public package/public_html
           cd package
           zip -q -r -X ../booking.zip booking public_html

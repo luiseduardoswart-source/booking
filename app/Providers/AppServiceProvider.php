@@ -72,6 +72,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // After an update with the zip package: clear old views and caches once.
+        \App\Support\Release::refreshIfNew();
+
         // Row buttons in every admin table: an icon with the name as tooltip,
         // so tables stay narrow enough to fit without scrolling sideways.
         // All in the interface colour; only delete is red.

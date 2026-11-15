@@ -156,6 +156,12 @@
                     @endforeach
                 </div>
             </details>
+
+            {{-- My bookings: the guest's bookings and documents (see GuestAccess) --}}
+            <a href="{{ route('guest.bookings') }}" title="{{ __('My bookings') }}" aria-label="{{ __('My bookings') }}" data-my-bookings
+               class="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-700 transition hover:text-rose-600 hover:shadow {{ request()->routeIs('guest.*') ? 'border-rose-400 text-rose-600' : '' }}">
+                <x-site-icon name="user-circle" class="h-5 w-5" />
+            </a>
             </div>
         </div>
     </header>
@@ -175,7 +181,6 @@
                         <a href="{{ url('/'.$footerPage->slugFor()) }}" class="hover:text-rose-600">{{ $footerPage->localized('title') }}</a>
                     @endforeach
                     <a href="{{ route('contact') }}" class="hover:text-rose-600">{{ __('Contact') }}</a>
-                    <a href="{{ route('guest.bookings') }}" class="hover:text-rose-600">{{ __('My bookings') }}</a>
                 </p>
             </div>
         </div>

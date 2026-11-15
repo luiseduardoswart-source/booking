@@ -206,7 +206,7 @@
                     @if ($property->cancellationPolicyLines() !== [])
                         <div class="mt-4 border-t border-stone-200 pt-4 text-xs text-stone-500">
                             <p class="font-semibold text-stone-700">
-                                {{ __('Cancellation policy') }}@if ($property->effectiveCancellationPolicy() !== \App\Enums\CancellationPolicy::Custom) — {{ $property->effectiveCancellationPolicy()->getLabel() }}@endif
+                                {{ __('Cancellation policy') }}
                             </p>
                             <ul class="mt-1 list-disc space-y-1 pl-4">
                                 @foreach ($property->cancellationPolicyLines() as $rule)

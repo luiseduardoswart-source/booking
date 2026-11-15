@@ -60,6 +60,39 @@ class CancellationPolicyTest extends TestCase
         $this->assertSame(['Van dit huis'], $accommodation->cancellationPolicyLines());
     }
 
+    public function test_the_guest_sees_the_rules_but_not_the_name_of_the_policy(): void
+    {
+        $this->withoutVite();
+        $this->travelTo('2026-02-01');
+        $accommodation = $this->accommodation(['cancellation_policy' => CancellationPolicy::Strict, 'base_price_cents' => 10000]);
+        // The pages are in English here.
+        app()->setLocale('en');
+        $rule = CancellationPolicy::Strict->defaultLines()[0];
+        $name = '>'.CancellationPolicy::Strict->getLabel().'<';
+
+        $this->get(route('properties.show', $accommodation->slugFor()))
+            ->assertOk()
+            ->assertSee($rule)
+            ->assertDontSee($name, false)
+            ->assertDontSee(__('Cancellation policy').' — '.CancellationPolicy::Strict->getLabel());
+
+        $this->get(route('bookings.create', ['property' => $accommodation->slug, 'arrival' => '2026-03-02', 'departure' => '2026-03-05', 'guests' => 2]))
+            ->assertOk()
+            ->assertSee($rule)
+            ->assertDontSee(__('Cancellation policy').' — '.CancellationPolicy::Strict->getLabel());
+    }
+
+    public function test_the_payment_promise_names_no_payment_methods(): void
+    {
+        $this->withoutVite();
+
+        $this->get(route('properties.show', $this->accommodation(['base_price_cents' => 10000])->slugFor()))
+            ->assertOk()
+            ->assertSee(__('Secure online payment'))
+            ->assertSee(__('You pay securely online, in the protected environment of our payment provider.'))
+            ->assertDontSee('iDEAL');
+    }
+
     public function test_a_custom_policy_has_no_built_in_rules(): void
     {
         $this->assertSame([], CancellationPolicy::Custom->lines());

@@ -891,7 +891,7 @@
     "Paste third-party scripts here (e.g. Google Analytics, Meta Pixel, Hotjar). They are only loaded after the visitor accepts the matching category — so you don’t have to build the consent yourself.": "Pega aquí scripts de terceros (p. ej. Google Analytics, Meta Pixel, Hotjar). Solo se cargan después de que el visitante acepte la categoría correspondiente, así que no tienes que implementar el consentimiento tú mismo.",
     "Paste your own code here (e.g. Google Analytics, a tracking pixel or a chat widget). It is placed exactly as-is on every site page — only use code you trust.": "Pega aquí tu propio código (p. ej. Google Analytics, un píxel de seguimiento o un widget de chat). Se coloca tal cual en cada página del sitio — usa solo código de confianza.",
     "Pay now": "Pagar ahora",
-    "Pay securely via iDEAL or credit card.": "Paga de forma segura con iDEAL o tarjeta de crédito.",
+    "You pay securely online, in the protected environment of our payment provider.": "Pagas de forma segura en línea, en el entorno protegido de nuestro proveedor de pagos.",
     "Pay the balance": "Pagar el resto",
     "Pay the deposit": "Pagar la fianza",
     "Pay the down payment": "Pagar la señal",

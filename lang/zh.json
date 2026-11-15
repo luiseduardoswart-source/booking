@@ -891,7 +891,7 @@
     "Paste third-party scripts here (e.g. Google Analytics, Meta Pixel, Hotjar). They are only loaded after the visitor accepts the matching category — so you don’t have to build the consent yourself.": "在此粘贴第三方脚本（如 Google Analytics、Meta Pixel、Hotjar）。它们只有在访客接受相应类别后才会加载——因此你无需自行实现同意逻辑。",
     "Paste your own code here (e.g. Google Analytics, a tracking pixel or a chat widget). It is placed exactly as-is on every site page — only use code you trust.": "在此粘贴您自己的代码（例如 Google Analytics、跟踪像素或聊天小工具）。它会原样放置在每个网站页面上——请只使用您信任的代码。",
     "Pay now": "立即付款",
-    "Pay securely via iDEAL or credit card.": "通过 iDEAL 或信用卡安全支付。",
+    "You pay securely online, in the protected environment of our payment provider.": "您将在我们支付服务商的安全环境中在线安全付款。",
     "Pay the balance": "支付尾款",
     "Pay the deposit": "支付押金",
     "Pay the down payment": "支付定金",

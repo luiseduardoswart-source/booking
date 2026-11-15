@@ -129,7 +129,7 @@
                         <x-site-icon name="credit-card" class="h-7 w-7 shrink-0 text-stone-700" />
                         <div>
                             <p class="font-medium text-stone-900">{{ __('Secure online payment') }}</p>
-                            <p class="text-sm text-stone-500">{{ __('Pay securely via iDEAL or credit card.') }}</p>
+                            <p class="text-sm text-stone-500">{{ __('You pay securely online, in the protected environment of our payment provider.') }}</p>
                         </div>
                     </div>
                     @endif
@@ -173,10 +173,8 @@
                 {{-- Cancellation policy --}}
                 @if ($property->cancellationPolicyLines() !== [])
                     <div class="mt-8 border-t border-stone-200 pt-8">
+                        {{-- Only the rules: the name of the policy (Strict...) is for the admin. --}}
                         <h2 class="text-xl font-semibold text-stone-900">{{ __('Cancellation policy') }}</h2>
-                        @if ($property->effectiveCancellationPolicy() !== \App\Enums\CancellationPolicy::Custom)
-                            <p class="mt-1 text-sm font-medium text-stone-500">{{ $property->effectiveCancellationPolicy()->getLabel() }}</p>
-                        @endif
                         <ul class="mt-3 space-y-2 text-stone-700">
                             @foreach ($property->cancellationPolicyLines() as $rule)
                                 <li class="flex items-start gap-3">

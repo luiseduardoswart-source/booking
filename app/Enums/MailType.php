@@ -13,6 +13,8 @@ enum MailType: string
     case Checkin = 'checkin';
     case Checkout = 'checkout';
     case Review = 'review';
+    case IdentityReminder = 'identity_reminder';
+    case IdentityCancelled = 'identity_cancelled';
 
     public function label(): string
     {
@@ -26,6 +28,8 @@ enum MailType: string
             self::Checkin => 'Check-in instructions',
             self::Checkout => 'Check-out information',
             self::Review => 'Review request',
+            self::IdentityReminder => 'Identity check reminder',
+            self::IdentityCancelled => 'Cancelled: no identity check',
         };
     }
 
@@ -46,6 +50,8 @@ enum MailType: string
             self::Checkin => 'The number of days before arrival set here',
             self::Checkout => 'The number of days before departure set here',
             self::Review => 'The number of days after departure set here',
+            self::IdentityReminder => 'With the identity check after the payment: the number of days before its deadline set under Rules, if it has not been done yet',
+            self::IdentityCancelled => 'With the identity check after the payment: when the booking is cancelled because it was not done by the deadline',
         };
     }
 }

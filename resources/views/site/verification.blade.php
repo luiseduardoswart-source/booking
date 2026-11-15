@@ -9,7 +9,14 @@
                 <p class="mt-3 text-stone-600">{{ __('Thank you — no further action is needed.') }}</p>
             @elseif ($status === \App\Enums\IdentityStatus::Failed)
                 <h1 class="text-2xl font-bold text-stone-900">{{ __('Verification failed') }}</h1>
-                <p class="mt-3 text-stone-600">{{ __('Try again via the link in your confirmation email, or contact us.') }}</p>
+                <p class="mt-3 text-stone-600">{{ __('The check did not succeed. You can try again right away, or contact us.') }}</p>
+                <div>
+                    <a href="{{ $retryUrl }}"
+                       class="mt-6 inline-flex items-center gap-2 rounded-xl button-accent bg-gradient-to-r from-rose-600 to-pink-600 px-6 py-3 font-semibold text-white transition hover:from-rose-700 hover:to-pink-700">
+                        <x-site-icon name="arrow-path" />
+                        {{ __('Try again') }}
+                    </a>
+                </div>
             @else
                 <h1 class="text-2xl font-bold text-stone-900">{{ __('Verification in progress') }}</h1>
                 <p class="mt-3 text-stone-600">{{ __('Your verification is being processed. This usually takes only a few minutes; no further action is needed.') }}</p>

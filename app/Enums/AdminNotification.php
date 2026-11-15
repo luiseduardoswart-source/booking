@@ -14,6 +14,7 @@ enum AdminNotification: string
     case NewBooking = 'new_booking';
     case Cancellation = 'cancellation';
     case Payment = 'payment';
+    case IdentityMissing = 'identity_missing';
 
     public function title(): string
     {
@@ -21,6 +22,7 @@ enum AdminNotification: string
             self::NewBooking => __('New booking'),
             self::Cancellation => __('Booking cancelled'),
             self::Payment => __('Payment received'),
+            self::IdentityMissing => __('Identity check not done'),
         };
     }
 

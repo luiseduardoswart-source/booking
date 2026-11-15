@@ -46,6 +46,8 @@ class BookingMail extends Mailable implements ShouldQueue
             MailType::Checkin => __('Practical information for your arrival (:number)', $number),
             MailType::Checkout => __('Information about your departure (:number)', $number),
             MailType::Review => __('How was your stay?'),
+            MailType::IdentityReminder => __('Please verify your identity before your stay (:number)', $number),
+            MailType::IdentityCancelled => __('Your booking :number has been cancelled', $number),
         };
 
         return new Envelope(subject: $subject);
@@ -100,8 +102,9 @@ class BookingMail extends Mailable implements ShouldQueue
                 'payBalanceUrl' => $this->booking->paymentLink(PaymentType::Balance),
                 'reviewUrl' => URL::signedRoute('reviews.create', $this->booking),
                 'payDepositUrl' => $this->booking->paymentLink(PaymentType::Deposit),
-                'idVerification' => $this->booking->property->idRequired()
-                    && $this->booking->identity_status !== \App\Enums\IdentityStatus::Verified,
+                'idVerification' => $this->booking->identityMissing(),
+                // With the check after the payment: the last day to do it.
+                'identityDeadline' => $this->booking->identityDeadline(),
                 'verificationUrl' => URL::signedRoute('identity.start', $this->booking),
             ],
         );

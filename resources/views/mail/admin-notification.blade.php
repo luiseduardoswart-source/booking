@@ -2,6 +2,13 @@
 <x-mail::message>
 # {{ $notification->title() }}
 
+@if ($notification === \App\Enums\AdminNotification::IdentityMissing)
+{{ __('The guest has not verified their identity by :date. You decide whether the booking goes ahead.', ['date' => $booking->identityDeadline()?->translatedFormat('j M Y')]) }}
+
+@elseif ($notification === \App\Enums\AdminNotification::Cancellation && $booking->identity_overdue_at !== null)
+{{ __('Cancelled automatically: the guest did not verify their identity in time.') }}
+
+@endif
 @if ($notification === \App\Enums\AdminNotification::Payment && $payment)
 **{{ $payment->kind() }}**: {{ \App\Support\Money::format($payment->amount_cents, $booking->currency) }}
 

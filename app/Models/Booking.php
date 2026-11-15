@@ -11,6 +11,7 @@ use App\Support\Signature;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,7 +25,7 @@ use Spatie\Activitylog\Support\LogOptions;
     'booking_number', 'property_id', 'status', 'payment_status',
     'guest_name', 'guest_email', 'guest_phone',
     'guest_address', 'guest_postal_code', 'guest_city', 'guest_country', 'locale',
-    'identity_status', 'identity_session_id',
+    'identity_status', 'identity_session_id', 'identity_overdue_at',
     'arrival_date', 'departure_date', 'guests',
     'adults', 'children', 'infants', 'pets',
     'notes', 'form_answers', 'internal_notes', 'terms_accepted_at', 'terms_snapshot',
@@ -75,14 +76,29 @@ class Booking extends Model
         return $this->hasOne(Review::class);
     }
 
-    /**
-     * True while ID verification is required and this booking has not yet
-     * been verified — then the guest may not yet be sent to payment.
-     */
-    public function identityStillMissingBeforePayment(): bool
+    /** True while ID verification is required and this booking has not been verified yet. */
+    public function identityMissing(): bool
     {
         return $this->property->idRequired()
             && $this->identity_status !== \App\Enums\IdentityStatus::Verified;
+    }
+
+    /**
+     * True while the check is still missing and has to come before paying —
+     * then the guest may not yet be sent to payment. Not when the
+     * accommodation lets the guest verify after paying, before arrival.
+     */
+    public function identityStillMissingBeforePayment(): bool
+    {
+        return $this->identityMissing() && ! $this->property->idAfterPayment();
+    }
+
+    /** With the check after the payment: the last day to do it. Otherwise null. */
+    public function identityDeadline(): ?CarbonImmutable
+    {
+        return $this->property->idAfterPayment()
+            ? $this->arrival_date->subDays($this->property->idDeadlineDays())
+            : null;
     }
 
     /**
@@ -222,6 +238,7 @@ class Booking extends Model
             'status' => BookingStatus::class,
             'payment_status' => PaymentStatus::class,
             'identity_status' => \App\Enums\IdentityStatus::class,
+            'identity_overdue_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'signed_at' => 'datetime',
             'arrival_date' => 'immutable_date:Y-m-d',

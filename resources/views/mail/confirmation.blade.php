@@ -51,6 +51,13 @@
 
 {{ __('To complete your booking, we ask you to verify your identity. It takes about a minute and runs in a secure environment — we never see your document itself.') }}
 
+@if ($identityDeadline ?? null)
+**{{ __('Please do this by :date at the latest.', ['date' => $identityDeadline->translatedFormat('l j F Y')]) }}**
+@if ($property->idOverdueCancels())
+{{ __('Without it, your booking will be cancelled.') }}
+@endif
+
+@endif
 <x-mail::button :url="$verificationUrl">
 {{ __('Verify your identity') }}
 </x-mail::button>

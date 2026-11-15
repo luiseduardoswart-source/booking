@@ -35,7 +35,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'rental_terms_translations', 'house_rules_translations', 'cancellation_policy_text_translations',
     'rental_terms_min_nights',
     'min_stay_nights', 'booking_window_months',
-    'id_required', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
+    'id_required', 'id_moment', 'id_deadline_days', 'id_reminder_days', 'id_overdue_action', 'id_cancel_refund', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
     'down_payment_percentage', 'vat_percentage', 'pricing_service',
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
     'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund', 'deposit_moment',
@@ -97,6 +97,23 @@ class Property extends Model implements HasMedia
 
     public const DEPOSIT_BEFORE_ARRIVAL = 'before_arrival';
 
+    /** When the guest verifies their identity: before the payment, or after it but before arrival. */
+    public const ID_BEFORE_PAYMENT = 'before_payment';
+
+    public const ID_AFTER_PAYMENT = 'after_payment';
+
+    /** Check after the payment not done by the deadline: cancel the booking, or notify the owner. */
+    public const ID_OVERDUE_CANCEL = 'cancel';
+
+    public const ID_OVERDUE_NOTIFY = 'notify';
+
+    /** Refund when cancelled for that reason: everything, only the deposit, or the owner decides. */
+    public const ID_REFUND_FULL = 'full';
+
+    public const ID_REFUND_DEPOSIT = 'deposit';
+
+    public const ID_REFUND_MANUAL = 'manual';
+
     /** Check-in: by themselves (key box, code or smart lock) or welcomed in person by a host. */
     public const CHECK_IN_SELF = 'self';
 
@@ -133,6 +150,11 @@ class Property extends Model implements HasMedia
         'checkout_days_before_departure' => 1,
         'review_days_after_departure' => 2,
         'id_required' => false,
+        'id_moment' => self::ID_BEFORE_PAYMENT,
+        'id_deadline_days' => 7,
+        'id_reminder_days' => 3,
+        'id_overdue_action' => self::ID_OVERDUE_NOTIFY,
+        'id_cancel_refund' => self::ID_REFUND_MANUAL,
         'prices_in_calendar' => false,
         'discounts_add_up' => false,
         'pets_allowed' => false,
@@ -362,6 +384,35 @@ class Property extends Model implements HasMedia
     public function idRequired(): bool
     {
         return (bool) $this->effective('id_required');
+    }
+
+    /** The guest verifies after paying, before a deadline ahead of arrival; otherwise before paying. */
+    public function idAfterPayment(): bool
+    {
+        return $this->idRequired() && $this->effective('id_moment') === self::ID_AFTER_PAYMENT;
+    }
+
+    /** With the check after the payment: done at the latest this many days before arrival. */
+    public function idDeadlineDays(): int
+    {
+        return max(0, (int) $this->effective('id_deadline_days'));
+    }
+
+    /** The reminder this many days before the deadline; 0 = no reminder. */
+    public function idReminderDays(): int
+    {
+        return max(0, (int) $this->effective('id_reminder_days'));
+    }
+
+    public function idOverdueCancels(): bool
+    {
+        return $this->effective('id_overdue_action') === self::ID_OVERDUE_CANCEL;
+    }
+
+    /** What is refunded when the booking is cancelled because the check was missed. */
+    public function idCancelRefund(): string
+    {
+        return $this->effective('id_cancel_refund') ?: self::ID_REFUND_MANUAL;
     }
 
     /**

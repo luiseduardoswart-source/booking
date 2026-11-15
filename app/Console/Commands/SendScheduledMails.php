@@ -50,11 +50,13 @@ class SendScheduledMails extends Command
             ->whereDate('arrival_date', '>=', today())
             ->withoutPaidDeposit());
 
-        // 2. Check-in instructions: X days before arrival.
+        // 2. Check-in instructions: X days before arrival. Held back while a
+        //    required ID check is missing; it goes out on the first run after it.
         $sent += $this->send($notifications, MailType::Checkin, 'checkin_days_before_arrival', fn (int $days) => Booking::query()
+            ->with('property')
             ->whereIn('status', $active)
             ->whereDate('arrival_date', '<=', today()->addDays($days))
-            ->whereDate('arrival_date', '>=', today()));
+            ->whereDate('arrival_date', '>=', today()), holdBack: fn (Booking $booking) => $booking->identityMissing());
 
         // 3. Check-out information: exactly X days before departure.
         $sent += $this->send($notifications, MailType::Checkout, 'checkout_days_before_departure', fn (int $days) => Booking::query()
@@ -77,17 +79,22 @@ class SendScheduledMails extends Command
      *
      * @param  string|Collection<int, mixed>  $days  the field with the days, or days per accommodation id
      * @param  Closure(int): Builder  $bookings
+     * @param  (Closure(Booking): bool)|null  $holdBack  bookings that do not get it yet
      */
-    private function send(NotificationEngine $notifications, MailType $type, string|Collection $days, Closure $bookings): int
+    private function send(NotificationEngine $notifications, MailType $type, string|Collection $days, Closure $bookings, ?Closure $holdBack = null): int
     {
         $sent = 0;
 
         (is_string($days) ? Property::valuePerAccommodation($days) : $days)
             ->groupBy(fn ($days) => (int) $days, preserveKeys: true)
-            ->each(function ($accommodations, int $days) use ($notifications, $type, $bookings, &$sent) {
+            ->each(function ($accommodations, int $days) use ($notifications, $type, $bookings, $holdBack, &$sent) {
                 $bookings($days)
                     ->whereIn('property_id', $accommodations->keys())
-                    ->each(function (Booking $booking) use ($notifications, $type, &$sent) {
+                    ->each(function (Booking $booking) use ($notifications, $type, $holdBack, &$sent) {
+                        if ($holdBack !== null && $holdBack($booking)) {
+                            return;
+                        }
+
                         $sent += (int) $notifications->sendOnce($booking, $type);
                     });
             });

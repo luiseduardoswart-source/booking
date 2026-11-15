@@ -42,6 +42,7 @@ class ScheduledTasksTest extends TestCase
         $this->assertSame([
             'heartbeat' => '* * * * *',
             'mails:send-scheduled' => '0 9 * * *',
+            'identity:process' => '45 8 * * *',
             'channels:sync' => '*/30 * * * *',
             'deposits:process' => '30 9 * * *',
             'prices:sync' => '0 5 * * *',

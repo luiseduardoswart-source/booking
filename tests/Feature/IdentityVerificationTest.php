@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Engines\BookingEngine;
 use App\Enums\IdentityStatus;
 use App\Enums\MailType;
+use App\Enums\PaymentType;
 use App\Mail\BookingMail;
 use App\Models\Booking;
 use App\Models\Property;
@@ -196,6 +197,79 @@ class IdentityVerificationTest extends TestCase
         Property::master()->update(['id_required' => false]);
         $mailWithout = new BookingMail($booking->refresh(), MailType::Confirmation);
         $this->assertStringNotContainsString('/verification', $mailWithout->render());
+    }
+
+    public function test_after_a_failed_check_the_guest_can_try_again_from_the_page(): void
+    {
+        $booking = $this->makeBooking();
+        $this->get(URL::signedRoute('identity.start', $booking));
+        $this->verifier->outcome = IdentityStatus::Failed;
+
+        // No "link in your confirmation email": that email only comes after the payment.
+        $this->get(URL::signedRoute('identity.return', $booking))
+            ->assertOk()
+            ->assertSee(__('Verification failed'))
+            ->assertDontSee('confirmation email')
+            ->assertSee(e(URL::signedRoute('identity.start', $booking)), false)
+            ->assertSee(__('Try again'));
+
+        // That button starts a new check.
+        $this->verifier->outcome = IdentityStatus::Pending;
+        $this->get(URL::signedRoute('identity.start', $booking))
+            ->assertRedirect('https://verify.fake.test/session/'.$booking->id);
+    }
+
+    public function test_a_payment_link_first_asks_for_a_missing_id_check_and_then_pays_what_it_was_for(): void
+    {
+        $booking = $this->makeBooking();
+        $payLink = $booking->paymentLink(PaymentType::Balance);
+
+        // Not verified yet: first the check, which remembers what was to be paid.
+        $toCheck = URL::signedRoute('identity.start', ['booking' => $booking, 'pay' => PaymentType::Balance->value]);
+        $this->get($payLink)->assertRedirect($toCheck);
+        $this->assertSame(0, $booking->payments()->count());
+
+        $this->get($toCheck)->assertRedirect('https://verify.fake.test/session/'.$booking->id);
+
+        // Verified: back to that same payment, not to the down payment.
+        $this->verifier->outcome = IdentityStatus::Verified;
+        $this->get(URL::signedRoute('identity.return', ['booking' => $booking, 'pay' => PaymentType::Balance->value]))
+            ->assertRedirect($payLink);
+
+        $this->get($payLink)->assertRedirect();
+        $this->assertSame(PaymentType::Balance, $booking->payments()->sole()->type);
+    }
+
+    public function test_the_check_remembers_the_payment_through_the_return_from_stripe(): void
+    {
+        $verifier = new class extends FakeIdentityVerifier
+        {
+            public ?string $returnUrl = null;
+
+            public function start(Booking $booking, string $returnUrl): string
+            {
+                $this->returnUrl = $returnUrl;
+
+                return parent::start($booking, $returnUrl);
+            }
+        };
+        $this->app->instance(IdentityVerifier::class, $verifier);
+        $booking = $this->makeBooking();
+
+        $this->get(URL::signedRoute('identity.start', ['booking' => $booking, 'pay' => PaymentType::Deposit->value]));
+
+        $this->assertSame(URL::signedRoute('identity.return', ['booking' => $booking, 'pay' => PaymentType::Deposit->value]), $verifier->returnUrl);
+    }
+
+    public function test_a_payment_link_pays_straight_away_once_verified_or_without_the_check(): void
+    {
+        $verified = $this->makeBooking();
+        $verified->update(['identity_status' => IdentityStatus::Verified]);
+        $this->get($verified->paymentLink(PaymentType::DownPayment))->assertRedirect($verified->payments()->sole()->checkout_url);
+
+        Property::master()->update(['id_required' => false]);
+        $without = $this->makeBooking();
+        $this->get($without->paymentLink(PaymentType::DownPayment))->assertRedirect($without->payments()->sole()->checkout_url);
     }
 
     public function test_the_setting_asks_plainly_whether_guests_verify_their_identity(): void

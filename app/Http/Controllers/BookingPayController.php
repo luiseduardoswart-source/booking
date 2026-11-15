@@ -6,6 +6,7 @@ use App\Engines\PaymentEngine;
 use App\Enums\PaymentType;
 use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\URL;
 use InvalidArgumentException;
 
 /**
@@ -20,6 +21,11 @@ class BookingPayController extends Controller
 
         if ($paymentType === null || $paymentType === PaymentType::Refund) {
             abort(404);
+        }
+
+        // ID check required and not done yet: that first, then on to this payment.
+        if ($booking->identityStillMissingBeforePayment()) {
+            return redirect()->to(URL::signedRoute('identity.start', IdentityController::parameters($booking, $paymentType)));
         }
 
         try {

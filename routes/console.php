@@ -23,6 +23,9 @@ Schedule::call(fn () => ScheduledTasks::tick())->name('heartbeat')->everyMinute(
 // Scheduled guest mails: remaining payment, check-in, check-out and review request.
 $task('mails:send-scheduled')->dailyAt('09:00');
 
+// ID check after the payment: reminder before the deadline, then cancel or notify.
+$task('identity:process')->dailyAt('08:45');
+
 // Sync external calendars (iCal) every 30 minutes.
 $task('channels:sync')->everyThirtyMinutes();
 

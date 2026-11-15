@@ -92,6 +92,8 @@ class PropertyForm
         'checkout' => 'Text for the check-out information',
         'review' => 'Text for the review request',
         'verified' => 'Text for "verification successful, pay now"',
+        'identity_reminder' => 'Text for the identity check reminder',
+        'identity_cancelled' => 'Text for "cancelled: no identity check"',
     ];
 
     /**
@@ -110,6 +112,37 @@ class PropertyForm
             ->hint($hint)
             ->formatStateUsing(fn ($state) => $state === null ? null : ((int) $state ? '1' : '0'))
             ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (bool) (int) $state);
+    }
+
+    /** A choice that follows the default when empty; required on the defaults screen itself. */
+    private static function inheritChoice(string $name, string $label, array $options): Select
+    {
+        return Select::make($name)
+            ->label($label)
+            ->options($options)
+            ->placeholder(__('Follow the default'))
+            ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
+            ->required(fn (?Property $record) => (bool) $record?->is_master)
+            ->native(false);
+    }
+
+    /** What a field is in the form right now, or the default's when it is empty here. */
+    private static function formOrDefault(Get $get, ?Property $record, string $field): mixed
+    {
+        $state = $get($field);
+
+        return ($state === null || $state === '') && ! $record?->is_master ? self::default()->{$field} : $state;
+    }
+
+    private static function idCheckOn(Get $get, ?Property $record): bool
+    {
+        return (bool) (int) self::formOrDefault($get, $record, 'id_required');
+    }
+
+    private static function idCheckAfterPayment(Get $get, ?Property $record): bool
+    {
+        return self::idCheckOn($get, $record)
+            && self::formOrDefault($get, $record, 'id_moment') === Property::ID_AFTER_PAYMENT;
     }
 
     /**
@@ -1206,8 +1239,35 @@ class PropertyForm
                                     ]),
 
                                 Section::make(__('ID verification'))
+                                    ->columns(2)
                                     ->components([
-                                        self::inheritToggle('id_required', __('Ask guests to verify their identity'), __('Via Stripe Identity — requires a Stripe secret key; cost per verification')),
+                                        self::inheritToggle('id_required', __('Ask guests to verify their identity'), __('Via Stripe Identity — requires a Stripe secret key; cost per verification'))
+                                            ->columnSpanFull()
+                                            ->live(),
+                                        self::inheritChoice('id_moment', __('When'), [
+                                            Property::ID_BEFORE_PAYMENT => __('Before the payment'),
+                                            Property::ID_AFTER_PAYMENT => __('After the payment, before arrival'),
+                                        ])
+                                            ->live()
+                                            ->visible(fn (Get $get, ?Property $record): bool => self::idCheckOn($get, $record)),
+                                        self::defaultNumber('id_deadline_days', __('Done at the latest: days before arrival'))
+                                            ->visible(fn (Get $get, ?Property $record): bool => self::idCheckAfterPayment($get, $record)),
+                                        self::defaultNumber('id_reminder_days', __('Reminder: days before that date'))
+                                            ->helperText(__('0 = no reminder.'))
+                                            ->visible(fn (Get $get, ?Property $record): bool => self::idCheckAfterPayment($get, $record)),
+                                        self::inheritChoice('id_overdue_action', __('Not done by then'), [
+                                            Property::ID_OVERDUE_NOTIFY => __('Notify me, I decide'),
+                                            Property::ID_OVERDUE_CANCEL => __('Cancel the booking automatically'),
+                                        ])
+                                            ->live()
+                                            ->visible(fn (Get $get, ?Property $record): bool => self::idCheckAfterPayment($get, $record)),
+                                        self::inheritChoice('id_cancel_refund', __('Refund when cancelled'), [
+                                            Property::ID_REFUND_FULL => __('Everything (stay and deposit)'),
+                                            Property::ID_REFUND_DEPOSIT => __('Only the deposit'),
+                                            Property::ID_REFUND_MANUAL => __('I decide myself (via Payments)'),
+                                        ])
+                                            ->visible(fn (Get $get, ?Property $record): bool => self::idCheckAfterPayment($get, $record)
+                                                && self::formOrDefault($get, $record, 'id_overdue_action') === Property::ID_OVERDUE_CANCEL),
                                     ]),
 
                                 Section::make(__('Cancellation policy'))

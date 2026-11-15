@@ -40,6 +40,21 @@ class HomeFilterTest extends TestCase
             ->assertSee('Strandvilla');
     }
 
+    public function test_every_filter_has_a_maximum_width_so_a_long_option_does_not_push_the_others_down(): void
+    {
+        $this->makeAccommodations();
+
+        $html = $this->withSession(['locale' => 'nl'])->get('/')->assertOk()->getContent();
+
+        preg_match_all('/<select name="(price_max|type|amenity|bedrooms|bathrooms)"[^>]*class="([^"]*)"/', $html, $selects, PREG_SET_ORDER);
+
+        $this->assertNotEmpty($selects);
+        foreach ($selects as [, $name, $class]) {
+            $this->assertStringContainsString('max-w-48', $class, $name);
+            $this->assertStringContainsString('truncate', $class, $name);
+        }
+    }
+
     public function test_type_filter_restricts_the_results(): void
     {
         $this->makeAccommodations();

@@ -1,6 +1,8 @@
 {{-- Filter bar (in the search form; every change filters immediately).
-     Expects $typeOptions, $amenityOptions and $filters. --}}
-@php $filterClass = 'rounded-full border-stone-300 py-2 pl-4 pr-9 text-sm focus:border-rose-500 focus:ring-rose-500'; @endphp
+     Expects $typeOptions, $amenityOptions and $filters.
+     A select is as wide as its longest option: capped, so one long amenity
+     name does not push the other filters onto a new line. --}}
+@php $filterClass = 'max-w-48 truncate rounded-full border-stone-300 py-2 pl-4 pr-9 text-sm focus:border-rose-500 focus:ring-rose-500'; @endphp
 <div class="flex flex-wrap items-center gap-2">
     <select name="price_max" onchange="this.form.submit()" class="{{ $filterClass }}">
         <option value="">{{ __('Price per night: all') }}</option>

@@ -23,6 +23,7 @@
 {{ __('Booking') }}: **{{ $booking->booking_number }}** ({{ $property->localized('name') }},
 {{ $booking->arrival_date->translatedFormat('j F') }} – {{ $booking->departure_date->translatedFormat('j F Y') }})
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

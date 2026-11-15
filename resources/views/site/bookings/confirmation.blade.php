@@ -21,6 +21,12 @@
                     ]) !!}
                 </p>
             @endif
+            <div>
+                <a href="{{ \App\Support\GuestAccess::bookingUrl($booking) }}" class="mt-6 inline-flex items-center gap-2 rounded-xl border border-stone-300 px-5 py-2.5 font-semibold text-stone-800 hover:border-rose-400 hover:text-rose-600">
+                    <x-site-icon name="chevron-right" class="h-5 w-5" />
+                    {{ __('View your booking') }}
+                </a>
+            </div>
             <a href="{{ route('home') }}" class="mt-6 inline-block text-rose-600 hover:underline">
                 {{ __('Back to the homepage') }}
             </a>

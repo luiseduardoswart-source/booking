@@ -23,6 +23,7 @@
 {{ __('Outstanding balance: :amount — due before arrival.', ['amount' => \App\Support\Money::format($booking->total_cents - $booking->down_payment_cents, $booking->currency)]) }}
 @endif
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

@@ -25,6 +25,7 @@
 
 {{ __('Thank you for your stay — we hope to welcome you again!') }}
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 // Accommodation slugs live at root level (/duinhuisje-aan-zee). This pattern
 // excludes all reserved paths so they are never mistaken for a slug.
-$slugPattern = '(?!admin$|api$|accommodations$|accommodation$|payment$|booking$|build$|contact$|ical$|install$|livewire$|storage$|language$|up$|vendor$|webhooks$)[a-z0-9-]+';
+$slugPattern = '(?!admin$|api$|my-bookings$|accommodations$|accommodation$|payment$|booking$|build$|contact$|ical$|install$|livewire$|storage$|language$|up$|vendor$|webhooks$)[a-z0-9-]+';
 
 // Installation wizard: first start without SSH (database + admin).
 // Closes itself once an account exists.
@@ -155,6 +155,20 @@ Route::get('/booking/{booking}/review', [\App\Http\Controllers\ReviewController:
 Route::post('/booking/{booking}/review', [\App\Http\Controllers\ReviewController::class, 'store'])
     ->name('reviews.store')
     ->middleware('signed');
+
+// My bookings: guests see their bookings and documents without a password
+// (login link by email, or the signed link in every guest email; see GuestAccess).
+Route::prefix('my-bookings')->name('guest.')->controller(\App\Http\Controllers\GuestBookingController::class)->group(function () {
+    Route::get('/', 'index')->name('bookings');
+    Route::post('/link', 'sendLink')->middleware('throttle:5,1')->name('link');
+    Route::get('/login/{token}', 'confirmLogin')->where('token', '[A-Za-z0-9]{64}')->name('login');
+    Route::post('/login/{token}', 'login')->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:10,1')->name('login.use');
+    Route::post('/logout', 'logout')->name('logout');
+    Route::get('/{booking}', 'show')->whereNumber('booking')->name('booking');
+    Route::get('/{booking}/documents/{kind}/{payment?}', 'document')
+        ->whereNumber('booking')->whereIn('kind', ['confirmation', 'invoice', 'receipt'])->whereNumber('payment')
+        ->middleware('throttle:30,1')->name('document');
+});
 
 // iCal export (secret feed per accommodation, for Airbnb/Booking.com)
 Route::get('/ical/{property}/{token}.ics', IcalExportController::class)->name('ical.export');

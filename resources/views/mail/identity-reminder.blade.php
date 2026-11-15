@@ -26,6 +26,7 @@
 
 {{ __('It takes about a minute and runs in a secure environment — we never see your document itself.') }}
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

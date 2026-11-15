@@ -175,6 +175,7 @@
                         <a href="{{ url('/'.$footerPage->slugFor()) }}" class="hover:text-rose-600">{{ $footerPage->localized('title') }}</a>
                     @endforeach
                     <a href="{{ route('contact') }}" class="hover:text-rose-600">{{ __('Contact') }}</a>
+                    <a href="{{ route('guest.bookings') }}" class="hover:text-rose-600">{{ __('My bookings') }}</a>
                 </p>
             </div>
         </div>

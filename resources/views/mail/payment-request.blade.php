@@ -20,6 +20,7 @@
 
 {{ __('Button not working? Reply to this email and we will send you a new payment link.') }}
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

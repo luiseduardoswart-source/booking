@@ -18,7 +18,7 @@ class Slugs
     public const RESERVED = [
         'admin', 'api', 'accommodations', 'accommodation', 'payment', 'booking',
         'build', 'contact', 'ical', 'install', 'livewire', 'storage', 'language',
-        'track', 'up', 'currency', 'vendor', 'webhooks',
+        'track', 'up', 'currency', 'vendor', 'webhooks', 'my-bookings',
     ];
 
     /** Is this address already in use, in any language? */

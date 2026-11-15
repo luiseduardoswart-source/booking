@@ -20,6 +20,7 @@
 
 {{ __('The deposit will be refunded after your stay, provided everything is in order.') }}
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

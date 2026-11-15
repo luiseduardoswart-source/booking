@@ -46,7 +46,7 @@ class PageResource extends Resource
     private const RESERVED_SLUGS = [
         'admin', 'api', 'accommodations', 'accommodation', 'payment', 'booking',
         'build', 'contact', 'ical', 'install', 'livewire', 'storage', 'language',
-        'track', 'up', 'currency', 'vendor', 'webhooks',
+        'track', 'up', 'currency', 'vendor', 'webhooks', 'my-bookings',
     ];
 
     public static function getModelLabel(): string

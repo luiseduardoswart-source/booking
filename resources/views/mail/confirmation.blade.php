@@ -65,6 +65,7 @@
 
 {{ __('Questions or changes? Reply to this email and we will be happy to help.') }}
 
+@include('mail.partials.booking-link')
 {{ __('Kind regards,') }}<br>
 {{ $company }}
 </x-mail::message>

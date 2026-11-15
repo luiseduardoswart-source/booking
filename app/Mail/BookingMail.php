@@ -106,6 +106,8 @@ class BookingMail extends Mailable implements ShouldQueue
                 // With the check after the payment: the last day to do it.
                 'identityDeadline' => $this->booking->identityDeadline(),
                 'verificationUrl' => URL::signedRoute('identity.start', $this->booking),
+                // The booking and its documents online, until three months after departure.
+                'bookingUrl' => \App\Support\GuestAccess::bookingUrl($this->booking),
             ],
         );
     }

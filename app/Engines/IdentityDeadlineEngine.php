@@ -11,6 +11,7 @@ use App\Enums\PaymentType;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Property;
+use App\Services\IdentityVerifier;
 use App\Support\AdminNotifications;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -28,6 +29,7 @@ class IdentityDeadlineEngine
         private readonly NotificationEngine $notifications,
         private readonly BookingEngine $bookings,
         private readonly PaymentEngine $payments,
+        private readonly IdentityVerifier $verifier,
     ) {}
 
     /** @return array{reminded: int, cancelled: int, notified: int} */
@@ -38,22 +40,48 @@ class IdentityDeadlineEngine
 
         foreach ($this->openChecks() as $booking) {
             $deadline = $booking->identityDeadline();
+            $overdue = $today->greaterThan($deadline);
+            $reminderDays = $booking->property->idReminderDays();
+            $remind = ! $overdue && $reminderDays > 0 && $today->greaterThanOrEqualTo($deadline->subDays($reminderDays));
 
-            if ($today->greaterThan($deadline)) {
-                $booking->property->idOverdueCancels() ? $this->cancel($booking) : $this->notify($booking);
-                $done[$booking->property->idOverdueCancels() ? 'cancelled' : 'notified']++;
-
+            // Something to do: first ask Stripe how the check stands.
+            if (($overdue || $remind) && ! $this->stillUnverified($booking)) {
                 continue;
             }
 
-            $reminderDays = $booking->property->idReminderDays();
-
-            if ($reminderDays > 0 && $today->greaterThanOrEqualTo($deadline->subDays($reminderDays))) {
+            if ($overdue) {
+                $booking->property->idOverdueCancels() ? $this->cancel($booking) : $this->notify($booking);
+                $done[$booking->property->idOverdueCancels() ? 'cancelled' : 'notified']++;
+            } elseif ($remind) {
                 $done['reminded'] += (int) $this->notifications->sendOnce($booking, MailType::IdentityReminder);
             }
         }
 
         return $done;
+    }
+
+    /**
+     * A guest who verified and closed the page without coming back is only
+     * known through the webhook; if that never arrived, Stripe still knows.
+     * Without a started check there is nothing to ask. If Stripe cannot be
+     * reached, the booking waits for the next day: better a day late than a
+     * wrongful reminder or cancellation.
+     */
+    private function stillUnverified(Booking $booking): bool
+    {
+        if ($booking->identity_session_id === null) {
+            return true;
+        }
+
+        try {
+            $this->verifier->refresh($booking);
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
+        }
+
+        return $booking->refresh()->identity_status !== IdentityStatus::Verified;
     }
 
     /**

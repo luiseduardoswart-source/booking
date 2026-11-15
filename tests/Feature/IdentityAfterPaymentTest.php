@@ -226,6 +226,71 @@ class IdentityAfterPaymentTest extends TestCase
         $this->assertStringContainsString('We will contact you about any refund.', $manualMail->locale('en')->render());
     }
 
+    /** A verifier that answers like Stripe: the outcome of a started session, or an error. */
+    private function stripeSays(?IdentityStatus $outcome, bool $unreachable = false): void
+    {
+        $this->app->instance(\App\Services\IdentityVerifier::class, new class($outcome, $unreachable) implements \App\Services\IdentityVerifier
+        {
+            public function __construct(private ?IdentityStatus $outcome, private bool $unreachable) {}
+
+            public function start(Booking $booking, string $returnUrl): string
+            {
+                return 'https://verify.fake.test';
+            }
+
+            public function refresh(Booking $booking): void
+            {
+                if ($this->unreachable) {
+                    throw new \RuntimeException('Stripe is not reachable');
+                }
+
+                $booking->update(['identity_status' => $this->outcome]);
+            }
+        });
+    }
+
+    public function test_a_check_done_without_coming_back_is_picked_up_from_stripe_first(): void
+    {
+        // The guest verified and closed the page; the webhook never arrived.
+        $booking = $this->paidBooking($this->accommodation(['id_overdue_action' => Property::ID_OVERDUE_CANCEL, 'id_cancel_refund' => Property::ID_REFUND_FULL]));
+        $booking->update(['identity_session_id' => 'vs_123', 'identity_status' => IdentityStatus::Pending]);
+        $this->stripeSays(IdentityStatus::Verified);
+
+        $this->process('2026-02-21');
+        $this->process('2026-02-24');
+
+        $this->assertSame(IdentityStatus::Verified, $booking->refresh()->identity_status);
+        $this->assertSame(BookingStatus::Confirmed, $booking->status);
+        $this->assertSame(0, $this->mailed($booking, MailType::IdentityReminder));
+        $this->assertSame([], $this->provider->refunds);
+    }
+
+    public function test_when_stripe_cannot_be_reached_the_booking_waits_a_day(): void
+    {
+        $booking = $this->paidBooking($this->accommodation(['id_overdue_action' => Property::ID_OVERDUE_CANCEL]));
+        $booking->update(['identity_session_id' => 'vs_123', 'identity_status' => IdentityStatus::Pending]);
+
+        $this->stripeSays(null, unreachable: true);
+        $this->process('2026-02-24');
+        $this->assertSame(BookingStatus::Confirmed, $booking->refresh()->status);
+        $this->assertNull($booking->identity_overdue_at);
+
+        // The next day Stripe answers: still not done, so now it is cancelled.
+        $this->stripeSays(IdentityStatus::Pending);
+        $this->process('2026-02-25');
+        $this->assertSame(BookingStatus::Cancelled, $booking->refresh()->status);
+    }
+
+    public function test_without_a_started_check_stripe_is_not_asked(): void
+    {
+        $booking = $this->paidBooking($this->accommodation(['id_overdue_action' => Property::ID_OVERDUE_CANCEL]));
+        $this->stripeSays(null, unreachable: true);
+
+        $this->process('2026-02-24');
+
+        $this->assertSame(BookingStatus::Cancelled, $booking->refresh()->status);
+    }
+
     public function test_the_check_in_email_waits_for_the_check(): void
     {
         $booking = $this->paidBooking($this->accommodation(['checkin_days_before_arrival' => 3]));

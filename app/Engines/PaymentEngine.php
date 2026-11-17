@@ -87,6 +87,7 @@ class PaymentEngine
             'amount_cents' => $amountCents,
             'deposit_part_cents' => $depositPartCents,
             'provider' => $this->provider->name(),
+            'test_mode' => $this->provider->isTestMode(),
             'description' => $depositPartCents > 0
                 ? "{$booking->paymentKind($type)} + ".PaymentType::Deposit->label()." {$booking->booking_number}"
                 : "{$booking->paymentKind($type)} {$booking->booking_number}",
@@ -298,6 +299,7 @@ class PaymentEngine
             'amount_cents' => $amountCents,
             'deposit_part_cents' => $deposit ? $amountCents : 0,
             'provider' => $this->provider->name(),
+            'test_mode' => $payment->test_mode,
             'provider_payment_id' => $refundId,
             'refunded_payment_id' => $payment->id,
             'description' => "Refund of {$payment->description}",

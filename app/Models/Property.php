@@ -43,7 +43,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'address', 'postal_code', 'city', 'country', 'latitude', 'longitude', 'location_display', 'overview_location_display',
     'max_guests', 'bedrooms', 'beds', 'sofa_beds', 'bathrooms',
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
-    'tourist_tax_cents', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
+    'tourist_tax_cents', 'tourist_tax_basis', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
     'check_in_from', 'check_in_until', 'check_out_until', 'check_in_kind', 'check_in_host_id',
     'access_code_kind', 'access_code', 'check_in_fields', 'check_in_values',
     'meta_title', 'meta_description', 'social_links', 'ical_token', 'external_listing_id',
@@ -67,6 +67,13 @@ class Property extends Model implements HasMedia
     public const WEEKEND_FIXED = 'fixed';
 
     public const WEEKEND_PERCENT = 'percent';
+
+    /** Tourist tax: per person per night, per night, or once per stay. */
+    public const TAX_PER_PERSON_NIGHT = 'person_night';
+
+    public const TAX_PER_NIGHT = 'night';
+
+    public const TAX_PER_STAY = 'stay';
 
     /** Discount on the dynamic price: none, a percentage or a fixed amount per night. */
     public const DISCOUNT_NONE = 'none';
@@ -159,6 +166,7 @@ class Property extends Model implements HasMedia
         'discounts_add_up' => false,
         'pets_allowed' => false,
         'weekend_kind' => self::WEEKEND_FIXED,
+        'tourist_tax_basis' => self::TAX_PER_PERSON_NIGHT,
         'max_babies' => 5,
         'max_pets' => 2,
         'currency' => 'EUR',
@@ -482,6 +490,18 @@ class Property extends Model implements HasMedia
                 : __('Pets are not allowed.'),
             'infants.max' => trans_choice('{0} Infants cannot come along here.|{1} At most 1 infant per booking.|[2,*] At most :count infants per booking.', $this->maxBabies()),
         ];
+    }
+
+    /** The tourist tax for a stay, charged the way this accommodation (or the default) says. */
+    public function touristTax(int $guests, int $nights): int
+    {
+        $amount = (int) $this->effectiveAmount('tourist_tax_cents');
+
+        return match ($this->effective('tourist_tax_basis')) {
+            self::TAX_PER_STAY => $amount,
+            self::TAX_PER_NIGHT => $amount * $nights,
+            default => $amount * $guests * $nights,
+        };
     }
 
     /** Fixed amount or percentage for Friday and Saturday nights; own choice, otherwise the default. */

@@ -125,8 +125,8 @@ class PricingEngine
             $lines[] = new QuoteLine('cleaning', __('Cleaning fee'), $cleaningCents);
         }
 
-        // 5. Tourist tax (p.p. per night)
-        $touristTaxCents = (int) $property->effectiveAmount('tourist_tax_cents') * $guests * $nights;
+        // 5. Tourist tax (per person per night, per night or per stay)
+        $touristTaxCents = $property->touristTax($guests, $nights);
 
         if ($touristTaxCents > 0) {
             $lines[] = new QuoteLine('tourist_tax', __('Tourist tax'), $touristTaxCents);

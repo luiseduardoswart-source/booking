@@ -13,6 +13,12 @@ interface PaymentProvider
     public function name(): string;
 
     /**
+     * Does this provider work with a test key (no real money)? Stored on
+     * every payment, so test bookings can be cleared safely before going live.
+     */
+    public function isTestMode(): bool;
+
+    /**
      * Create the payment with the provider and return the external id and the
      * checkout URL the guest must be sent to. The provider handles its own
      * webhook configuration.

@@ -25,6 +25,12 @@ class FakeProvider implements PaymentProvider
         return 'fake';
     }
 
+    /** Never real money. */
+    public function isTestMode(): bool
+    {
+        return true;
+    }
+
     public function supportsCurrency(string $currency): bool
     {
         return true;

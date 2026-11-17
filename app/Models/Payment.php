@@ -15,7 +15,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable([
     'booking_id', 'type', 'status', 'amount_cents', 'deposit_part_cents',
-    'provider', 'provider_payment_id', 'refunded_payment_id', 'checkout_url', 'description', 'paid_at',
+    'provider', 'test_mode', 'provider_payment_id', 'refunded_payment_id', 'checkout_url', 'description', 'paid_at',
 ])]
 class Payment extends Model
 {
@@ -145,6 +145,7 @@ class Payment extends Model
             'type' => PaymentType::class,
             'status' => PaymentTransactionStatus::class,
             'paid_at' => 'datetime',
+            'test_mode' => 'boolean',
         ];
     }
 }

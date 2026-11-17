@@ -50,6 +50,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -379,7 +380,11 @@ class PropertyForm
      */
     private static function weekendFields(): array
     {
-        $kind = fn (Get $get): ?string => $get('weekend_kind');
+        // The amount field of the kind that applies, also when the accommodation
+        // follows the default: then it shows the default's value, read-only.
+        // This way the fields after it keep their place.
+        $kind = fn (Get $get, ?Property $record): string => self::formOrDefault($get, $record, 'weekend_kind') ?: Property::WEEKEND_FIXED;
+        $followsDefault = fn (Get $get, ?Property $record): bool => ! $record?->is_master && blank($get('weekend_kind'));
 
         return [
             Select::make('weekend_kind')
@@ -392,10 +397,25 @@ class PropertyForm
                 ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
                 ->required(fn (?Property $record) => (bool) $record?->is_master)
                 ->live()
+                // Following the default: the own amounts no longer count (the model clears them on save).
+                ->afterStateUpdated(function (?string $state, Set $set): void {
+                    if (blank($state)) {
+                        $set('weekend_price_cents', null);
+                        $set('weekend_percentage', null);
+                    }
+                })
                 ->native(false),
             self::euroInput('weekend_price_cents', __('Weekend price per night'))
-                ->hint(__('Empty = base price'))
-                ->visible(fn (Get $get): bool => $kind($get) === Property::WEEKEND_FIXED),
+                ->hint(fn (Get $get, ?Property $record): string => $followsDefault($get, $record) ? __('Follows the default') : __('Empty = base price'))
+                ->disabled($followsDefault)
+                // The default's weekend price in the currency of this form.
+                ->placeholder(function (Get $get, ?Property $record, $livewire) use ($followsDefault): ?string {
+                    $default = self::default();
+                    $amount = Money::convert($default->weekend_price_cents, $default->priceCurrency(), self::chosenCurrency($livewire));
+
+                    return $followsDefault($get, $record) && $amount !== null ? (string) ($amount / 100) : null;
+                })
+                ->visible(fn (Get $get, ?Property $record): bool => $kind($get, $record) === Property::WEEKEND_FIXED),
             TextInput::make('weekend_percentage')
                 ->label(__('Weekend adjustment'))
                 ->numeric()
@@ -403,9 +423,11 @@ class PropertyForm
                 ->minValue(-50)
                 ->maxValue(100)
                 ->suffix('%')
-                ->required()
+                ->required(fn (Get $get, ?Property $record): bool => ! $followsDefault($get, $record))
+                ->disabled($followsDefault)
+                ->placeholder(fn (Get $get, ?Property $record): ?string => $followsDefault($get, $record) ? (string) self::default()->weekend_percentage : null)
                 ->live(onBlur: true)
-                ->hint(__('E.g. 15 for 15% more, -10 for 10% less'))
+                ->hint(fn (Get $get, ?Property $record): string => $followsDefault($get, $record) ? __('Follows the default') : __('E.g. 15 for 15% more, -10 for 10% less'))
                 ->helperText(function (Get $get, ?Property $record, $livewire): ?string {
                     if (! is_numeric($get('weekend_percentage'))) {
                         return null;
@@ -421,7 +443,7 @@ class PropertyForm
                         'amount' => Money::format($weekend, self::chosenCurrency($livewire)),
                     ]);
                 })
-                ->visible(fn (Get $get): bool => $kind($get) === Property::WEEKEND_PERCENT),
+                ->visible(fn (Get $get, ?Property $record): bool => $kind($get, $record) === Property::WEEKEND_PERCENT),
         ];
     }
 
@@ -934,7 +956,12 @@ class PropertyForm
                                         self::euroInput('base_price_cents', __('Base price per night')),
                                         ...self::weekendFields(),
                                         self::euroInput('cleaning_fee_cents', __('Cleaning fee (one-off)')),
-                                        self::euroInput('tourist_tax_cents', __('Tourist tax p.p. per night')),
+                                        self::euroInput('tourist_tax_cents', __('Tourist tax')),
+                                        self::inheritChoice('tourist_tax_basis', __('Tourist tax charged'), [
+                                            Property::TAX_PER_PERSON_NIGHT => __('Per person per night'),
+                                            Property::TAX_PER_NIGHT => __('Per night'),
+                                            Property::TAX_PER_STAY => __('Once per stay'),
+                                        ]),
                                         TextInput::make('included_guests')
                                             ->label(__('Guests included in the price'))
                                             ->numeric()

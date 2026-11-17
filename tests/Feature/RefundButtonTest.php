@@ -82,6 +82,11 @@ class RefundButtonTest extends TestCase
                 return 'stripe';
             }
 
+            public function isTestMode(): bool
+            {
+                return true;
+            }
+
             public function create(Payment $payment, string $redirectUrl): ProviderPaymentResult
             {
                 throw new RuntimeException('not needed');

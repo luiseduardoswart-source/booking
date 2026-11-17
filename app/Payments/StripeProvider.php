@@ -16,6 +16,12 @@ class StripeProvider implements PaymentProvider
         return 'stripe';
     }
 
+    /** Stripe test keys are sk_test_ (or restricted rk_test_), live keys sk_live_. */
+    public function isTestMode(): bool
+    {
+        return (bool) preg_match('/^(sk|rk)_test_/', (string) Setting::get('payments', 'stripe_secret_key'));
+    }
+
     /** Currencies without decimals: the amount is in whole units (500 = ¥500). */
     private const WITHOUT_DECIMALS = [
         'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG',

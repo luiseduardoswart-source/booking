@@ -16,6 +16,12 @@ class MollieProvider implements PaymentProvider
         return 'mollie';
     }
 
+    /** Mollie test keys start with test_, live keys with live_. */
+    public function isTestMode(): bool
+    {
+        return str_starts_with((string) Setting::get('payments', 'mollie_api_key'), 'test_');
+    }
+
     /**
      * Currencies Mollie charges in, and those without decimals
      * (docs.mollie.com/docs/multicurrency). Which payment method works also

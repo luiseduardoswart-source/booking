@@ -30,7 +30,16 @@ rental business.
   first and the rest later.
 - **Coupon codes** at checkout.
 - **Rental agreement** that the guest signs digitally when booking.
-- **Identity check** of the guest through Stripe Identity (optional).
+- **Identity check** of the guest through Stripe Identity (optional): before
+  the payment, or after it with a deadline before arrival. A guest who has not
+  done it yet gets a reminder; when the deadline passes you choose whether the
+  booking is cancelled (with the refund you pick) or you get a notification.
+  The check-in email waits until the check is done.
+- **My bookings**: through the icon at the top right, guests see their bookings
+  and download the confirmation, invoice and receipts, without a password. They
+  get a sign-in link by email (valid for 15 minutes); the browser then stays
+  signed in for 90 days. Every guest email also has a direct link to the
+  booking.
 - **Reviews**: after their stay, guests get an invitation to write a review. You
   can reply to it.
 - **Your language and currency**: Dutch, English, Spanish, French, German and
@@ -46,8 +55,8 @@ rental business.
 - **Defaults for all properties**, which each property can follow or override.
   Change something once and it applies everywhere.
 - **Prices**: base price per night, weekend price (fixed amount or percentage),
-  seasons, extra guest fee, cleaning fee, pet fee, tourist tax, and a currency
-  per property.
+  seasons, extra guest fee, cleaning fee, pet fee, tourist tax (per person per
+  night, per night or once per stay), and a currency per property.
 - **Discounts** like on Airbnb: weekly and monthly (length of stay), last minute
   and early bird, as a percentage or a fixed amount. You choose whether discounts
   add up or only the best one applies.
@@ -89,7 +98,9 @@ rental business.
 
 - **Automatic guest emails**: booking confirmation, payment reminder, check-in
   instructions, check-out information and review request, in the guest's own
-  language and at the time you choose.
+  language and at the time you choose. The booking confirmation goes out once
+  the payment has succeeded, with the confirmation and receipt attached.
+- **Your logo and company name** at the top of every email.
 - **Write your own texts** with tags such as the guest's name, the property and
   the dates, which are filled in automatically.
 - **Notifications for you** by email: a new booking, a cancellation, a payment,
@@ -273,7 +284,32 @@ follow steps 3 and 4; the installation code is in
   first if your hosting provider does not do this automatically, then click the
   button.
 
-Your bookings and settings stay as they are.
+Your bookings and settings stay as they are. After an update with the zip
+file, the website clears its old pages and caches once by itself.
+
+### Before going live: remove the test bookings
+
+Tested by making bookings on the live website? Remove them before real guests
+arrive, so the first real booking and invoice get number 0001. Log in with SSH
+and run, in the website's folder (`booking` or `app`):
+
+```bash
+php artisan bookings:clear-test-data
+```
+
+It first shows what it will remove and asks for confirmation:
+
+- removed: all bookings, with their payments, invoices, sent emails, reviews,
+  guest sign-in links, log lines, queued emails and signatures;
+- reset: the booking and invoice numbering starts at 0001 again, and coupon
+  usage at 0;
+- kept: properties, prices, settings, pages, users and blocked dates.
+
+It refuses when a real payment (made with a live Mollie or Stripe key) is among
+them. Payments made before the website remembered this are listed, and it asks
+whether they were all test payments. A real booking that has not been paid yet
+cannot be told apart from a test booking, so run it just before going live, not
+after.
 
 ### Backups
 
@@ -411,6 +447,10 @@ How the zip installation works:
 - After an update, the same widget shows a button when there are pending
   migrations (`App\Support\DatabaseUpdater`). It runs `migrate --force` in the
   same PHP process, for administrators only.
+- The zip contains a `VERSION` file. When it differs from the version the site
+  last ran (`storage/framework/deployed-version`), `App\Support\Release` clears
+  the compiled views and `bootstrap/cache` once, so an update by zip never
+  shows old pages.
 - Mail settings from the admin panel (`App\Support\MailSettings`) override
   the `MAIL_` lines in `.env`. They are applied when the mailer is created, so
   they never end up in the `config:cache` file.
@@ -433,7 +473,7 @@ and calendar sync all follow the same rules:
 | Availability | `app/Engines/AvailabilityEngine.php` | Single source of truth for available nights |
 | Pricing | `app/Engines/PricingEngine.php` | Price breakdown: nightly price, season, weekend, discounts, fees |
 | Booking | `app/Engines/BookingEngine.php` | Creating bookings and their status transitions |
-| Payment | `app/Engines/PaymentEngine.php`, `app/Payments/` | Mollie, Stripe and a test provider behind one interface |
+| Payment | `app/Engines/PaymentEngine.php`, `app/Payments/` | Mollie, Stripe and a test provider behind one interface; every payment records whether it used a test key |
 | Calendar | `app/Engines/CalendarEngine.php` | iCal import and export |
 | Documents | `app/Engines/DocumentEngine.php` | Invoices, confirmations and receipts as PDF |
 | Notifications | `app/Engines/NotificationEngine.php` | Guest emails |
@@ -450,10 +490,13 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `queue:work` | every minute | Sends the queued emails |
 | `channels:sync` | every 30 minutes | Syncs iCal calendars |
 | `prices:sync` | daily at 05:00 | Fetches dynamic prices |
+| `identity:process` | daily at 08:45 | ID check after payment: reminds guests, then cancels or notifies you |
 | `mails:send-scheduled` | daily at 09:00 | Sends scheduled guest emails |
 | `deposits:process` | daily at 09:30 | Refunds security deposits, or reminds the host |
 | `lang:translate es` | by hand | Machine-translates a language file from English (DeepL) |
 | `admin:disable-two-factor` | by hand | Disables two-factor sign-in for one account |
+| `bookings:clear-test-data` | by hand | Removes test bookings before going live and restarts the numbering |
+
 ### API
 
 `GET /api/v1/properties`, `/properties/{id}`, `/properties/{id}/quote` and

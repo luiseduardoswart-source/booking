@@ -220,6 +220,8 @@ class InstallController extends Controller
             ['label' => __('PHP extension :name', ['name' => 'pdo_mysql']), 'ok' => extension_loaded('pdo_mysql')],
             ['label' => __('PHP extension :name', ['name' => 'mbstring']), 'ok' => extension_loaded('mbstring')],
             ['label' => __('PHP extension :name', ['name' => 'openssl']), 'ok' => extension_loaded('openssl')],
+            // Needed by the login of the AI connection (Passport); Composer refuses to install without it.
+            ['label' => __('PHP extension :name', ['name' => 'sodium']), 'ok' => extension_loaded('sodium')],
             ['label' => __('PHP extension :name', ['name' => 'fileinfo']), 'ok' => extension_loaded('fileinfo')],
             ['label' => __('PHP extension :name', ['name' => 'gd']).' — '.__('for photos and PDFs'), 'ok' => extension_loaded('gd')],
             ['label' => __('PHP extension :name', ['name' => 'zip']).' — '.__('for layout templates'), 'ok' => extension_loaded('zip')],

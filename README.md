@@ -155,7 +155,11 @@ way; only the names of the menus differ.
 ### What you need
 
 - **Web hosting with PHP 8.4 or higher and a MySQL or MariaDB database.** Most
-  "Premium" or "Business" hosting plans have this.
+  "Premium" or "Business" hosting plans have this. PHP needs the extensions
+  pdo_mysql, mbstring, openssl, **sodium**, fileinfo, gd and zip; the
+  installation wizard checks them. Sodium is sometimes off by default (on
+  Hostinger: **Advanced → PHP Configuration → PHP extensions**, tick
+  **sodium**).
 - **A domain name**, for example `yourdomain.com`, connected to that hosting,
   with the free **SSL certificate** switched on (the padlock in the browser; on
   Hostinger: **Security → SSL**).

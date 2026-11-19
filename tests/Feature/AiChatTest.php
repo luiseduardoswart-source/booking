@@ -25,6 +25,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
+use App\Services\Ai\SiteChat;
 use Tests\TestCase;
 
 /**
@@ -202,6 +203,21 @@ class AiChatTest extends TestCase
         // Last month does not count.
         AiUsage::query()->update(['created_at' => now()->subMonthNoOverflow()->startOfMonth()]);
         $this->get('/beach-house')->assertSee(self::CHAT_BUTTON, false);
+    }
+
+    public function test_there_is_always_a_monthly_limit(): void
+    {
+        $this->switchOn();
+        $this->accommodation();
+
+        // Not set, or set to 0: the default limit, never unlimited.
+        foreach ([null, '0'] as $setting) {
+            Setting::set('chat', 'monthly_limit', $setting);
+            $this->assertSame((float) SiteChat::DEFAULT_MONTHLY_LIMIT, SiteChat::monthlyLimit());
+        }
+
+        AiUsage::create(['feature' => 'chat', 'provider' => 'claude', 'model' => 'x', 'cost_eur' => SiteChat::DEFAULT_MONTHLY_LIMIT]);
+        $this->get('/beach-house')->assertDontSee(self::CHAT_BUTTON, false);
     }
 
     public function test_openai_and_gemini_get_the_conversation_in_their_own_form(): void

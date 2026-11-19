@@ -225,7 +225,7 @@ class InstallationWithoutSshTest extends TestCase
             ->assertSet('data.mail_security', 'ssl')
             ->fillForm(['company_name' => 'Kustverhuur', 'mail_host' => 'smtp.example.nl'])
             ->call('save')
-            ->assertHasFormErrors(['mail_sender' => 'required_with', 'mail_user' => 'required_with', 'mail_password' => 'required_with'])
+            ->assertHasFormErrors(['mail_sender' => 'required_with', 'mail_user' => 'required_with', 'mail_password' => 'required'])
             ->fillForm([
                 'mail_sender' => 'bookings@example.nl', 'mail_user' => 'bookings@example.nl',
                 'mail_password' => 'mailbox-password', 'mail_port' => '2465',

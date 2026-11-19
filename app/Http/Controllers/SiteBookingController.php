@@ -176,6 +176,10 @@ class SiteBookingController extends Controller
 
         \App\Models\ListingEvent::record('booking', $property);
 
+        // Made on the site: the dates are held while the guest pays. Bookings
+        // from the admin or the API get no hold and never expire.
+        $booking->update(['hold_until' => now()->addMinutes(Booking::HOLD_MINUTES)]);
+
         // If ID verification is required, complete that first and only then
         // proceed to payment. That way a guest who does not want to verify
         // does not have to pay anything yet.

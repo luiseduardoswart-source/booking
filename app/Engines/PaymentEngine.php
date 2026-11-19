@@ -173,11 +173,24 @@ class PaymentEngine
     public function checkoutOrConfirmationUrl(Booking $booking): string
     {
         try {
-            return $this->createPayment($booking, PaymentType::DownPayment)->checkout_url;
+            $checkoutUrl = $this->createPayment($booking, PaymentType::DownPayment)->checkout_url;
+
+            // A booking made on the site that holds its dates: the time counts
+            // from the moment the guest goes to pay (after any ID check).
+            if ($booking->hold_until !== null) {
+                $booking->update(['hold_until' => now()->addMinutes(Booking::HOLD_MINUTES)]);
+            }
+
+            return $checkoutUrl;
         } catch (Throwable $e) {
             // Nothing (more) to pay is not an error.
             if (! $e instanceof InvalidArgumentException) {
                 report($e);
+            }
+
+            // No online payment now: the booking stands, so it no longer expires.
+            if ($booking->hold_until !== null) {
+                $booking->update(['hold_until' => null]);
             }
 
             // No online payment now: the booking stands as it is, so the guest

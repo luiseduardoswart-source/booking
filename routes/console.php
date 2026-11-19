@@ -26,6 +26,9 @@ $task('mails:send-scheduled')->dailyAt('09:00');
 // ID check after the payment: reminder before the deadline, then cancel or notify.
 $task('identity:process')->dailyAt('08:45');
 
+// Bookings made on the site that were not paid in time give their dates back.
+$task('bookings:release-unpaid')->everyFiveMinutes();
+
 // Sync external calendars (iCal) every 30 minutes.
 $task('channels:sync')->everyThirtyMinutes();
 

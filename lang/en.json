@@ -776,7 +776,6 @@
     "Mollie API key": "Mollie API key",
     "Mollie does not charge in :currency. Choose Stripe as payment provider or a different currency for this accommodation.": "Mollie does not charge in :currency. Choose Stripe as payment provider or a different currency for this accommodation.",
     "Monthly limit (number of images, 0 = unlimited)": "Monthly limit (number of images, 0 = unlimited)",
-    "Monthly limit in euros (0 = no limit)": "Monthly limit in euros (0 = no limit)",
     "months": "months",
     "More information": "More information",
     "More options": "More options",
@@ -842,7 +841,6 @@
     "On the day of departure, please check out by :time.": "On the day of departure, please check out by :time.",
     "On the site": "On the site",
     "Once for the whole stay, not per night.": "Once for the whole stay, not per night.",
-    "Once the limit is reached, the chat disappears until next month.": "Once the limit is reached, the chat disappears until next month.",
     "One English name per line, or paste a whole list. Names that already exist are skipped. The icon is recognised by name and can be changed per amenity afterwards.": "One English name per line, or paste a whole list. Names that already exist are skipped. The icon is recognised by name and can be changed per amenity afterwards.",
     "One-time, per pet": "One-time, per pet",
     "Only do this if someone has lost both their phone and recovery codes. If 2FA is mandatory, they set it up again at their next login.": "Only do this if someone has lost both their phone and recovery codes. If 2FA is mandatory, they set it up again at their next login.",
@@ -1801,5 +1799,11 @@
     "The calendar could not be fetched.": "The calendar could not be fetched.",
     "The calendar could not be fetched (status :status).": "The calendar could not be fetched (status :status).",
     "A stay can be at most a year.": "A stay can be at most a year.",
-    "The template is too large: at most :size MB unpacked.": "The template is too large: at most :size MB unpacked."
+    "The template is too large: at most :size MB unpacked.": "The template is too large: at most :size MB unpacked.",
+    "Monthly limit in euros": "Monthly limit in euros",
+    "Once the limit is reached, the chat disappears until next month. Empty = :amount euros.": "Once the limit is reached, the chat disappears until next month. Empty = :amount euros.",
+    "Saved — leave empty to keep it": "Saved — leave empty to keep it",
+    "Remove the saved value": "Remove the saved value",
+    "Remove the saved value?": "Remove the saved value?",
+    "Removed": "Removed"
 }

@@ -771,7 +771,6 @@
     "Mollie API key": "Clave API de Mollie",
     "Mollie does not charge in :currency. Choose Stripe as payment provider or a different currency for this accommodation.": "Mollie no cobra en :currency. Elige Stripe como proveedor de pagos u otra moneda para este alojamiento.",
     "Monthly limit (number of images, 0 = unlimited)": "Límite mensual (número de imágenes, 0 = sin límite)",
-    "Monthly limit in euros (0 = no limit)": "Límite mensual en euros (0 = sin límite)",
     "months": "meses",
     "More information": "Más información",
     "More options": "Más opciones",
@@ -836,7 +835,6 @@
     "On the day of departure, please check out by :time.": "El día de salida te pedimos hacer el check-out antes de las :time.",
     "On the site": "En el sitio",
     "Once for the whole stay, not per night.": "Una sola vez por toda la estancia, no por noche.",
-    "Once the limit is reached, the chat disappears until next month.": "Al alcanzar el límite, el chat desaparece hasta el mes siguiente.",
     "One English name per line, or paste a whole list. Names that already exist are skipped. The icon is recognised by name and can be changed per amenity afterwards.": "Un nombre en inglés por línea, o pega una lista completa. Los nombres que ya existen se omiten. El icono se reconoce por el nombre y después se puede cambiar en cada servicio.",
     "One-time, per pet": "Una vez, por mascota",
     "Only do this if someone has lost both their phone and recovery codes. If 2FA is mandatory, they set it up again at their next login.": "Hazlo solo si alguien ha perdido su teléfono y sus códigos de recuperación. Si la 2FA es obligatoria, la configurará de nuevo en su próximo inicio de sesión.",
@@ -1790,5 +1788,11 @@
     "The calendar could not be fetched.": "No se pudo obtener el calendario.",
     "The calendar could not be fetched (status :status).": "No se pudo obtener el calendario (estado :status).",
     "A stay can be at most a year.": "Una estancia puede durar como máximo un año.",
-    "The template is too large: at most :size MB unpacked.": "La plantilla es demasiado grande: como máximo :size MB descomprimida."
+    "The template is too large: at most :size MB unpacked.": "La plantilla es demasiado grande: como máximo :size MB descomprimida.",
+    "Monthly limit in euros": "Límite mensual en euros",
+    "Once the limit is reached, the chat disappears until next month. Empty = :amount euros.": "Al alcanzar el límite, el chat desaparece hasta el mes siguiente. Vacío = :amount euros.",
+    "Saved — leave empty to keep it": "Guardado — déjalo vacío para conservarlo",
+    "Remove the saved value": "Eliminar el valor guardado",
+    "Remove the saved value?": "¿Eliminar el valor guardado?",
+    "Removed": "Eliminado"
 }

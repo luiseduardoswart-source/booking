@@ -228,6 +228,14 @@ class Settings extends Page implements HasActions, HasForms
         $values['reviews_auto_approve_from'] = $values['reviews_auto_approve_from'] ?? '4';
         $values['cookie_on'] = ($values['cookie_on'] ?? '0') === '1';
         $values['cookie_marketing_on'] = ($values['cookie_marketing_on'] ?? '0') === '1';
+        // Passwords and keys are never sent to the browser again: the field
+        // stays empty and shows that a value is saved (secretField).
+        foreach (self::fields() as $field => [$group, $key]) {
+            if (Setting::isSecret($group, $key)) {
+                $values[$field] = null;
+            }
+        }
+
         $values['mcp_enabled'] = McpConnection::enabled();
         $values['mcp_apps'] = McpConnection::allowedApps();
         $values['mcp_url'] = McpConnection::url();
@@ -540,11 +548,11 @@ class Settings extends Page implements HasActions, HasForms
                                             ->autocomplete(false)
                                             ->hint(__('Usually the full email address'))
                                             ->requiredWith('mail_host'),
-                                        TextInput::make('mail_password')
+                                        self::secretField(TextInput::make('mail_password')
                                             ->label(__('Mailbox password'))
-                                            ->password()->revealable()
                                             ->autocomplete('new-password')
-                                            ->requiredWith('mail_host'),
+                                            // Empty may stay empty when a password is saved already.
+                                            ->required(fn (Get $get): bool => filled($get('mail_host')) && blank(Setting::get('mail', 'password')))),
                                     ]),
                             ]),
 
@@ -842,35 +850,32 @@ class Settings extends Page implements HasActions, HasForms
                                             ->options(['mollie' => 'Mollie (iDEAL, creditcard, Bancontact...)', 'stripe' => 'Stripe (creditcard, iDEAL, Apple/Google Pay...)', 'fake' => __('Test (fake provider)')])
                                             ->default('mollie')
                                             ->columnSpanFull(),
-                                        TextInput::make('payments_mollie_api_key')
-                                            ->label(__('Mollie API key'))
-                                            ->password()->revealable(),
-                                        TextInput::make('payments_stripe_secret_key')
+                                        self::secretField(TextInput::make('payments_mollie_api_key')
+                                            ->label(__('Mollie API key'))),
+                                        self::secretField(TextInput::make('payments_stripe_secret_key')
                                             ->label(__('Stripe secret key'))
-                                            ->hint(__('Also needed for ID verification'))
-                                            ->password()->revealable(),
-                                        TextInput::make('payments_stripe_webhook_secret')
-                                            ->label(__('Stripe webhook secret (optional)'))
-                                            ->password()->revealable(),
+                                            ->hint(__('Also needed for ID verification'))),
+                                        self::secretField(TextInput::make('payments_stripe_webhook_secret')
+                                            ->label(__('Stripe webhook secret (optional)'))),
                                     ]),
 
                                 Section::make(__('Dynamic pricing'))
                                     ->description(__('The keys of the dynamic pricing services. You choose which service an accommodation uses at the accommodation or under Default accommodation settings.'))
                                     ->columns(2)
                                     ->components([
-                                        TextInput::make('prices_pricelabs_api_key')
-                                            ->label(__('PriceLabs API key'))->password()->revealable(),
-                                        TextInput::make('prices_beyond_api_key')
-                                            ->label(__('Beyond API key'))->password()->revealable(),
-                                        TextInput::make('prices_wheelhouse_api_key')
-                                            ->label(__('Wheelhouse API key'))->password()->revealable(),
+                                        self::secretField(TextInput::make('prices_pricelabs_api_key')
+                                            ->label(__('PriceLabs API key'))),
+                                        self::secretField(TextInput::make('prices_beyond_api_key')
+                                            ->label(__('Beyond API key'))),
+                                        self::secretField(TextInput::make('prices_wheelhouse_api_key')
+                                            ->label(__('Wheelhouse API key'))),
                                     ]),
 
                                 Section::make(__('Listing import (Apify)'))
                                     ->columns(2)
                                     ->components([
-                                        TextInput::make('import_apify_token')
-                                            ->label(__('Apify API token'))->password()->revealable(),
+                                        self::secretField(TextInput::make('import_apify_token')
+                                            ->label(__('Apify API token'))),
                                         TextInput::make('import_apify_actor')
                                             ->label(__('Apify actor ID'))
                                             ->hint(__('The actor that scrapes the listing, e.g. for Airbnb')),
@@ -879,21 +884,21 @@ class Settings extends Page implements HasActions, HasForms
                                 Section::make(__('Translations'))
                                     ->description(__('With a (free) DeepL API key, the "Translate empty languages" button translates your texts automatically.'))
                                     ->components([
-                                        TextInput::make('translations_deepl_api_key')
-                                            ->label(__('DeepL API key'))->password()->revealable(),
+                                        self::secretField(TextInput::make('translations_deepl_api_key')
+                                            ->label(__('DeepL API key'))),
                                     ]),
 
                                 Section::make(__('AI texts'))
                                     ->description(__('Enter the key of the AI service you selected under Website. The model is optional — empty = a strong default model.'))
                                     ->columns(2)
                                     ->components([
-                                        TextInput::make('ai_openai_api_key')
-                                            ->label(__('OpenAI API key'))->password()->revealable(),
+                                        self::secretField(TextInput::make('ai_openai_api_key')
+                                            ->label(__('OpenAI API key'))),
                                         TextInput::make('ai_openai_model')
                                             ->label(__('OpenAI model (optional)'))
                                             ->placeholder('gpt-4o'),
-                                        TextInput::make('ai_claude_api_key')
-                                            ->label(__('Claude (Anthropic) API key'))->password()->revealable(),
+                                        self::secretField(TextInput::make('ai_claude_api_key')
+                                            ->label(__('Claude (Anthropic) API key'))),
                                         TextInput::make('ai_claude_model')
                                             ->label(__('Claude model (optional)'))
                                             ->placeholder(ClaudeTextGenerator::DEFAULT_MODEL),
@@ -914,8 +919,8 @@ class Settings extends Page implements HasActions, HasForms
                                                 'gemini' => 'Google Nano Banana (Gemini)',
                                             ])
                                             ->default('openai'),
-                                        TextInput::make('ai_gemini_api_key')
-                                            ->label(__('Google (Gemini) API key'))->password()->revealable(),
+                                        self::secretField(TextInput::make('ai_gemini_api_key')
+                                            ->label(__('Google (Gemini) API key'))),
                                         Select::make('ai_image_model')
                                             ->label(__('OpenAI image model'))
                                             ->options([
@@ -1238,11 +1243,12 @@ class Settings extends Page implements HasActions, HasForms
                     ->maxLength(4000)
                     ->columnSpanFull(),
                 TextInput::make('chat_monthly_limit')
-                    ->label(__('Monthly limit in euros (0 = no limit)'))
+                    ->label(__('Monthly limit in euros'))
                     ->numeric()
-                    ->minValue(0)
-                    ->placeholder('0')
-                    ->helperText(__('Once the limit is reached, the chat disappears until next month.')),
+                    // Always a limit: anyone on the internet can send chat messages, and each one costs money.
+                    ->minValue(1)
+                    ->placeholder((string) SiteChat::DEFAULT_MONTHLY_LIMIT)
+                    ->helperText(__('Once the limit is reached, the chat disappears until next month. Empty = :amount euros.', ['amount' => SiteChat::DEFAULT_MONTHLY_LIMIT])),
                 Placeholder::make('chat_consumption')
                     ->label(__('Usage'))
                     ->content($consumption),
@@ -1434,6 +1440,36 @@ class Settings extends Page implements HasActions, HasForms
             });
     }
 
+    /**
+     * A password or API key: typed in, never shown again (stored encrypted,
+     * see Setting::SECRETS). Empty on save = keep the saved value; the
+     * button next to the field removes it.
+     */
+    private static function secretField(TextInput $field): TextInput
+    {
+        [$group, $key] = self::fields()[$field->getName()];
+        $saved = fn (): bool => filled(Setting::get($group, $key));
+
+        return $field
+            ->password()
+            ->revealable()
+            ->placeholder(fn (): ?string => $saved() ? __('Saved — leave empty to keep it') : null)
+            ->suffixAction(
+                Action::make('forget_'.$field->getName())
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('danger')
+                    ->tooltip(__('Remove the saved value'))
+                    ->visible($saved)
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Remove the saved value?'))
+                    ->action(function () use ($group, $key): void {
+                        abort_unless(static::canAccess(), 403);
+                        Setting::set($group, $key, null);
+                        Notification::make()->title(__('Removed'))->success()->send();
+                    }),
+            );
+    }
+
     public function save(): void
     {
         $data = $this->form->getState();
@@ -1454,6 +1490,12 @@ class Settings extends Page implements HasActions, HasForms
             }
 
             $value = $data[$field];
+
+            // A password or key is never shown, so empty means: keep it.
+            // Removing goes through the button next to the field.
+            if (Setting::isSecret($group, $key) && blank($value)) {
+                continue;
+            }
 
             if (is_bool($value)) {
                 $value = $value ? '1' : '0';

@@ -771,7 +771,6 @@
     "Mollie API key": "Mollie API 密钥",
     "Mollie does not charge in :currency. Choose Stripe as payment provider or a different currency for this accommodation.": "Mollie 不支持以 :currency 收款。请选择 Stripe 作为支付服务，或为此住宿选择其他货币。",
     "Monthly limit (number of images, 0 = unlimited)": "每月上限（图片数量，0 = 不限）",
-    "Monthly limit in euros (0 = no limit)": "每月上限（欧元，0 = 无上限）",
     "months": "个月",
     "More information": "了解更多",
     "More options": "更多选项",
@@ -836,7 +835,6 @@
     "On the day of departure, please check out by :time.": "退房当天请在 :time 前办理退房。",
     "On the site": "显示在网站上",
     "Once for the whole stay, not per night.": "整个住宿只减一次，不是每晚。",
-    "Once the limit is reached, the chat disappears until next month.": "达到上限后，聊天将隐藏至下个月。",
     "One English name per line, or paste a whole list. Names that already exist are skipped. The icon is recognised by name and can be changed per amenity afterwards.": "每行一个英文名称，或粘贴整份列表。已存在的名称会被跳过。图标根据名称自动识别，之后可以逐个修改。",
     "One-time, per pet": "一次性，每只宠物",
     "Only do this if someone has lost both their phone and recovery codes. If 2FA is mandatory, they set it up again at their next login.": "仅在有人同时丢失手机和恢复码时使用。如果双重验证为强制，他会在下次登录时重新设置。",
@@ -1790,5 +1788,11 @@
     "The calendar could not be fetched.": "无法获取日历。",
     "The calendar could not be fetched (status :status).": "无法获取日历（状态 :status）。",
     "A stay can be at most a year.": "入住时间最长为一年。",
-    "The template is too large: at most :size MB unpacked.": "模板过大：解压后最多 :size MB。"
+    "The template is too large: at most :size MB unpacked.": "模板过大：解压后最多 :size MB。",
+    "Monthly limit in euros": "每月限额（欧元）",
+    "Once the limit is reached, the chat disappears until next month. Empty = :amount euros.": "达到限额后，聊天将隐藏至下个月。留空 = :amount 欧元。",
+    "Saved — leave empty to keep it": "已保存 — 留空即保留",
+    "Remove the saved value": "删除已保存的值",
+    "Remove the saved value?": "删除已保存的值？",
+    "Removed": "已删除"
 }

@@ -3,15 +3,32 @@
 namespace App\Models;
 
 use App\Support\RequestMemory;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 #[Fillable(['group', 'key', 'value'])]
 class Setting extends Model
 {
     /** Key of the cache and of the request memory. */
     private const ALL = 'settings.all';
+
+    /**
+     * Passwords and API keys: stored encrypted (with APP_KEY), so the
+     * database, a backup or the settings cache never holds them readable.
+     * get() and set() do this themselves; the rest of the code does not
+     * notice. The admin never shows them again either (Settings).
+     */
+    public const SECRETS = [
+        'ai.claude_api_key', 'ai.openai_api_key', 'ai.gemini_api_key',
+        'import.apify_token',
+        'mail.password',
+        'payments.mollie_api_key', 'payments.stripe_secret_key', 'payments.stripe_webhook_secret',
+        'prices.pricelabs_api_key', 'prices.beyond_api_key', 'prices.wheelhouse_api_key',
+        'translations.deepl_api_key',
+    ];
 
     protected static function booted(): void
     {
@@ -21,7 +38,34 @@ class Setting extends Model
 
     public static function get(string $group, string $key, ?string $default = null): ?string
     {
-        return static::allCached()["{$group}.{$key}"] ?? $default;
+        $value = static::allCached()["{$group}.{$key}"] ?? null;
+
+        if ($value !== null && static::isSecret($group, $key)) {
+            $value = static::reveal($value);
+        }
+
+        return $value ?? $default;
+    }
+
+    public static function isSecret(string $group, string $key): bool
+    {
+        return in_array("{$group}.{$key}", self::SECRETS, true);
+    }
+
+    /**
+     * The readable value of a stored secret. A value that cannot be decrypted
+     * (APP_KEY changed) counts as not set, rather than passing on gibberish;
+     * a value from before encryption (plain text) is returned as it is.
+     */
+    private static function reveal(string $stored): ?string
+    {
+        try {
+            return Crypt::decryptString($stored);
+        } catch (DecryptException) {
+            $payload = json_decode((string) base64_decode($stored, true), true);
+
+            return is_array($payload) && isset($payload['iv'], $payload['mac']) ? null : $stored;
+        }
     }
 
     /**
@@ -37,6 +81,10 @@ class Setting extends Model
 
     public static function set(string $group, string $key, ?string $value): void
     {
+        if (static::isSecret($group, $key) && filled($value)) {
+            $value = Crypt::encryptString($value);
+        }
+
         static::query()->updateOrCreate(
             ['group' => $group, 'key' => $key],
             ['value' => $value],

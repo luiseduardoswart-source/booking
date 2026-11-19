@@ -46,7 +46,9 @@ rental business.
   Chinese out of the box, and more languages can be added. Prices are shown in
   the currency the guest picks.
 - **AI chat assistant** (optional) that answers guest questions using your
-  property details and your own documents.
+  property details and your own documents. It always has a monthly cost limit
+  (25 euros unless you set another amount under **Settings → AI chat**); once
+  it is reached, the chat disappears until next month.
 - **Contact form**, share button, cookie banner (GDPR) and pages of your own
   (for example "About us" or "Things to do").
 
@@ -89,6 +91,13 @@ rental business.
   supports iCal, in both directions, every 30 minutes. Double bookings are
   flagged.
 - **Block dates** yourself, for example for maintenance or personal use.
+- **Unpaid bookings give their dates back**: a booking made on the site holds
+  its dates for 60 minutes while the guest pays. Not paid by then, the open
+  payment is closed and the booking is cancelled, so nobody can fill your
+  calendar with bookings that are never paid. Whoever paid in time stays
+  booked. Bookings you make yourself, bookings through the API and bookings
+  without an online payment never expire. Note: a guest who pays by bank
+  transfer through Mollie must also finish within those 60 minutes.
 - **Payments**: payment links you can send, refunds from the admin panel, and
   invoices, booking confirmations and receipts as PDF.
 - **Security deposit**: refunded automatically after departure, or a daily
@@ -327,6 +336,9 @@ These can never be replaced: the **database** (bookings, guests, payments), the
 folder **`storage/app`** inside the website folder (uploaded
 documents and the signed rental agreements), the folder **`storage`** in the web
 folder (uploaded photos) and the file **`.env`** (your settings and passwords).
+Keep `.env` with the database: the passwords and API keys under Settings are
+stored encrypted with its `APP_KEY`, and without that key they cannot be read
+(you would have to enter them again).
 Most hosting plans make automatic backups; check this in your hosting panel (on
 Hostinger: **Files → Backups**).
 
@@ -577,6 +589,9 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
   suggestions and photo tracking.
 - **Live, links use `APP_URL`** (also in mails), never the Host header of the
   request; the session cookie is https-only when `APP_URL` is https.
+- **Passwords and API keys** in the settings (`Setting::SECRETS`) are stored
+  encrypted with `APP_KEY` and never sent to the browser: the field stays
+  empty, empty on save keeps the saved value, and a button removes it.
 - **Headers**: `nosniff` and a referrer policy everywhere; the admin, My
   bookings, the installation and invitations cannot be shown inside another
   site. Accommodation pages stay embeddable for the embed code.
@@ -590,6 +605,7 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `heartbeat` | every minute | Tells the dashboard that the cron job runs |
 | `queue:work` | every minute | Sends the queued emails |
 | `channels:sync` | every 30 minutes | Syncs iCal calendars |
+| `bookings:release-unpaid` | every 5 minutes | Cancels site bookings not paid within 60 minutes, so their dates are free again |
 | `prices:sync` | daily at 05:00 | Fetches dynamic prices |
 | `identity:process` | daily at 08:45 | ID check after payment: reminds guests, then cancels or notifies you |
 | `mails:send-scheduled` | daily at 09:00 | Sends scheduled guest emails |

@@ -22,7 +22,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable([
-    'booking_number', 'property_id', 'status', 'payment_status',
+    'booking_number', 'property_id', 'status', 'payment_status', 'hold_until',
     'guest_name', 'guest_email', 'guest_phone',
     'guest_address', 'guest_postal_code', 'guest_city', 'guest_country', 'locale',
     'identity_status', 'identity_session_id', 'identity_overdue_at',
@@ -41,6 +41,14 @@ class Booking extends Model
      * in the availability check.
      */
     public const INACTIVE_STATUSES = ['cancelled'];
+
+    /**
+     * How long a booking made on the site holds its dates while the guest
+     * pays (or does the ID check first). Not paid by then: the open payment
+     * is closed and the booking is cancelled (bookings:release-unpaid), so
+     * nobody can block the calendar with bookings that are never paid.
+     */
+    public const HOLD_MINUTES = 60;
 
     /**
      * Validation of an arrival date entered by a guest or the API: today
@@ -239,6 +247,7 @@ class Booking extends Model
             'payment_status' => PaymentStatus::class,
             'identity_status' => \App\Enums\IdentityStatus::class,
             'identity_overdue_at' => 'datetime',
+            'hold_until' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'signed_at' => 'datetime',
             'arrival_date' => 'immutable_date:Y-m-d',

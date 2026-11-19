@@ -66,17 +66,24 @@ final class SiteChat
         return Setting::get('chat', 'model') ?: null;
     }
 
-    /** Monthly limit in euros; 0 = no limit. */
+    /**
+     * Every chat message costs money, and anyone on the internet can send
+     * them: there is always a monthly limit. The owner sets it under
+     * Settings → AI chat; not set (or 0) = this default.
+     */
+    public const DEFAULT_MONTHLY_LIMIT = 25;
+
+    /** Monthly limit in euros. */
     public static function monthlyLimit(): float
     {
-        return max(0, (float) Setting::get('chat', 'monthly_limit', '0'));
+        $limit = (float) Setting::get('chat', 'monthly_limit');
+
+        return $limit > 0 ? $limit : self::DEFAULT_MONTHLY_LIMIT;
     }
 
     public static function limitReached(): bool
     {
-        $limit = static::monthlyLimit();
-
-        return $limit > 0 && AiUsage::thisMonth('chat')['costs'] >= $limit;
+        return AiUsage::thisMonth('chat')['costs'] >= static::monthlyLimit();
     }
 
     /** Does the site show the chat? On, with a key for the service and within the monthly limit. */

@@ -69,3 +69,9 @@
 .leaflet-popup.map-popup .leaflet-popup-close-button:hover {
     background: #fff;
 }
+
+/* The page behind the photo viewer does not scroll while it is open
+   (site/properties/partials/photo-lightbox.blade.php). */
+html:has([data-photo-viewer][open]) {
+    overflow: hidden;
+}

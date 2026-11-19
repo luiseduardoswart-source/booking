@@ -374,35 +374,116 @@ if (mapElement) {
 }
 
 // ---------------------------------------------------------------------------
-// Performance tracking: records which photos are actually viewed in the
-// "all photos" lightbox. An IntersectionObserver only fires once the photo
-// comes into view (so after the dialog is opened), once per photo per visit.
+// Photo viewer (site/properties/partials/photo-lightbox.blade.php): one photo
+// at a time, opened at the photo that was clicked. Arrows, arrow keys, swipe
+// and thumbnails move through the photos; Escape closes (native <dialog>).
+//
+// Performance tracking: a photo counts as viewed once it has been shown for
+// at least VIEW_MS, once per photo per visit. Clicking quickly past a photo
+// does not count it.
 // ---------------------------------------------------------------------------
-(function initPhotoTracking() {
-    const dialog = document.getElementById('photo_dialog');
-    if (!dialog || !('IntersectionObserver' in window) || !navigator.sendBeacon) return;
+(function initPhotoViewer() {
+    const dialog = document.querySelector('[data-photo-viewer]');
+    if (!dialog) return;
 
+    const VIEW_MS = 1000;
+    const SWIPE_PX = 50;
+    const slides = [...dialog.querySelectorAll('[data-photo-slide]')];
+    const thumbs = [...dialog.querySelectorAll('[data-photo-thumb]')];
+    const caption = dialog.querySelector('[data-photo-caption]');
+    const counter = dialog.querySelector('[data-photo-counter]');
     const propertyId = dialog.dataset.property;
-    if (!propertyId) return;
+    const tracked = new Set();
+    let current = 0;
+    let viewTimer = null;
 
-    const sent = new Set();
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (!entry.isIntersecting) return;
+    const track = (slide) => {
+        clearTimeout(viewTimer);
+        const id = slide.dataset.photoTrack;
+        if (!id || tracked.has(id) || !propertyId || !navigator.sendBeacon) return;
 
-            const id = entry.target.dataset.photoTrack;
-            if (!id || sent.has(id)) return;
-
-            sent.add(id);
+        viewTimer = setTimeout(() => {
+            if (!dialog.open || slides[current] !== slide) return;
+            tracked.add(id);
             const data = new FormData();
             data.append('property_id', propertyId);
             data.append('media_id', id);
             navigator.sendBeacon('/track/photo', data);
-            observer.unobserve(entry.target);
-        });
-    }, { threshold: 0.5 });
+        }, VIEW_MS);
+    };
 
-    dialog.querySelectorAll('[data-photo-track]').forEach((img) => observer.observe(img));
+    // The photo shown loads at once, and its neighbours too, so the next
+    // photo is there immediately; the rest waits until it is shown.
+    const preload = (index) => {
+        slides[index]?.querySelectorAll('img[loading="lazy"]').forEach((img) => { img.loading = 'eager'; });
+    };
+
+    const show = (index) => {
+        const total = slides.length;
+        if (total === 0) return;
+        index = (index + total) % total;
+
+        slides[current]?.querySelectorAll('video').forEach((video) => video.pause());
+        slides.forEach((slide, i) => { slide.hidden = i !== index; });
+        thumbs.forEach((thumb, i) => {
+            thumb.toggleAttribute('data-active', i === index);
+            if (i === index) thumb.setAttribute('aria-current', 'true'); else thumb.removeAttribute('aria-current');
+        });
+        thumbs[index]?.scrollIntoView({ block: 'nearest', inline: 'center' });
+
+        current = index;
+        caption.textContent = slides[index].dataset.caption || '';
+        counter.textContent = `${index + 1} / ${total}`;
+        preload(index);
+        preload((index + 1) % total);
+        preload((index - 1 + total) % total);
+
+        if (dialog.open) track(slides[index]);
+    };
+
+    // The page behind does not scroll while the viewer is open: see
+    // html:has([data-photo-viewer][open]) in resources/css/app.css.
+    const open = (index) => {
+        dialog.showModal();
+        show(index);
+    };
+
+    document.querySelectorAll('[data-photo-open]').forEach((button) => {
+        button.addEventListener('click', () => open(Number(button.dataset.photoOpen) || 0));
+    });
+    dialog.querySelector('[data-photo-close]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelector('[data-photo-prev]')?.addEventListener('click', () => show(current - 1));
+    dialog.querySelector('[data-photo-next]')?.addEventListener('click', () => show(current + 1));
+    thumbs.forEach((thumb) => thumb.addEventListener('click', () => show(Number(thumb.dataset.index))));
+
+    dialog.addEventListener('close', () => {
+        clearTimeout(viewTimer);
+        slides[current]?.querySelectorAll('video').forEach((video) => video.pause());
+    });
+
+    dialog.addEventListener('keydown', (event) => {
+        if (event.target.closest('video')) return; // the video uses the arrows to seek
+        if (event.key === 'ArrowRight') { event.preventDefault(); show(current + 1); }
+        if (event.key === 'ArrowLeft') { event.preventDefault(); show(current - 1); }
+    });
+
+    // Swipe on the photo: horizontal movement only, so scrolling still works.
+    let touchX = null;
+    let touchY = null;
+    const stage = slides[0]?.parentElement;
+    stage?.addEventListener('touchstart', (event) => {
+        // On a video a swipe is dragging its timeline; the arrows still work.
+        if (event.target.closest('video')) { touchX = null; return; }
+        touchX = event.touches[0].clientX;
+        touchY = event.touches[0].clientY;
+    }, { passive: true });
+    stage?.addEventListener('touchend', (event) => {
+        if (touchX === null) return;
+        const dx = event.changedTouches[0].clientX - touchX;
+        const dy = event.changedTouches[0].clientY - touchY;
+        touchX = null;
+        if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy)) show(current + (dx < 0 ? 1 : -1));
+    }, { passive: true });
 })();
 
 // ---------------------------------------------------------------------------

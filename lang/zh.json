@@ -1736,5 +1736,10 @@
     "Want to see all your bookings?": "想查看您的所有预订？",
     "Log the guest out of My bookings": "将客人从“我的预订”中退出登录",
     "Ends every login of :email on the site. The guest can log in again with a new link sent to that address.": "结束 :email 在网站上的所有登录。客人可通过发送到该邮箱的新链接重新登录。",
-    "The guest has been logged out.": "客人已退出登录。"
+    "The guest has been logged out.": "客人已退出登录。",
+    "Previous photo": "上一张照片",
+    "Next photo": "下一张照片",
+    "Show photo :number": "显示第 :number 张照片",
+    "No photo views in the last 30 days.": "过去 30 天内没有照片浏览记录。",
+    "{1} 1 view|[2,*] :count views": "{1} 1 次浏览|[2,*] :count 次浏览"
 }

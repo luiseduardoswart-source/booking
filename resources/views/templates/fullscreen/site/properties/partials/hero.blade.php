@@ -28,7 +28,7 @@
                             {{ __('Share') }}
                         </button>
                         @if ($photos->count() > 1)
-                            <button onclick="photo_dialog.showModal()"
+                            <button type="button" data-photo-open="0"
                                     class="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-stone-900 shadow transition hover:bg-white">
                                 <x-site-icon name="photo" class="h-4 w-4" />
                                 {{ __('Show all photos') }} ({{ $photos->count() }})

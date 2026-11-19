@@ -1736,5 +1736,10 @@
     "Want to see all your bookings?": "¿Quieres ver todas tus reservas?",
     "Log the guest out of My bookings": "Cerrar la sesión del huésped en Mis reservas",
     "Ends every login of :email on the site. The guest can log in again with a new link sent to that address.": "Cierra todas las sesiones de :email en el sitio. El huésped puede volver a entrar con un nuevo enlace enviado a esa dirección.",
-    "The guest has been logged out.": "Se ha cerrado la sesión del huésped."
+    "The guest has been logged out.": "Se ha cerrado la sesión del huésped.",
+    "Previous photo": "Foto anterior",
+    "Next photo": "Foto siguiente",
+    "Show photo :number": "Mostrar foto :number",
+    "No photo views in the last 30 days.": "No se han visto fotos en los últimos 30 días.",
+    "{1} 1 view|[2,*] :count views": "{1} 1 visualización|[2,*] :count visualizaciones"
 }

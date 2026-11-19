@@ -87,7 +87,6 @@ class ListingAnalyticsTest extends TestCase
             \App\Filament\Statistics\PageViewsChart::class,
             \App\Filament\Statistics\ViewsPerAccommodationChart::class,
             \App\Filament\Statistics\ConversionFunnelChart::class,
-            \App\Filament\Statistics\TopPhotosChart::class,
             \App\Filament\Statistics\DeviceChart::class,
             \App\Filament\Statistics\LanguageChart::class,
             \App\Filament\Statistics\OriginChart::class,

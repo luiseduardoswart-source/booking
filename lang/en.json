@@ -1747,5 +1747,10 @@
     "Want to see all your bookings?": "Want to see all your bookings?",
     "Log the guest out of My bookings": "Log the guest out of My bookings",
     "Ends every login of :email on the site. The guest can log in again with a new link sent to that address.": "Ends every login of :email on the site. The guest can log in again with a new link sent to that address.",
-    "The guest has been logged out.": "The guest has been logged out."
+    "The guest has been logged out.": "The guest has been logged out.",
+    "Previous photo": "Previous photo",
+    "Next photo": "Next photo",
+    "Show photo :number": "Show photo :number",
+    "No photo views in the last 30 days.": "No photo views in the last 30 days.",
+    "{1} 1 view|[2,*] :count views": "{1} 1 view|[2,*] :count views"
 }

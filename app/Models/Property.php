@@ -941,6 +941,14 @@ class Property extends Model implements HasMedia
         return str_starts_with((string) $media->mime_type, 'video/');
     }
 
+    /** The description of a photo in the current language, otherwise the original; null when empty. */
+    public static function photoLabel(Media $media): ?string
+    {
+        $label = $media->getCustomProperty('label_translations.'.app()->getLocale()) ?: $media->getCustomProperty('label');
+
+        return filled($label) ? (string) $label : null;
+    }
+
     /** The explanation above the photos, with the limits from the constants above. */
     public static function photoHint(): string
     {

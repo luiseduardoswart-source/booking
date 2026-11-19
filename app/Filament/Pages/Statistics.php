@@ -8,7 +8,7 @@ use App\Filament\Statistics\OriginChart;
 use App\Filament\Statistics\PageViewsChart;
 use App\Filament\Statistics\StatisticsOverview;
 use App\Filament\Statistics\LanguageChart;
-use App\Filament\Statistics\TopPhotosChart;
+use App\Filament\Statistics\TopPhotos;
 use App\Filament\Statistics\ViewsPerAccommodationChart;
 use BackedEnum;
 use App\Support\Access;
@@ -56,7 +56,7 @@ class Statistics extends Dashboard
             PageViewsChart::class,
             ViewsPerAccommodationChart::class,
             ConversionFunnelChart::class,
-            TopPhotosChart::class,
+            TopPhotos::class,
             DeviceChart::class,
             LanguageChart::class,
             OriginChart::class,

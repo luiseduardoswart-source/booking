@@ -1747,5 +1747,10 @@
     "Want to see all your bookings?": "Al je boekingen zien?",
     "Log the guest out of My bookings": "Gast uitloggen bij Mijn boekingen",
     "Ends every login of :email on the site. The guest can log in again with a new link sent to that address.": "Beëindigt elke inlog van :email op de site. De gast kan opnieuw inloggen met een nieuwe link naar dat adres.",
-    "The guest has been logged out.": "De gast is uitgelogd."
+    "The guest has been logged out.": "De gast is uitgelogd.",
+    "Previous photo": "Vorige foto",
+    "Next photo": "Volgende foto",
+    "Show photo :number": "Toon foto :number",
+    "No photo views in the last 30 days.": "Nog geen foto's bekeken in de afgelopen 30 dagen.",
+    "{1} 1 view|[2,*] :count views": "{1} 1 keer bekeken|[2,*] :count keer bekeken"
 }

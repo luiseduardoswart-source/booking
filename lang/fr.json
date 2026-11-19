@@ -1736,5 +1736,10 @@
     "Want to see all your bookings?": "Voir toutes vos réservations ?",
     "Log the guest out of My bookings": "Déconnecter le voyageur de Mes réservations",
     "Ends every login of :email on the site. The guest can log in again with a new link sent to that address.": "Met fin à toutes les connexions de :email sur le site. Le voyageur peut se reconnecter avec un nouveau lien envoyé à cette adresse.",
-    "The guest has been logged out.": "Le voyageur a été déconnecté."
+    "The guest has been logged out.": "Le voyageur a été déconnecté.",
+    "Previous photo": "Photo précédente",
+    "Next photo": "Photo suivante",
+    "Show photo :number": "Afficher la photo :number",
+    "No photo views in the last 30 days.": "Aucune photo vue au cours des 30 derniers jours.",
+    "{1} 1 view|[2,*] :count views": "{1} 1 vue|[2,*] :count vues"
 }

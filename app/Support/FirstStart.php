@@ -52,16 +52,7 @@ final class FirstStart
      */
     private static function set(string $content, array $values): string
     {
-        foreach ($values as $key => $value) {
-            $rule = $key.'='.$value;
-            $pattern = '/^'.preg_quote($key, '/').'=.*$/m';
-
-            $content = preg_match($pattern, $content)
-                ? preg_replace($pattern, $rule, $content, 1)
-                : rtrim($content)."\n".$rule."\n";
-        }
-
-        return $content;
+        return EnvFile::set($content, $values);
     }
 
     private static function newKey(): string

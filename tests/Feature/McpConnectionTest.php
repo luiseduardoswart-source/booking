@@ -7,9 +7,10 @@ use App\Filament\Pages\Settings;
 use App\Models\Property;
 use App\Models\Setting;
 use App\Models\User;
-use App\Support\ClaudeConnection;
+use App\Support\McpConnection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Laravel\Passport\Passport;
 use Laravel\Passport\RefreshToken;
 use Laravel\Passport\Token;
@@ -17,11 +18,11 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * The Claude connection itself: off until the owner switches it on, only
- * Claude can register, logging in and "Allow" go through the admin, and only
+ * The AI connection itself: off until the owner switches it on, only the
+ * apps the owner allows can register, logging in and "Allow" go through the admin, and only
  * with a valid token and an admin account does /mcp answer.
  */
-class ClaudeConnectionTest extends TestCase
+class McpConnectionTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -32,15 +33,15 @@ class ClaudeConnectionTest extends TestCase
         parent::setUp();
 
         // Signing keys in a folder of their own, made once: never the real storage/.
-        $keys = sys_get_temp_dir().DIRECTORY_SEPARATOR.'claude-connection-test-keys';
+        $keys = sys_get_temp_dir().DIRECTORY_SEPARATOR.'mcp-connection-test-keys';
         is_dir($keys) || mkdir($keys);
         Passport::loadKeysFrom($keys);
-        ClaudeConnection::ensureKeys();
+        McpConnection::ensureKeys();
     }
 
     private function switchOn(): void
     {
-        Setting::set('claude', 'enabled', '1');
+        Setting::set('mcp', 'enabled', '1');
     }
 
     private function owner(): User
@@ -56,7 +57,7 @@ class ClaudeConnectionTest extends TestCase
     }
 
     /**
-     * The whole connection as Claude makes it: register, the person logs in
+     * The whole connection as an AI app makes it: register, the person logs in
      * and allows, the code becomes a token.
      */
     private function connect(User $user): string
@@ -115,20 +116,54 @@ class ClaudeConnectionTest extends TestCase
         $this->mcp('not-a-token', 'tools/list')->assertUnauthorized();
     }
 
-    public function test_only_claude_can_register_as_an_app(): void
+    private function register(string $redirect): TestResponse
+    {
+        return $this->postJson('/oauth/register', ['client_name' => 'Some app', 'redirect_uris' => [$redirect]]);
+    }
+
+    public function test_the_known_ai_apps_can_register_and_nothing_else(): void
     {
         $this->switchOn();
 
-        $this->postJson('/oauth/register', ['client_name' => 'Claude', 'redirect_uris' => ['https://evil.example/callback']])
-            ->assertStatus(400)->assertJsonPath('error', 'invalid_redirect_uri');
-        $this->postJson('/oauth/register', ['client_name' => 'Claude', 'redirect_uris' => ['https://claude.ai.evil.example/callback']])
-            ->assertStatus(400);
-        $this->postJson('/oauth/register', ['client_name' => 'App', 'redirect_uris' => ['cursor://callback']])
-            ->assertStatus(400);
+        // Nobody chose yet: all known apps.
+        $this->register(self::CALLBACK)->assertCreated();
+        $this->register('https://chatgpt.com/connector_platform_oauth_redirect')->assertCreated();
+        $this->register('https://vscode.dev/redirect')->assertCreated();
+        $this->register('cursor://anysphere.cursor-mcp/oauth/callback')->assertCreated();
+        // Claude Code, Gemini CLI and the like on the person's own computer.
+        $this->register('http://localhost:51234/callback')->assertCreated();
 
-        $this->postJson('/oauth/register', ['client_name' => 'Claude', 'redirect_uris' => [self::CALLBACK]])->assertCreated();
-        // Claude Code on the person's own computer.
-        $this->postJson('/oauth/register', ['client_name' => 'Claude Code', 'redirect_uris' => ['http://localhost:51234/callback']])->assertCreated();
+        // A look-alike or unknown website cannot collect the access code.
+        $this->register('https://evil.example/callback')->assertStatus(400)->assertJsonPath('error', 'invalid_redirect_uri');
+        $this->register('https://claude.ai.evil.example/callback')->assertStatus(400);
+        $this->register('javascript://claude.ai/%0aalert(1)')->assertStatus(400);
+        $this->register('evilapp://callback')->assertStatus(400);
+    }
+
+    public function test_the_owner_chooses_which_apps_may_connect(): void
+    {
+        $this->switchOn();
+        Setting::set('mcp', 'apps', 'chatgpt');
+        Setting::set('mcp', 'other_addresses', "https://agent.example.com/oauth/callback\nnot an address");
+
+        $this->register('https://chatgpt.com/connector_platform_oauth_redirect')->assertCreated();
+        $this->register('https://agent.example.com/oauth/callback')->assertCreated();
+        $this->register(self::CALLBACK)->assertStatus(400);
+        $this->register('http://localhost:51234/callback')->assertStatus(400);
+        $this->register('cursor://anysphere.cursor-mcp/oauth/callback')->assertStatus(400);
+    }
+
+    public function test_an_app_the_owner_no_longer_allows_cannot_log_in(): void
+    {
+        $this->switchOn();
+        $client = $this->register(self::CALLBACK)->json('client_id');
+
+        Setting::set('mcp', 'apps', 'chatgpt');
+
+        $this->actingAs($this->owner())->get('/oauth/authorize?'.http_build_query([
+            'client_id' => $client, 'redirect_uri' => self::CALLBACK, 'response_type' => 'code', 'scope' => 'mcp:use',
+            'state' => 'abc', 'code_challenge' => str_repeat('a', 43), 'code_challenge_method' => 'S256',
+        ]))->assertForbidden();
     }
 
     public function test_allowing_goes_through_the_admin_login(): void
@@ -143,7 +178,7 @@ class ClaudeConnectionTest extends TestCase
         ]))->assertRedirect(route('filament.admin.auth.login'));
     }
 
-    public function test_after_allowing_claude_works_with_the_rights_of_that_person(): void
+    public function test_after_allowing_the_app_works_with_the_rights_of_that_person(): void
     {
         $this->switchOn();
         Property::create(['name' => 'Beach house', 'slug' => 'beach-house', 'type' => 'holiday_home', 'max_guests' => 2, 'active' => true]);
@@ -174,14 +209,14 @@ class ClaudeConnectionTest extends TestCase
     {
         $this->switchOn();
         $token = $this->connect($this->owner());
-        $this->assertCount(1, ClaudeConnection::connections());
+        $this->assertCount(1, McpConnection::connections());
 
-        Setting::set('claude', 'enabled', '0');
-        ClaudeConnection::switched(true);
+        Setting::set('mcp', 'enabled', '0');
+        McpConnection::switched(true);
 
         $this->assertSame(0, Token::query()->where('revoked', false)->count());
         $this->assertSame(0, RefreshToken::query()->where('revoked', false)->count());
-        $this->assertCount(0, ClaudeConnection::connections());
+        $this->assertCount(0, McpConnection::connections());
 
         // Switched on again, the old token does not come back to life.
         $this->switchOn();
@@ -193,12 +228,15 @@ class ClaudeConnectionTest extends TestCase
         $owner = $this->owner();
 
         Livewire::actingAs($owner)->test(Settings::class)
-            ->assertFormFieldHidden('claude_url')
-            ->set('data.claude_enabled', true)
-            ->assertFormFieldVisible('claude_url')
-            ->assertFormSet(['claude_url' => ClaudeConnection::url()]);
+            ->assertFormFieldHidden('mcp_url')
+            ->set('data.mcp_enabled', true)
+            ->assertFormFieldVisible('mcp_url')
+            ->assertFormSet(['mcp_url' => McpConnection::url()])
+            ->set('data.mcp_apps', ['claude', 'local']);
 
-        $this->assertTrue(ClaudeConnection::enabled());
+        $this->assertSame(['claude', 'local'], McpConnection::allowedApps());
+
+        $this->assertTrue(McpConnection::enabled());
     }
 
     public function test_only_the_owner_may_switch_it(): void
@@ -206,6 +244,6 @@ class ClaudeConnectionTest extends TestCase
         $staff = User::factory()->create(['role' => UserRole::Staff]);
 
         Livewire::actingAs($staff)->test(Settings::class)->assertForbidden();
-        $this->assertFalse(ClaudeConnection::enabled());
+        $this->assertFalse(McpConnection::enabled());
     }
 }

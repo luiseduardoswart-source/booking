@@ -6,7 +6,7 @@ use App\Models\ListingEvent;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * The visit figures behind the Statistics page and the Claude connection:
+ * The visit figures behind the Statistics page and the AI connection:
  * page views, visitors, price requests and bookings over the last days,
  * for all accommodations or one. One place, so both show the same numbers.
  */

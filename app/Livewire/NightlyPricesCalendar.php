@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Engines\CalendarEngine;
 use App\Engines\PricingEngine;
 use App\Models\NightlyRate;
+use App\Filament\Resources\Properties\PropertyResource;
 use App\Models\Property;
 use Carbon\CarbonImmutable;
 use Filament\Notifications\Notification;
@@ -101,6 +102,8 @@ class NightlyPricesCalendar extends Component
 
     public function save(): void
     {
+        $this->checkPermission();
+
         $cents = $this->centsFromInput();
 
         if ($cents === null) {
@@ -134,6 +137,8 @@ class NightlyPricesCalendar extends Component
 
     public function restore(): void
     {
+        $this->checkPermission();
+
         if ($this->selected === []) {
             Notification::make()->title(__('Select one or more nights first.'))->warning()->send();
 
@@ -155,6 +160,8 @@ class NightlyPricesCalendar extends Component
 
     public function discount(): void
     {
+        $this->checkPermission();
+
         $percent = str_replace(',', '.', trim((string) $this->discountInput));
 
         if ($percent === '' || ! is_numeric($percent) || (float) $percent <= 0 || (float) $percent >= 100) {
@@ -202,6 +209,8 @@ class NightlyPricesCalendar extends Component
 
     public function block(): void
     {
+        $this->checkPermission();
+
         if ($this->selected === []) {
             Notification::make()->title(__('Select one or more nights first.'))->warning()->send();
 
@@ -231,6 +240,8 @@ class NightlyPricesCalendar extends Component
 
     public function unblock(): void
     {
+        $this->checkPermission();
+
         if ($this->selected === []) {
             Notification::make()->title(__('Select one or more nights first.'))->warning()->send();
 
@@ -416,5 +427,15 @@ class NightlyPricesCalendar extends Component
     public function render(): \Illuminate\View\View
     {
         return view('livewire.nightly-prices-calendar');
+    }
+
+    /**
+     * Every change is checked on the server again: a host who lost the
+     * accommodation (or the right) cannot keep changing prices from a tab
+     * that is still open.
+     */
+    private function checkPermission(): void
+    {
+        abort_unless(PropertyResource::canEdit($this->property), 403);
     }
 }

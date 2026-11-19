@@ -59,6 +59,17 @@ class Page extends Model
      *
      * @return array<int, array{image: string, image_mobile: string, title: array<string, string>, link: string, position: string}>
      */
+    /**
+     * A hero link may go to a web address, a page on the site or an anchor;
+     * never javascript: or data:, which would run a script for whoever clicks.
+     */
+    public static function safeLink(string $link): string
+    {
+        $link = trim($link);
+
+        return preg_match('~^(https?://|/(?!/)|#)~i', $link) === 1 ? $link : '';
+    }
+
     public static function cleanHeroes(array $items): array
     {
         $positions = ['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'];
@@ -79,7 +90,7 @@ class Page extends Model
                 'image' => $item['image'],
                 'image_mobile' => (string) ($item['image_mobile'] ?? ''),
                 'title' => $title,
-                'link' => (string) ($item['link'] ?? ''),
+                'link' => self::safeLink((string) ($item['link'] ?? '')),
                 'position' => in_array($item['position'] ?? '', $positions, true) ? $item['position'] : 'center',
             ];
         }

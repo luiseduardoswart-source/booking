@@ -15,9 +15,9 @@ return [
 
     'guard' => 'web',
 
-    // Passport only serves the Claude connection: its routes (/oauth/...)
+    // Passport only serves the AI connection: its routes (/oauth/...)
     // exist only while the owner has switched that on in Settings.
-    'middleware' => [\App\Http\Middleware\EnsureClaudeConnectionEnabled::class],
+    'middleware' => [\App\Http\Middleware\EnsureMcpEnabled::class],
 
     /*
     |--------------------------------------------------------------------------

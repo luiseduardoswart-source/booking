@@ -48,7 +48,7 @@ class FakeProvider implements PaymentProvider
         $id = 'fake_'.$payment->id;
         $this->setStatus($id, ProviderPaymentStatus::Open);
 
-        return new ProviderPaymentResult($id, route('payment.test', $payment));
+        return new ProviderPaymentResult($id, \Illuminate\Support\Facades\URL::signedRoute('payment.test', $payment));
     }
 
     public function status(Payment $payment): ProviderPaymentStatus

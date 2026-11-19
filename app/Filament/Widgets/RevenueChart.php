@@ -11,6 +11,12 @@ class RevenueChart extends ChartWidget
 {
     protected static ?int $sort = 3;
 
+    /** Revenue: only with the right to see payments. */
+    public static function canView(): bool
+    {
+        return Access::may(auth()->user(), 'payments', Access::VIEW);
+    }
+
     protected int|string|array $columnSpan = 'full';
 
     public function getHeading(): string

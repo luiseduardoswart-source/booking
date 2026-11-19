@@ -84,7 +84,7 @@ class GuestBookingsTest extends TestCase
     {
         $this->post(route('guest.link'), ['email' => $email])->assertRedirect(route('guest.bookings'));
 
-        return Mail::sent(GuestLoginMail::class)->last()?->token;
+        return Mail::queued(GuestLoginMail::class)->last()?->token;
     }
 
     /** Logs in through the link; returns the cookie value the browser keeps. */
@@ -110,14 +110,14 @@ class GuestBookingsTest extends TestCase
 
         $this->askLink('nobody@example.com');
         $unknown = session('guest_status');
-        Mail::assertNotSent(GuestLoginMail::class);
+        Mail::assertNotQueued(GuestLoginMail::class);
 
         $this->askLink('JAN@example.com');
         $this->assertSame($unknown, session('guest_status'));
-        Mail::assertSent(GuestLoginMail::class, fn (GuestLoginMail $mail) => $mail->hasTo('jan@example.com'));
+        Mail::assertQueued(GuestLoginMail::class, fn (GuestLoginMail $mail) => $mail->hasTo('jan@example.com'));
 
         // No address in the link: only a random code.
-        $this->assertStringNotContainsString('example.com', route('guest.login', ['token' => Mail::sent(GuestLoginMail::class)->sole()->token]));
+        $this->assertStringNotContainsString('example.com', route('guest.login', ['token' => Mail::queued(GuestLoginMail::class)->sole()->token]));
     }
 
     public function test_at_most_three_links_per_address_per_ten_minutes(): void
@@ -128,7 +128,7 @@ class GuestBookingsTest extends TestCase
             $this->askLink('jan@example.com');
         }
 
-        Mail::assertSent(GuestLoginMail::class, 3);
+        Mail::assertQueued(GuestLoginMail::class, 3);
     }
 
     public function test_opening_the_link_does_not_use_it_only_the_button_does_and_only_once(): void

@@ -23,3 +23,13 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Uploaded files are served from this domain: the browser must use the type the
+# server gives (no guessing a photo is HTML), and an SVG never runs a script.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+
+    <FilesMatch "\.svg$">
+        Header set Content-Security-Policy "default-src 'none'; img-src data:; style-src 'unsafe-inline'; sandbox"
+    </FilesMatch>
+</IfModule>

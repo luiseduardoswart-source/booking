@@ -88,7 +88,13 @@ final class GuestAccess
             return null;
         }
 
-        $link->update(['used_at' => now()]);
+        // Claim it in one statement: two requests with the same link at the
+        // same moment must not both log in.
+        $claimed = GuestLogin::query()->whereKey($link->id)->whereNull('used_at')->update(['used_at' => now()]);
+
+        if ($claimed !== 1) {
+            return null;
+        }
 
         $code = Str::random(64);
         $login = GuestLogin::create([

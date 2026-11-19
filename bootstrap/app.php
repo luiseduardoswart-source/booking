@@ -22,6 +22,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // This also applies the canonical hostname to /api.
         $middleware->prepend(\App\Http\Middleware\CanonicalHost::class);
 
+        // Browser security headers on every response (see the class).
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         // Payment provider webhooks and sendBeacon tracking have no
         // CSRF token.
         $middleware->validateCsrfTokens(except: [
@@ -35,7 +38,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
 
         // Not logged in on a page that requires it: the admin login, which
         // then returns to the page. The only such page outside the admin is
-        // the Claude connection's "Allow" screen (/oauth/authorize).
+        // the AI connection's "Allow" screen (/oauth/authorize).
         $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
 
         $middleware->web(append: [
@@ -53,7 +56,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             // The site chat also speaks JSON (see SiteChatController), and so
-            // does the Claude connection (routes/ai.php): without a valid
+            // does the AI connection (routes/ai.php): without a valid
             // token it must get a 401, not the login page.
             fn (Request $request) => $request->is('api/*', 'chat', 'mcp'),
         );

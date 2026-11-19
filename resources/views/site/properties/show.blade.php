@@ -432,8 +432,10 @@
                         return;
                     }
 
+                    // Price lines such as a discount name are typed in the admin: text, not HTML.
+                    const text = (value) => { const span = document.createElement('span'); span.textContent = value ?? ''; return span.innerHTML; };
                     overview.innerHTML = json.quote.lines
-                        .map(l => `<div class="flex justify-between"><span class="text-stone-600 underline decoration-stone-300 underline-offset-2">${l.label}</span><span>${euro(l.amount_cents)}</span></div>`)
+                        .map(l => `<div class="flex justify-between"><span class="text-stone-600 underline decoration-stone-300 underline-offset-2">${text(l.label)}</span><span>${euro(l.amount_cents)}</span></div>`)
                         .join('')
                         + `<div class="mt-2 flex justify-between border-t border-stone-200 pt-3 text-base font-semibold"><span>{{ __('Total') }}</span><span>${euro(json.quote.total_cents)}</span></div>`
                         + (json.quote.down_payment_cents < json.quote.total_cents

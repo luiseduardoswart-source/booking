@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 
 #[Name('undo_style_change')]
-#[Description('Puts the look of the website back to how it was before the last change made through Claude (style template, style settings, layout or style rule). Can be repeated for earlier changes. The owner can do the same in Settings → Layout & style.')]
+#[Description('Puts the look of the website back to how it was before the last change made through this connection (style template, style settings, layout or style rule). Can be repeated for earlier changes. The owner can do the same in Settings → Layout & style.')]
 class UndoStyleChange extends StyleTool
 {
     public function schema(JsonSchema $schema): array
@@ -22,7 +22,7 @@ class UndoStyleChange extends StyleTool
 
     protected function run(Request $request, User $user): Response|ResponseFactory
     {
-        $undone = StyleHistory::undo() ?? throw new ToolFailure('There is no change made through Claude left to undo.');
+        $undone = StyleHistory::undo() ?? throw new ToolFailure('There is no change made through this connection left to undo.');
 
         $next = StyleHistory::last();
 

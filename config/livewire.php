@@ -16,7 +16,8 @@ return [
         'directory' => null,
         'middleware' => null,
         'preview_mimes' => [
-            'png', 'gif', 'bmp', 'svg', 'wav', 'mp4',
+            // No 'svg': a preview of an uploaded SVG would run its script.
+            'png', 'gif', 'bmp', 'wav', 'mp4',
             'mov', 'avi', 'wmv', 'mp3', 'm4a',
             'jpg', 'jpeg', 'mpga', 'webp', 'wma',
         ],

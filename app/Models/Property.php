@@ -61,6 +61,11 @@ class Property extends Model implements HasMedia
 
     public const VIDEO_EXTENSIONS = ['mp4', 'webm'];
 
+    /** Photo formats every browser shows; no SVG, which can carry a script. */
+    public const PHOTO_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'];
+
+    public const PHOTO_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+
     public const VIDEO_MIMES = ['video/mp4', 'video/webm'];
 
     /** Weekend adjustment: a fixed weekend price per night, or a percentage on the nightly price. */
@@ -930,8 +935,17 @@ class Property extends Model implements HasMedia
     {
         $name = \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'photo';
 
+        // The extension from the content, never from the name the uploader
+        // chose: an image that is also valid HTML must not end up as .html
+        // on the site's own domain.
+        $extension = strtolower((string) $file->guessExtension());
+
+        if (! in_array($extension, [...self::PHOTO_EXTENSIONS, ...self::VIDEO_EXTENSIONS], true)) {
+            throw new \InvalidArgumentException(__('Only photos (jpg, png, webp, gif, avif) and videos (mp4, webm).'));
+        }
+
         return $this->addMedia($file->getRealPath())
-            ->usingFileName($name.'.'.strtolower($file->getClientOriginalExtension()))
+            ->usingFileName($name.'.'.($extension === 'jpeg' ? 'jpg' : $extension))
             ->toMediaCollection('photos');
     }
 

@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Only someone who may log in to the admin gets through: a user whose role
  * was changed after connecting loses access at once.
  */
-class AuthenticateClaudeUser
+class AuthenticateMcpUser
 {
     public function handle(Request $request, Closure $next): Response
     {

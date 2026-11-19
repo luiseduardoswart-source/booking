@@ -19,12 +19,12 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Tool;
 
 /**
- * Every action of the Claude connection. The rights are those of the admin
+ * Every action of the AI connection. The rights are those of the admin
  * (App\Support\Access): a tool needs one screen and action from
  * Access::SCREENS, or is for the owner only (permission() returns null).
  * Who may not use a tool does not see it, and cannot call it.
  *
- * The user is the real User (AuthenticateClaudeUser), so a host only finds
+ * The user is the real User (AuthenticateMcpUser), so a host only finds
  * their own accommodations, saving runs the same ownership check as the
  * admin, and the activity log records who changed what.
  */

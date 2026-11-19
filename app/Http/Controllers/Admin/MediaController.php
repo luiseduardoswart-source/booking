@@ -33,6 +33,19 @@ class MediaController extends Controller implements HasMiddleware
 
     private const IMAGES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
 
+    /**
+     * An SVG can carry a script that runs on the site's own domain when the
+     * file is opened, so only the owner may add or edit one (a logo, an
+     * icon). Everyone else gets the other formats.
+     *
+     * @param  list<string>  $extensions
+     * @return list<string>
+     */
+    private static function forCurrentUser(array $extensions): array
+    {
+        return auth()->user()?->isAdministrator() ? $extensions : array_values(array_diff($extensions, ['svg']));
+    }
+
     public function index()
     {
         return view('admin.media.index');
@@ -117,7 +130,7 @@ class MediaController extends Controller implements HasMiddleware
 
         foreach ($request->file('files') as $file) {
             $ext = strtolower($file->getClientOriginalExtension());
-            if (! in_array($ext, self::ALLOWED)) {
+            if (! in_array($ext, self::forCurrentUser(self::ALLOWED))) {
                 continue;
             }
             $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
@@ -159,7 +172,7 @@ class MediaController extends Controller implements HasMiddleware
         abort_unless($disk->exists($target), 404);
 
         $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
-        abort_unless(in_array($ext, self::IMAGES), 422);
+        abort_unless(in_array($ext, self::forCurrentUser(self::IMAGES)), 422);
 
         if ($request->boolean('overwrite')) {
             $new = $target;
@@ -415,12 +428,24 @@ class MediaController extends Controller implements HasMiddleware
     {
         $share = array_values(array_filter(explode('/', $this->withoutMediaPrefix($path))));
 
-        return match (count($share)) {
+        $parsed = match (count($share)) {
             1 => ['root', null, null],
             2 => ['accommodation', (int) $share[1], null],
             3 => ['photo', (int) $share[1], (int) $share[2]],
             default => ['unknown', null, null],
         };
+
+        // A host only reaches the photos of their own accommodations, as
+        // everywhere else in the admin (Access::restrict).
+        abort_unless($parsed[1] === null || $this->ownAccommodations()->whereKey($parsed[1])->exists(), 404);
+
+        return $parsed;
+    }
+
+    /** The accommodations whose photos this user may manage here. */
+    private function ownAccommodations(): \Illuminate\Database\Eloquent\Builder
+    {
+        return \App\Support\Access::restrict(Property::query()->withoutGlobalScope('withoutMaster'));
     }
 
     private function accommodationPhoto(string $path): Media
@@ -452,8 +477,7 @@ class MediaController extends Controller implements HasMiddleware
         [$kind, $accommodationId] = $this->accommodationPath($path);
 
         if ($kind === 'root') {
-            $dirs = Property::query()
-                ->withoutGlobalScope('withoutMaster')
+            $dirs = $this->ownAccommodations()
                 ->orderBy('name')
                 ->get()
                 ->filter(fn (Property $p) => $p->getMedia('photos')->isNotEmpty())
@@ -616,12 +640,16 @@ class MediaController extends Controller implements HasMiddleware
         foreach ($request->file('files') as $file) {
             $ext = strtolower($file->getClientOriginalExtension());
 
-            // A property shows images and videos (mp4, webm), no documents.
-            if (! in_array($ext, [...self::IMAGES, ...Property::VIDEO_EXTENSIONS])) {
+            // A property shows images and videos (mp4, webm), no documents and no SVG.
+            if (! in_array($ext, [...Property::PHOTO_EXTENSIONS, ...Property::VIDEO_EXTENSIONS])) {
                 continue;
             }
 
-            $uploaded[] = $this->accommodationFile($property->addPhoto($file));
+            try {
+                $uploaded[] = $this->accommodationFile($property->addPhoto($file));
+            } catch (\InvalidArgumentException) {
+                continue; // the content is not a photo or video
+            }
         }
 
         return response()->json(['ok' => true, 'uploaded' => $uploaded]);

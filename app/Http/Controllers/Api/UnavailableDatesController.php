@@ -21,6 +21,11 @@ class UnavailableDatesController extends Controller
     {
         abort_unless($property->active, 404);
 
+        $request->validate([
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
         $from = $request->query('from')
             ? CarbonImmutable::parse($request->query('from'))
             : CarbonImmutable::today();
@@ -28,6 +33,11 @@ class UnavailableDatesController extends Controller
         $to = $request->query('to')
             ? CarbonImmutable::parse($request->query('to'))
             : $from->addMonths(18);
+
+        // Every night is computed: at most two years at once, starting at
+        // most a year back (a calendar never shows more).
+        $from = $from->max(CarbonImmutable::today()->subYear());
+        $to = $to->min($from->addMonths(24));
 
         // Booking horizon: dates beyond the horizon cannot be booked.
         $windowMonths = $property->effective('booking_window_months');

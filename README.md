@@ -130,17 +130,17 @@ rental business.
   website. Each user can choose their own.
 - **Updates in one click**: after uploading a new version, a button on the
   dashboard updates the database.
-- **Work from Claude**: connect Claude (claude.ai, the app or Claude Code) and
-  ask in plain language for your bookings, change prices, texts and the
+- **Work from an AI app**: connect Claude, ChatGPT or another AI app (MCP)
+  and ask in plain language for your bookings, change prices, texts and the
   calendar, or have the look of the website adjusted. Off until you switch it
-  on; see [Working from Claude](#working-from-claude).
+  on; see [Working with an AI app](#working-with-an-ai-app-mcp).
 
 ### For developers
 
 - **API** for properties, prices, availability and bookings (bookings require a
   token).
-- **MCP server** for Claude, with OAuth sign-in through the admin (see
-  [Working from Claude](#working-from-claude)).
+- **MCP server** for AI apps, with OAuth sign-in through the admin (see
+  [Working with an AI app](#working-with-an-ai-app-mcp)).
 
 ---
 
@@ -346,35 +346,37 @@ At the next login you set it up again.
 
 ---
 
-## Working from Claude
+## Working with an AI app (MCP)
 
-You can manage the website from Claude instead of clicking through the admin:
-"Which guests arrive this week?", "Set the cleaning fee of the beach house to
-45 euros", "Block 10 to 12 June for painting", "Make the buttons dark green and
-the headings larger". Claude uses the website's own rules, so a price it sets is
-the price a guest gets.
+You can manage the website from an AI app such as Claude or ChatGPT instead of
+clicking through the admin: "Which guests arrive this week?", "Set the cleaning
+fee of the beach house to 45 euros", "Block 10 to 12 June for painting", "Make
+the buttons dark green and the headings larger". The website offers this as an
+MCP server, the open standard these apps use to connect to other software. The
+app uses the website's own rules, so a price it sets is the price a guest gets.
 
 ### Switching it on
 
-1. In the admin go to **Settings → Claude** and switch on **Claude connection
-   on**. The address for Claude appears, for example
+1. In the admin go to **Settings → AI connection** and switch on **AI
+   connection on**. The address for the app appears, for example
    `https://your-domain.com/mcp`.
-2. In Claude (claude.ai or the app): **Settings → Connectors → Add custom
-   connector**. Give it a name and paste that address.
-3. Click **Connect**. Your own admin opens: log in (with your two-factor code if
-   you use one) and click **Allow**.
-4. In a chat, switch the connector on and ask, for example: "Show my
+2. Under **Apps that may connect**, keep the apps you use: Claude, ChatGPT,
+   VS Code, Cursor and apps on your own computer (Claude Code, Gemini CLI,
+   Codex and others). Another app can be added by the https address it sends
+   you back to after logging in. Only these apps can register.
+3. In your AI app, add a custom connector (also called an MCP server) and paste
+   the address. In Claude: **Settings → Connectors → Add custom connector**.
+   With Claude Code: `claude mcp add --transport http booking
+   https://your-domain.com/mcp`, then `/mcp` to log in.
+4. Click **Connect**. Your own admin opens: log in (with your two-factor code if
+   you use one) and click **Allow**. Then ask, for example: "Show my
    accommodations".
 
-With Claude Code on your own computer:
-`claude mcp add --transport http booking https://your-domain.com/mcp`, then
-`/mcp` to log in.
-
-Claude reaches your website over the internet, so the address must be your
+The app reaches your website over the internet, so the address must be your
 live domain with https; a local test site such as `airbnb.test` only works with
-Claude Code on the same computer.
+an app on the same computer.
 
-### What Claude can and cannot do
+### What the app can and cannot do
 
 Everyone connects with their own login and gets exactly the rights they have in
 the admin: the owner everything below, a host only their own accommodations,
@@ -389,9 +391,9 @@ a staff member only the screens the owner gave them.
   freeing nights; the title and text of content pages.
 - **The look (owner only)**: a style template, the colours, header, font and
   buttons, the page layout, and style rules per element like the style editor.
-  Before every change the whole look is remembered: ask Claude to undo it, or
-  click **Undo the last change made through Claude** under **Settings → Layout
-  & style**. The last 20 changes can be undone.
+  Before every change the whole look is remembered: ask the app to undo it, or
+  click **Undo the last change made through the AI connection** under
+  **Settings → Layout & style**. The last 20 changes can be undone.
 - **Not possible**: payments and refunds, deleting accommodations or bookings,
   Settings and users, installing layout templates and your own scripts. Those
   stay in the admin. Texts that contain photos or videos are also left to the
@@ -401,11 +403,12 @@ Every change is in the activity log under the name of the person who connected.
 
 ### Disconnecting
 
-**Settings → Claude** shows who is connected. **Disconnect everyone** ends all
-connections; switching the connection off does the same, and the address then
-no longer exists. A user whose role changes so they can no longer use the admin
-loses access at once. A connection that has not been used for 60 days asks to
-log in again.
+**Settings → AI connection** shows who is connected with which app.
+**Disconnect everyone** ends all connections; switching the connection off does
+the same, and the address then no longer exists. An app you remove from the
+list can no longer log in. A user whose role changes so they can no longer use
+the admin loses access at once. A connection that has not been used for 60
+days asks to log in again.
 
 ---
 
@@ -548,9 +551,33 @@ and calendar sync all follow the same rules:
 | Notifications | `app/Engines/NotificationEngine.php` | Guest emails |
 | Pricing services | `app/Services/*Provider.php` | PriceLabs, Beyond, Wheelhouse |
 | Admin | `app/Filament/` | Filament screens |
-| Claude connection | `app/Mcp/`, `routes/ai.php`, `app/Support/ClaudeConnection.php` | MCP server (laravel/mcp) with OAuth through Passport; every tool checks the same rights as the admin (`app/Support/Access.php`) |
+| AI connection | `app/Mcp/`, `routes/ai.php`, `app/Support/McpConnection.php` | MCP server (laravel/mcp) with OAuth through Passport for the apps the owner allows; every tool checks the same rights as the admin (`app/Support/Access.php`) |
 
 Amounts are stored in cents. Everything is date-based: one night is one date.
+
+### Security rules worth knowing
+
+- **Rights**: everything goes through `app/Support/Access.php`, also outside the
+  Filament screens (media manager, price calendar, API, AI connection). An
+  action someone may only look at is hidden *and* refused on the server.
+- **Uploads** are served from the site's own domain, so nothing uploaded may
+  run there: photos are saved under the type of their content (not the name),
+  and only the owner can add SVG files. `public/.htaccess` sends `nosniff` and
+  sandboxes SVG files.
+- **Addresses the server fetches** (iCal calendars, listings and photos to
+  import) go through `app/Support/OutboundUrl.php`: http(s) only, never an
+  address inside the server's own network (also not after a redirect), and a
+  size limit.
+- **Limits** on public endpoints: booking, contact and forms, the chat, the
+  price and calendar API (at most two years of nights per request), search
+  suggestions and photo tracking.
+- **Live, links use `APP_URL`** (also in mails), never the Host header of the
+  request; the session cookie is https-only when `APP_URL` is https.
+- **Headers**: `nosniff` and a referrer policy everywhere; the admin, My
+  bookings, the installation and invitations cannot be shown inside another
+  site. Accommodation pages stay embeddable for the embed code.
+- **The test payment provider** only opens through the signed link the
+  booking flow gives; never leave it switched on for a live site.
 
 ### Scheduled tasks and commands
 

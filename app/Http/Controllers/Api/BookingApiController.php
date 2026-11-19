@@ -53,7 +53,7 @@ class BookingApiController extends Controller
             'arrival' => Booking::arrivalRule(),
             'departure' => ['required', 'date', 'after:arrival'],
             'guests' => ['required', 'integer', 'min:1'],
-            'guest.name' => ['required', 'string', 'max:255'],
+            'guest.name' => ['required', 'string', 'max:255', 'regex:/^[^\p{Cc}]*$/u'],
             'guest.email' => ['required', 'email', 'max:255'],
             'guest.phone' => ['nullable', 'string', 'max:50'],
             'guest.address' => ['nullable', 'string', 'max:255'],

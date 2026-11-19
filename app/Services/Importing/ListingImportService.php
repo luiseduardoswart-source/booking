@@ -3,6 +3,8 @@
 namespace App\Services\Importing;
 
 use App\Models\Property;
+use App\Support\OutboundUrl;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -61,7 +63,11 @@ class ListingImportService
             $seen[$baseName] = true;
 
             try {
-                $property->addMediaFromUrl($url)->toMediaCollection('photos');
+                // The links come from the imported page (or the form): fetched
+                // like any address a user gives, and saved as a real photo.
+                $file = OutboundUrl::download($url, Property::MAX_PHOTO_KB * 1024);
+                $property->addPhoto(new UploadedFile($file, $baseName !== '' ? $baseName : 'photo.jpg', null, null, true));
+                @unlink($file);
             } catch (Throwable) {
                 // One failed photo must not block the whole import.
             }

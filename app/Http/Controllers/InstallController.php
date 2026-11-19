@@ -276,15 +276,7 @@ class InstallController extends Controller
             $values['APP_KEY'] = 'base64:'.base64_encode(random_bytes(32));
         }
 
-        foreach ($values as $key => $value) {
-            $line = $key.'='.(preg_match('/\s|#|"/', (string) $value) ? '"'.$value.'"' : $value);
-
-            $contents = preg_match('/^'.preg_quote($key, '/').'=.*$/m', $contents)
-                ? preg_replace('/^'.preg_quote($key, '/').'=.*$/m', $line, $contents)
-                : rtrim($contents)."\n".$line."\n";
-        }
-
-        file_put_contents($path, $contents);
+        file_put_contents($path, \App\Support\EnvFile::set($contents, $values));
     }
 
     /**

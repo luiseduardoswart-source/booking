@@ -1,8 +1,8 @@
-{{-- "Allow" screen of the Claude connection (Passport::authorizationView in
-     AppServiceProvider). Shown after logging in to the admin when Claude
+{{-- "Allow" screen of the AI connection (Passport::authorizationView in
+     AppServiceProvider). Shown after logging in to the admin when an AI app
      connects; Passport passes $client, $user, $scopes, $request and
      $authToken. Only someone who may use the admin can allow; the MCP route
-     checks that again on every request (AuthenticateClaudeUser). --}}
+     checks that again on every request (AuthenticateMcpUser). --}}
 @php
     $account = \App\Models\User::query()->find($user->getAuthIdentifier());
     $mayConnect = $account?->canAccessPanel(\Filament\Facades\Filament::getPanel('admin')) ?? false;
@@ -17,7 +17,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
-    <title>{{ __('Connect Claude') }} · {{ $site }}</title>
+    <title>{{ __('Connect an AI app') }} · {{ $site }}</title>
     @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen bg-stone-100 font-sans text-stone-900 antialiased">
@@ -37,10 +37,10 @@
             @if ($redirectUri)
                 <p class="mt-3 break-all text-xs text-stone-500">{{ __('Afterwards you go back to :address', ['address' => parse_url($redirectUri, PHP_URL_HOST) ?: $redirectUri]) }}</p>
             @endif
-            <p class="mt-3 text-xs text-stone-500">{{ __('You can end the connection at any time under Settings → Claude.') }}</p>
+            <p class="mt-3 text-xs text-stone-500">{{ __('You can end the connection at any time under Settings → AI connection.') }}</p>
         @else
             <p class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-                {{ __('Your account cannot use the admin, so it cannot be connected to Claude.') }}
+                {{ __('Your account cannot use the admin, so it cannot be connected to an AI app.') }}
             </p>
         @endif
 

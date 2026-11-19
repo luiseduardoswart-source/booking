@@ -16,15 +16,15 @@
             <p class="mt-8 text-sm font-medium text-stone-700">{{ __('Choose the outcome of this payment:') }}</p>
 
             <div class="mt-3 space-y-2">
-                <a href="{{ route('payment.test.process', [$payment, 'paid']) }}"
+                <a href="{{ URL::signedRoute('payment.test.process', [$payment, 'paid']) }}"
                    class="flex w-full items-center justify-center gap-2 rounded-xl button-accent bg-gradient-to-r from-rose-600 to-pink-600 px-4 py-3 font-semibold text-white transition hover:from-rose-700 hover:to-pink-700">
                     {{ __('Payment successful') }}
                 </a>
-                <a href="{{ route('payment.test.process', [$payment, 'failed']) }}"
+                <a href="{{ URL::signedRoute('payment.test.process', [$payment, 'failed']) }}"
                    class="flex w-full items-center justify-center rounded-xl border border-stone-300 px-4 py-3 font-medium text-stone-700 transition hover:bg-stone-50">
                     {{ __('Payment failed') }}
                 </a>
-                <a href="{{ route('payment.test.process', [$payment, 'cancelled']) }}"
+                <a href="{{ URL::signedRoute('payment.test.process', [$payment, 'cancelled']) }}"
                    class="flex w-full items-center justify-center rounded-xl border border-stone-300 px-4 py-3 font-medium text-stone-700 transition hover:bg-stone-50">
                     {{ __('Payment cancelled') }}
                 </a>

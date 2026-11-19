@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\PropertyApiController;
 use App\Http\Controllers\Api\QuoteController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+// At most 60 requests a minute per visitor (or token): the calendar and
+// price endpoints compute per night.
+Route::prefix('v1')->middleware('throttle:60,1')->group(function () {
     // Publiek: accommodaties bekijken en prijzen/beschikbaarheid opvragen.
     Route::get('/properties', [PropertyApiController::class, 'index']);
     Route::get('/properties/{property}', [PropertyApiController::class, 'show']);

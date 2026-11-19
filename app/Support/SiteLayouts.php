@@ -16,6 +16,11 @@ class SiteLayouts
 {
     public const DEFAULT = 'default';
 
+    /** Limits for an uploaded layout zip, unpacked. */
+    private const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+    private const MAX_TOTAL_BYTES = 50 * 1024 * 1024;
+
     /**
      * All available layouts: the default plus every template folder.
      *
@@ -146,6 +151,7 @@ class SiteLayouts
 
             $allowed = ['blade.php', 'json', 'css', 'js', 'svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'ico', 'woff', 'woff2', 'ttf', 'txt', 'md'];
             $placed = 0;
+            $unpacked = 0;
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $entry = str_replace('\\', '/', (string) $zip->getNameIndex($i));
@@ -162,9 +168,20 @@ class SiteLayouts
                 }
 
                 $extension = str_ends_with($relative, '.blade.php') ? 'blade.php' : strtolower(pathinfo($relative, PATHINFO_EXTENSION));
+                $isAsset = str_starts_with($relative, 'assets/');
 
-                if (! in_array($extension, $allowed, true)) {
+                // assets/ ends up in the public folder: never PHP there, it
+                // could be called directly from the web.
+                if (! in_array($extension, $allowed, true) || ($isAsset && $extension === 'blade.php')) {
                     continue;
+                }
+
+                // A small zip can unpack to gigabytes: a limit per file and in total.
+                $size = (int) ($zip->statIndex($i)['size'] ?? 0);
+                $unpacked += $size;
+
+                if ($size > self::MAX_FILE_BYTES || $unpacked > self::MAX_TOTAL_BYTES) {
+                    throw new \RuntimeException(__('The template is too large: at most :size MB unpacked.', ['size' => self::MAX_TOTAL_BYTES / 1048576]));
                 }
 
                 $content = $zip->getFromIndex($i);
@@ -173,7 +190,7 @@ class SiteLayouts
                     continue;
                 }
 
-                $target = str_starts_with($relative, 'assets/')
+                $target = $isAsset
                     ? $assetsTarget.'/'.substr($relative, strlen('assets/'))
                     : $viewsTarget.'/'.$relative;
 

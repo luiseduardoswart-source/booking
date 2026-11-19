@@ -178,8 +178,8 @@ class PaymentAmountManipulationTest extends TestCase
 
         Setting::set('payments', 'provider', 'mollie');
 
-        $this->get(route('payment.test', $paymentRecord))->assertNotFound();
-        $this->get(route('payment.test.process', [$paymentRecord, 'paid']))->assertNotFound();
+        $this->get(URL::signedRoute('payment.test', $paymentRecord))->assertNotFound();
+        $this->get(URL::signedRoute('payment.test.process', [$paymentRecord, 'paid']))->assertNotFound();
         $this->assertSame(PaymentTransactionStatus::Open, $paymentRecord->fresh()->status);
     }
 }

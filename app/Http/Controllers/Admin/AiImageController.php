@@ -206,6 +206,10 @@ class AiImageController extends Controller implements \Illuminate\Routing\Contro
     /** Reject: deletes the image (still counts towards the monthly limit). */
     public function reject(AiImage $aiImage)
     {
+        // Only from the queue: an approved image is a media file by now, and
+        // removing it goes through the media manager.
+        abort_unless($aiImage->status === 'pending', 422);
+
         if ($aiImage->path) {
             Storage::disk('public')->delete($aiImage->path);
         }

@@ -3,6 +3,7 @@
 namespace App\Services\Importing;
 
 use App\Support\Languages;
+use App\Support\OutboundUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,14 @@ class MetadataImporter implements ListingImportProvider
     {
         $language = Languages::default();
 
-        $response = Http::withHeaders([
+        // A user types this address: no internal addresses, at most 5 MB.
+        try {
+            OutboundUrl::check($url);
+        } catch (\InvalidArgumentException $e) {
+            throw new ListingImportException($e->getMessage());
+        }
+
+        $response = Http::withOptions(OutboundUrl::options(5 * 1024 * 1024))->withHeaders([
             'User-Agent' => 'Mozilla/5.0 (compatible; BookingImporter/1.0)',
             'Accept' => 'text/html',
             // Without a language preference the platform picks one itself — usually that
@@ -250,6 +258,7 @@ class MetadataImporter implements ListingImportProvider
 
     private function clean(string $value): string
     {
-        return trim(html_entity_decode(Str::of($value)->stripTags()->toString(), ENT_QUOTES | ENT_HTML5));
+        // Decode first: an encoded tag (&lt;img ...&gt;) must not survive as a real tag.
+        return trim(strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
     }
 }

@@ -6,6 +6,7 @@ use App\Filament\Concerns\WithAccess;
 use App\Filament\Support\TranslationFields;
 use App\Filament\Resources\Hosts\Pages\ManageHosts;
 use App\Models\Host;
+use App\Models\Property;
 use App\Support\Access;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -80,6 +81,8 @@ class HostResource extends Resource
                 ->label(__('Profile photo'))
                 ->collection('avatar')
                 ->image()
+                // No SVG: a host could put a script in it.
+                ->acceptedFileTypes(Property::PHOTO_MIMES)
                 ->avatar(),
             TranslationFields::languageSection(
                 __('About the host (visible on the site)'),

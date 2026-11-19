@@ -27,8 +27,8 @@ use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
 
 /**
- * The Claude connection (routes/ai.php, App\Support\ClaudeConnection): what
- * Claude may do on this booking website. Each person only gets the tools
+ * The AI connection (routes/ai.php, App\Support\McpConnection): what an AI
+ * app such as Claude or ChatGPT may do on this booking website. Each person only gets the tools
  * their rights in the admin allow (BookingTool::shouldRegister).
  */
 #[Name('Booking website')]

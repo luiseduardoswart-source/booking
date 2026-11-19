@@ -43,12 +43,12 @@ return [
             'provider' => 'users',
         ],
 
-        // The Claude connection (routes/ai.php): an OAuth token from
+        // The AI connection (routes/ai.php): an OAuth token from
         // Passport. Its own provider, because the Passport model cannot be
         // the User model (that one carries Sanctum's tokens for the API).
         'api' => [
             'driver' => 'passport',
-            'provider' => 'claude_users',
+            'provider' => 'mcp_users',
         ],
     ],
 
@@ -75,9 +75,9 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        'claude_users' => [
+        'mcp_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\ClaudeUser::class,
+            'model' => App\Models\McpUser::class,
         ],
 
         // 'users' => [

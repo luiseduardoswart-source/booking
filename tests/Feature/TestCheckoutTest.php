@@ -13,6 +13,7 @@ use App\Payments\PaymentProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class TestCheckoutTest extends TestCase
@@ -49,7 +50,7 @@ class TestCheckoutTest extends TestCase
     {
         $payment = $this->makePayment();
 
-        $this->assertSame(route('payment.test', $payment), $payment->checkout_url);
+        $this->assertStringStartsWith(route('payment.test', $payment).'?signature=', $payment->checkout_url);
 
         $this->get($payment->checkout_url)
             ->assertOk()
@@ -61,7 +62,7 @@ class TestCheckoutTest extends TestCase
     {
         $payment = $this->makePayment();
 
-        $this->get(route('payment.test.process', [$payment, 'paid']))
+        $this->get(URL::signedRoute('payment.test.process', [$payment, 'paid']))
             ->assertRedirect($payment->returnUrl());
 
         // The return page syncs with the provider and processes the payment.
@@ -74,7 +75,7 @@ class TestCheckoutTest extends TestCase
     {
         $payment = $this->makePayment();
 
-        $this->get(route('payment.test.process', [$payment, 'failed']));
+        $this->get(URL::signedRoute('payment.test.process', [$payment, 'failed']));
         $this->get($payment->returnUrl())->assertOk();
 
         $this->assertSame(PaymentTransactionStatus::Failed, $payment->fresh()->status);
@@ -88,8 +89,20 @@ class TestCheckoutTest extends TestCase
         // otherwise someone could mark a payment as paid.
         Setting::set('payments', 'provider', 'mollie');
 
-        $this->get(route('payment.test', $payment))->assertNotFound();
-        $this->get(route('payment.test.process', [$payment, 'paid']))->assertNotFound();
+        $this->get(URL::signedRoute('payment.test', $payment))->assertNotFound();
+        $this->get(URL::signedRoute('payment.test.process', [$payment, 'paid']))->assertNotFound();
+
+        $this->assertSame(PaymentTransactionStatus::Open, $payment->fresh()->status);
+    }
+
+    public function test_the_test_page_only_opens_through_its_signed_link(): void
+    {
+        $payment = $this->makePayment();
+
+        // Otherwise anyone could mark any payment number as paid while the
+        // test provider is on.
+        $this->get(route('payment.test', $payment))->assertForbidden();
+        $this->get(route('payment.test.process', [$payment, 'paid']))->assertForbidden();
 
         $this->assertSame(PaymentTransactionStatus::Open, $payment->fresh()->status);
     }
@@ -98,6 +111,6 @@ class TestCheckoutTest extends TestCase
     {
         $payment = $this->makePayment();
 
-        $this->get(route('payment.test.process', [$payment, 'free']))->assertNotFound();
+        $this->get(URL::signedRoute('payment.test.process', [$payment, 'free']))->assertNotFound();
     }
 }

@@ -15,7 +15,7 @@ class SetAdminLocale extends SetLocale
 
     /**
      * The admin language for a page outside the admin that belongs to it,
-     * such as the "Allow" screen of the Claude connection.
+     * such as the "Allow" screen of the AI connection.
      */
     public static function localeFor(Request $request): string
     {

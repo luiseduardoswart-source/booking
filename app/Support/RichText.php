@@ -31,7 +31,7 @@ final class RichText
     }
 
     /**
-     * Text written outside the editor (the Claude connection) as editor
+     * Text written outside the editor (the AI connection) as editor
      * HTML: Markdown for paragraphs, bold, lists and links. Any HTML in it is
      * dropped and only http(s) and mail links are kept, because the site
      * shows this text unescaped (render()).

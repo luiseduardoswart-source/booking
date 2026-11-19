@@ -5,7 +5,7 @@ namespace App\Support;
 use App\Models\Setting;
 
 /**
- * Undo for layout changes made through Claude. Before every such change the
+ * Undo for layout changes made through the AI connection. Before every such change the
  * whole look of the site (style template, colours, header, font, buttons,
  * layout and the style editor's rules) is remembered; undo() puts the last
  * remembered look back. That restores everything as it was just before that
@@ -70,7 +70,7 @@ final class StyleHistory
      */
     private static function all(): array
     {
-        $history = json_decode((string) Setting::get('claude', 'style_history'), true);
+        $history = json_decode((string) Setting::get('mcp', 'style_history'), true);
 
         return is_array($history) ? array_values(array_filter($history, 'is_array')) : [];
     }
@@ -90,6 +90,6 @@ final class StyleHistory
             $json = json_encode($history, JSON_UNESCAPED_UNICODE);
         }
 
-        Setting::set('claude', 'style_history', $history === [] ? null : $json);
+        Setting::set('mcp', 'style_history', $history === [] ? null : $json);
     }
 }

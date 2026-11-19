@@ -22,6 +22,8 @@ class ListProperties extends ListRecords
             Action::make('import')
                 ->label(__('Import from link'))
                 ->icon(Heroicon::OutlinedArrowDownTray)
+                // It creates an accommodation: only with the right to create one.
+                ->authorize(fn (): bool => PropertyResource::canCreate())
                 ->color('gray')
                 ->modalHeading(__('Import listing'))
                 ->modalDescription(__('Paste the link to your Airbnb, Vrbo or Booking listing. We fetch what the page makes public; you complete the rest afterwards. The property starts as a draft (not visible).'))

@@ -14,6 +14,12 @@ class TodayAgenda extends TableWidget
 {
     protected static ?int $sort = 2;
 
+    /** Today's arrivals and departures with guest names: only with the right to see bookings. */
+    public static function canView(): bool
+    {
+        return Access::may(auth()->user(), 'bookings', Access::VIEW);
+    }
+
     protected int|string|array $columnSpan = 'full';
 
     public function getHeading(): string

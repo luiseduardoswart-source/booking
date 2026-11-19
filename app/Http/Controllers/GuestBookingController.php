@@ -55,9 +55,12 @@ class GuestBookingController extends Controller
         if (! RateLimiter::tooManyAttempts($limit, self::LINKS_PER_ADDRESS)) {
             RateLimiter::hit($limit, 600);
 
+            // Queued like the other mails (sent within a minute by the
+            // scheduled task): sending right away takes time, and a slower
+            // answer would tell that this address has booked here.
             if (Booking::query()->whereRaw('lower(guest_email) = ?', [$email])->exists()) {
                 try {
-                    Mail::to($email)->send(new GuestLoginMail(GuestAccess::issueLink($email), app()->getLocale()));
+                    Mail::to($email)->queue(new GuestLoginMail(GuestAccess::issueLink($email), app()->getLocale()));
                 } catch (Throwable $e) {
                     report($e);
                 }

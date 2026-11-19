@@ -31,7 +31,7 @@ class ContactController extends Controller
         [$rules, $names] = FormAnswers::rules($form);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^[^\p{Cc}]*$/u'],
             'email' => ['required', 'email', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
             ...$rules,

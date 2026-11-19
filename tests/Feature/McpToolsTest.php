@@ -44,11 +44,11 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * The actions Claude can take through the Claude connection: what they
+ * The actions an AI app can take through the AI connection: what they
  * show and change, and that every person only gets what their rights in the
  * admin allow.
  */
-class ClaudeToolsTest extends TestCase
+class McpToolsTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -250,10 +250,10 @@ class ClaudeToolsTest extends TestCase
         BookingServer::actingAs($owner)->tool(UpdateStyle::class, ['accent_color' => '#155e75'])->assertOk();
 
         Livewire::actingAs($owner)->test(Settings::class)
-            ->assertActionVisible(TestAction::make('undoClaudeStyle')->schemaComponent('style_editor_actions', schema: 'form'))
-            ->callAction(TestAction::make('undoClaudeStyle')->schemaComponent('style_editor_actions', schema: 'form'))
+            ->assertActionVisible(TestAction::make('undoMcpStyle')->schemaComponent('style_editor_actions', schema: 'form'))
+            ->callAction(TestAction::make('undoMcpStyle')->schemaComponent('style_editor_actions', schema: 'form'))
             ->assertSet('data.frontend_accent_color', null)
-            ->assertActionDoesNotExist(TestAction::make('undoClaudeStyle')->schemaComponent('style_editor_actions', schema: 'form'));
+            ->assertActionDoesNotExist(TestAction::make('undoMcpStyle')->schemaComponent('style_editor_actions', schema: 'form'));
 
         $this->assertNull(Setting::get('frontend', 'accent_color'));
     }

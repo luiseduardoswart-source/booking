@@ -707,6 +707,8 @@ class PropertyForm
                                     ->options(fn () => \App\Models\PropertyType::options())
                                     ->createOptionForm(self::typeCreationFields())
                                     ->createOptionUsing(fn (array $data) => \App\Models\PropertyType::create($data)->slug)
+                                    // A new type is for all accommodations: only with the right to create types.
+                                    ->createOptionAction(fn (Action $action) => $action->visible(fn (): bool => \App\Filament\Resources\PropertyTypes\PropertyTypeResource::canCreate()))
                                     ->required(),
                                 Switches::direct(
                                     Toggle::make('active')
@@ -887,7 +889,8 @@ class PropertyForm
                         ->multiple()
                         ->reorderable()
                         ->appendFiles()
-                        ->acceptedFileTypes(['image/*', ...Property::VIDEO_MIMES])
+                        // Named formats, not image/*: that would let an SVG (with a script) in.
+                        ->acceptedFileTypes([...Property::PHOTO_MIMES, ...Property::VIDEO_MIMES])
                         ->maxFiles(Property::MAX_PHOTOS)
                         ->maxSize(Property::MAX_VIDEO_KB)
                         // The upper limit above is the video one; a photo keeps its own limit.
@@ -1660,6 +1663,8 @@ class PropertyForm
                 ->relationship('hosts', 'name')
                 ->multiple()
                 ->preload()
+                // Only with the right to create hosts, like the welcome host field.
+                ->createOptionAction(fn (Action $action) => $action->visible(fn (): bool => HostResource::canCreate()))
                 ->createOptionForm([
                     TextInput::make('name')
                         ->label(__('Name'))

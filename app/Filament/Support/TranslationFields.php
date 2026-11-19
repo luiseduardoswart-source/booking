@@ -153,6 +153,9 @@ class TranslationFields
         return Action::make('translate')
             ->label(__('Translate empty languages automatically'))
             ->icon(Heroicon::OutlinedLanguage)
+            // It writes into every record of the list: only with the right to edit them.
+            ->authorize(fn ($livewire): bool => method_exists($livewire, 'getResource')
+                && \App\Support\Access::may(auth()->user(), (string) \App\Support\Access::screenOf($livewire::getResource()), \App\Support\Access::EDIT))
             ->requiresConfirmation()
             ->modalDescription($explanation)
             ->action(function () use ($records, $fields, $result) {

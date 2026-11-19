@@ -16,7 +16,7 @@ use App\Services\Ai\ClaudeTextGenerator;
 use App\Services\Ai\GeminiTextGenerator;
 use App\Services\Ai\SiteChat;
 use App\Services\MachineTranslator;
-use App\Support\ClaudeConnection;
+use App\Support\McpConnection;
 use App\Support\SiteLayouts;
 use App\Support\StyleHistory;
 use App\Support\SiteTemplates;
@@ -30,6 +30,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
@@ -163,6 +164,7 @@ class Settings extends Page implements HasActions, HasForms
             'cookie_privacy_url' => ['cookie', 'privacy_url'],
             'cookie_code_statistics' => ['cookie', 'code_statistics'],
             'cookie_code_marketing' => ['cookie', 'code_marketing'],
+            'mcp_other_addresses' => ['mcp', 'other_addresses'],
         ];
 
         $fields['translations_deepl_api_key'] = ['translations', 'deepl_api_key'];
@@ -226,8 +228,9 @@ class Settings extends Page implements HasActions, HasForms
         $values['reviews_auto_approve_from'] = $values['reviews_auto_approve_from'] ?? '4';
         $values['cookie_on'] = ($values['cookie_on'] ?? '0') === '1';
         $values['cookie_marketing_on'] = ($values['cookie_marketing_on'] ?? '0') === '1';
-        $values['claude_enabled'] = ClaudeConnection::enabled();
-        $values['claude_url'] = ClaudeConnection::url();
+        $values['mcp_enabled'] = McpConnection::enabled();
+        $values['mcp_apps'] = McpConnection::allowedApps();
+        $values['mcp_url'] = McpConnection::url();
 
         // Migration of the old single-language values to the NL field.
         $values['company_slogan_nl'] = $values['company_slogan_nl'] ?? Setting::get('company', 'slogan');
@@ -697,7 +700,7 @@ class Settings extends Page implements HasActions, HasForms
                                                 ->label(__('Open the style editor'))
                                                 ->icon(Heroicon::OutlinedCursorArrowRays)
                                                 ->url(StyleEditor::getUrl()),
-                                            $this->undoClaudeStyleAction(),
+                                            $this->undoMcpStyleAction(),
                                         ])->key('style_editor_actions'),
                                     ]),
 
@@ -1009,9 +1012,9 @@ class Settings extends Page implements HasActions, HasForms
                                     ]),
                             ]),
 
-                        Tab::make(__('Claude'))
+                        Tab::make(__('AI connection'))
                             ->icon(Heroicon::OutlinedSparkles)
-                            ->components([self::claudeSection()]),
+                            ->components([self::mcpSection()]),
 
                         Tab::make(__('AI chat'))
                             ->icon(Heroicon::OutlinedChatBubbleLeftRight)
@@ -1302,56 +1305,79 @@ class Settings extends Page implements HasActions, HasForms
     }
 
     /**
-     * The Claude connection (App\Support\ClaudeConnection): switch it on, the
-     * address and steps for Claude, who is connected, and disconnecting.
+     * The AI connection (App\Support\McpConnection): switch it on, which apps
+     * may connect, the address and steps, who is connected, and disconnecting.
      */
-    private static function claudeSection(): Section
+    private static function mcpSection(): Section
     {
-        $on = fn (Get $get): bool => (bool) $get('claude_enabled');
+        $on = fn (Get $get): bool => (bool) $get('mcp_enabled');
 
-        return Section::make(__('Claude connection'))
-            ->description(__('Work on this website from Claude: ask in plain language for your bookings, change prices, texts and the calendar, or have the layout adjusted. Claude gets exactly the rights of the person who connects: an owner everything, a host only their own accommodations. Payments, refunds, deleting, settings and users stay in the admin.'))
+        return Section::make(__('AI connection (MCP)'))
+            ->description(__('Work on this website from an AI app such as Claude or ChatGPT: ask in plain language for your bookings, change prices, texts and the calendar, or have the layout adjusted. The app gets exactly the rights of the person who connects: an owner everything, a host only their own accommodations. Payments, refunds, deleting, settings and users stay in the admin.'))
             ->components([
-                Switches::direct(Toggle::make('claude_enabled')->label(__('Claude connection on')), function (bool $on): bool {
+                Switches::direct(Toggle::make('mcp_enabled')->label(__('AI connection on')), function (bool $on): bool {
                     abort_unless(static::canAccess(), 403);
 
-                    $wasOn = ClaudeConnection::enabled();
-                    Setting::set('claude', 'enabled', $on ? '1' : '0');
+                    $wasOn = McpConnection::enabled();
+                    Setting::set('mcp', 'enabled', $on ? '1' : '0');
 
                     try {
-                        ClaudeConnection::switched($wasOn);
+                        McpConnection::switched($wasOn);
                     } catch (\Throwable $e) {
                         // Without signing keys no connection works: back to how it was.
-                        Setting::set('claude', 'enabled', $wasOn ? '1' : '0');
+                        Setting::set('mcp', 'enabled', $wasOn ? '1' : '0');
                         report($e);
-                        Notification::make()->title(__('The Claude connection could not be switched on'))->body($e->getMessage())->danger()->send();
+                        Notification::make()->title(__('The AI connection could not be switched on'))->body($e->getMessage())->danger()->send();
 
                         return false;
                     }
 
                     return true;
-                })->helperText(__('Off = the connection does not exist and every connected Claude loses access at once.')),
-                TextInput::make('claude_url')
-                    ->label(__('Address for Claude'))
+                })->helperText(__('Off = the connection does not exist and every connected app loses access at once.')),
+                Switches::direct(CheckboxList::make('mcp_apps')
+                    ->label(__('Apps that may connect'))
+                    ->options(fn (): array => McpConnection::appOptions())
+                    ->columns(2)
+                    ->helperText(__('Only these apps can register. An app you switch off here can no longer log in; apps already connected keep working until you disconnect them.'))
+                    ->visible($on), function (mixed $apps): bool {
+                        abort_unless(static::canAccess(), 403);
+                        Setting::set('mcp', 'apps', implode(',', array_intersect((array) $apps, array_keys(McpConnection::APPS))));
+
+                        return true;
+                    }),
+                Textarea::make('mcp_other_addresses')
+                    ->label(__('Other apps (web address, one per line)'))
+                    ->placeholder('https://app.example.com')
+                    ->helperText(__('For an app that is not in the list: the https address it sends you back to after Allow. Saved with Save.'))
+                    ->rows(2)
+                    ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail): void {
+                        foreach (preg_split('/\R/', (string) $value) as $line) {
+                            if (trim($line) !== '' && McpConnection::origin($line) === null) {
+                                $fail(__('Not a web address starting with https://: :line', ['line' => trim($line)]));
+                            }
+                        }
+                    })
+                    ->visible($on),
+                TextInput::make('mcp_url')
+                    ->label(__('Address for the AI app'))
                     ->readOnly()
                     ->copyable(copyMessage: __('Copied'))
                     ->dehydrated(false)
                     ->visible($on),
-                Placeholder::make('claude_steps')
+                Placeholder::make('mcp_steps')
                     ->label(__('How to connect'))
                     ->visible($on)
                     ->content(fn () => new HtmlString('<ol style="list-style: decimal; padding-left: 1.25rem; line-height: 1.7;">'
-                        .'<li>'.e(__('In Claude (claude.ai or the app): Settings → Connectors → Add custom connector.')).'</li>'
-                        .'<li>'.e(__('Give it a name, for example the name of your website, and paste the address above.')).'</li>'
+                        .'<li>'.e(__('In your AI app, add a custom connector (also called an MCP server) and paste the address above. In Claude: Settings → Connectors → Add custom connector.')).'</li>'
                         .'<li>'.e(__('Click Connect, log in to this admin and click Allow.')).'</li>'
                         .'<li>'.e(__('In a chat, switch the connector on and ask, for example: "Show my accommodations".')).'</li>'
                         .'</ol>'
                         .'<p style="margin-top: .5rem; opacity: .75;">'.e(__('Every staff member or host connects with their own login.')).'</p>')),
-                Placeholder::make('claude_connections')
+                Placeholder::make('mcp_connections')
                     ->label(__('Connected now'))
                     ->visible($on)
                     ->content(function (): HtmlString|string {
-                        $connections = ClaudeConnection::connections();
+                        $connections = McpConnection::connections();
 
                         if ($connections->isEmpty()) {
                             return __('Nobody yet.');
@@ -1364,29 +1390,30 @@ class Settings extends Page implements HasActions, HasForms
                         ])))->implode('<br>'));
                     }),
                 Actions::make([
-                    Action::make('claudeDisconnect')
+                    Action::make('mcpDisconnect')
                         ->label(__('Disconnect everyone'))
                         ->icon(Heroicon::OutlinedLinkSlash)
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalDescription(__('Every connected Claude loses access. Whoever wants to use it again connects again and clicks Allow.'))
+                        ->modalDescription(__('Every connected app loses access. Whoever wants to use it again connects again and clicks Allow.'))
                         ->action(function (): void {
                             abort_unless(static::canAccess(), 403);
-                            ClaudeConnection::disconnectAll();
+                            McpConnection::disconnectAll();
                             Notification::make()->title(__('Everyone is disconnected'))->success()->send();
                         }),
-                ])->visible(fn (Get $get): bool => $on($get) && ClaudeConnection::connections()->isNotEmpty()),
+                ])->visible(fn (Get $get): bool => $on($get) && McpConnection::connections()->isNotEmpty()),
             ]);
     }
 
     /**
-     * Undo for layout changes made through Claude (App\Support\StyleHistory),
-     * also here so the owner does not need Claude for it.
+     * Undo for layout changes made through the AI connection
+     * (App\Support\StyleHistory), also here so the owner does not need the
+     * AI app for it.
      */
-    private function undoClaudeStyleAction(): Action
+    private function undoMcpStyleAction(): Action
     {
-        return Action::make('undoClaudeStyle')
-            ->label(__('Undo the last change made through Claude'))
+        return Action::make('undoMcpStyle')
+            ->label(__('Undo the last change made through the AI connection'))
             ->icon(Heroicon::OutlinedArrowUturnLeft)
             ->color('gray')
             ->visible(fn (): bool => StyleHistory::last() !== null)

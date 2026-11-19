@@ -1,6 +1,11 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+// Text from the database (names, places, price lines) that goes into HTML
+// built here: escaped, so it can never become markup or a script.
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+
 // ---------------------------------------------------------------------------
 // Guest picker (Airbnb style) — reusable module. Every [data-guests-popover]
 // inside a form is initialized on its own.
@@ -535,26 +540,29 @@ function buildExploreMap() {
 
     const pinIcon = '<svg style="width:16px;height:16px;flex:none" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg>';
 
-    const pricePill = (p, active) => `<div class="map-price-pill" style="background:${active ? '#1c1917' : '#fff'};color:${active ? '#fff' : '#1c1917'};border:1px solid ${active ? '#1c1917' : '#d6d3d1'};border-radius:9999px;padding:5px 11px;font-weight:600;font-size:13px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2)">${p.price}</div>`;
+    const pricePill = (p, active) => `<div class="map-price-pill" style="background:${active ? '#1c1917' : '#fff'};color:${active ? '#fff' : '#1c1917'};border:1px solid ${active ? '#1c1917' : '#d6d3d1'};border-radius:9999px;padding:5px 11px;font-weight:600;font-size:13px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2)">${escapeHtml(p.price)}</div>`;
 
     const markers = points.map((p) => {
+        // Names and places are typed in the admin: text, never HTML.
+        const name = escapeHtml(p.name);
+        const city = escapeHtml(p.city);
         const marker = L.marker([p.lat, p.lng], {
             icon: L.divIcon({ className: '', html: pricePill(p, false), iconSize: null }),
         }).addTo(map);
 
         marker.bindPopup(
             '<div style="font-family:inherit">'
-            + (p.photo ? `<img src="${p.photo}" style="display:block;width:100%;height:150px;object-fit:cover" alt="">` : '')
+            + (p.photo ? `<img src="${escapeHtml(p.photo)}" style="display:block;width:100%;height:150px;object-fit:cover" alt="">` : '')
             + '<div style="padding:14px 16px 16px">'
-            + `<strong style="display:block;font-size:15px;line-height:1.3;color:#1c1917">${p.name}</strong>`
+            + `<strong style="display:block;font-size:15px;line-height:1.3;color:#1c1917">${name}</strong>`
             + (p.city
-                ? `<span style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:13px;color:#57534e">${pinIcon}<span>${p.city}</span></span>`
+                ? `<span style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:13px;color:#57534e">${pinIcon}<span>${city}</span></span>`
                 : '')
             + `<span style="display:block;margin-top:12px;font-size:12px;color:#78716c">${text.price}</span>`
             + `<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:2px">`
-            + `<span><span style="display:block;font-size:20px;font-weight:700;color:#1c1917">${p.price_full}</span>`
+            + `<span><span style="display:block;font-size:20px;font-weight:700;color:#1c1917">${escapeHtml(p.price_full)}</span>`
             + `<span style="display:block;margin-top:2px;font-size:11px;color:#a8a29e">${text.extra}</span></span>`
-            + `<a href="${p.url}" class="button-accent" style="flex:none;background:#e11d48;color:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap">${text.button}</a>`
+            + `<a href="${escapeHtml(p.url)}" class="button-accent" style="flex:none;background:#e11d48;color:#fff;border-radius:10px;padding:9px 14px;font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap">${text.button}</a>`
             + '</div></div></div>',
             { className: 'map-popup', maxWidth: 272, minWidth: 272, offset: [0, -6] }
         );
@@ -634,7 +642,7 @@ function initWhereSuggestions(input) {
         popover.innerHTML = items.map((s, i) => `
             <button type="button" data-suggestion="${i}" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-stone-100">
                 <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-stone-100">${s.type === 'city' ? pinIcon : houseIcon}</span>
-                <span class="min-w-0"><span class="block truncate font-medium text-stone-900">${s.text}</span>${s.detail ? `<span class="block truncate text-xs text-stone-500">${s.detail}</span>` : ''}</span>
+                <span class="min-w-0"><span class="block truncate font-medium text-stone-900">${escapeHtml(s.text)}</span>${s.detail ? `<span class="block truncate text-xs text-stone-500">${escapeHtml(s.detail)}</span>` : ''}</span>
             </button>`).join('');
         popover.classList.remove('hidden');
         active = -1;

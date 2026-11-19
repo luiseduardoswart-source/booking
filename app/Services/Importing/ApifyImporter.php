@@ -30,7 +30,8 @@ class ApifyImporter implements ListingImportProvider
         // Apify: run-sync-get-dataset-items runs the actor and returns the
         // results directly. The input shape depends on the chosen actor.
         $response = Http::timeout(120)
-            ->post("https://api.apify.com/v2/acts/{$actor}/run-sync-get-dataset-items?token={$token}", [
+            ->withToken($token)
+            ->post("https://api.apify.com/v2/acts/{$actor}/run-sync-get-dataset-items", [
                 'startUrls' => [['url' => $url]],
             ]);
 

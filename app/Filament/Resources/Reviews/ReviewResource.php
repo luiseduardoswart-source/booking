@@ -100,6 +100,8 @@ class ReviewResource extends Resource
                     ->modalCancelActionLabel(__('Close')),
                 Action::make('answer')
                     ->label(__('Reply'))
+                    // Only with the right to edit reviews, not with view only.
+                    ->authorize(fn (Review $record): bool => static::canEdit($record))
                     ->icon(Heroicon::OutlinedChatBubbleLeftRight)
                     ->schema([
                         \Filament\Forms\Components\Textarea::make('host_reply')
@@ -118,6 +120,8 @@ class ReviewResource extends Resource
                     }),
                 Action::make('approve')
                     ->label(__('Approve'))
+                    // Only with the right to edit reviews, not with view only.
+                    ->authorize(fn (Review $record): bool => static::canEdit($record))
                     ->icon(Heroicon::OutlinedCheck)
                     ->color('success')
                     ->visible(fn (Review $record) => $record->status !== ReviewStatus::Approved)
@@ -128,6 +132,8 @@ class ReviewResource extends Resource
                     }),
                 Action::make('reject')
                     ->label(__('Reject'))
+                    // Only with the right to edit reviews, not with view only.
+                    ->authorize(fn (Review $record): bool => static::canEdit($record))
                     ->icon(Heroicon::OutlinedXMark)
                     ->color('danger')
                     ->requiresConfirmation()

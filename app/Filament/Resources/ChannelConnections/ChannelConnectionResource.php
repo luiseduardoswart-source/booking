@@ -64,6 +64,14 @@ class ChannelConnectionResource extends Resource
                     ->label(__('iCal URL of the platform'))
                     ->url()
                     ->required()
+                    // The server fetches this address: not one inside its own network.
+                    ->rule(fn () => function (string $attribute, mixed $value, \Closure $fail): void {
+                        try {
+                            \App\Support\OutboundUrl::check((string) $value);
+                        } catch (\InvalidArgumentException $e) {
+                            $fail($e->getMessage());
+                        }
+                    })
                     ->columnSpanFull(),
                 Toggle::make('active')
                     ->label(__('Active'))

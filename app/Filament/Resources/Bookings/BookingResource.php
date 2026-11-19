@@ -259,6 +259,10 @@ class BookingResource extends Resource
                     Action::make('invoice')
                         ->label(__('Invoice (PDF)'))
                         ->icon(Heroicon::OutlinedDocumentText)
+                        // The first download assigns the next invoice number: that is
+                        // a change, so view-only users only get an existing invoice.
+                        ->authorize(fn (Booking $record): bool => static::canEdit($record)
+                            || \App\Models\Invoice::query()->where('booking_id', $record->id)->exists())
                         ->action(function (Booking $record) {
                             $engine = app(\App\Engines\DocumentEngine::class);
                             $invoice = $engine->findOrCreateInvoice($record);

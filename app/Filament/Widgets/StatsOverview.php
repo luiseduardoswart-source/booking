@@ -17,6 +17,12 @@ class StatsOverview extends StatsOverviewWidget
 {
     protected static ?int $sort = 1;
 
+    /** Revenue and outstanding amounts: only with the right to see payments. */
+    public static function canView(): bool
+    {
+        return Access::may(auth()->user(), 'payments', Access::VIEW);
+    }
+
     protected function getStats(): array
     {
         // Accommodations can each have their own currency: add up per currency

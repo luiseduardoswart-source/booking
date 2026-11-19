@@ -29,7 +29,8 @@ class QuoteController extends Controller
 
         $validated = $request->validate([
             'arrival' => Booking::arrivalRule(),
-            'departure' => ['required', 'date', 'after:arrival'],
+            // Every night is priced: no stays of years (the price loop) or far in the future.
+            'departure' => ['required', 'date', 'after:arrival', 'before_or_equal:'.today()->addYears(3)->toDateString()],
             'guests' => ['required', 'integer', 'min:1'],
             // Same rule as when booking: no pets where they are not allowed.
             'pets' => $property->petsRule(),
@@ -37,6 +38,10 @@ class QuoteController extends Controller
 
         $arrival = CarbonImmutable::parse($validated['arrival']);
         $departure = CarbonImmutable::parse($validated['departure']);
+
+        if ($arrival->diffInDays($departure) > 365) {
+            return response()->json(['available' => false, 'reasons' => [__('A stay can be at most a year.')]]);
+        }
 
         $result = $availability->check($property, $arrival, $departure);
 

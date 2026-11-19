@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // The Claude connection logs in through the browser (authorization
+        // The AI connection logs in through the browser (authorization
         // code): no device login and no routes for it. Here, before Passport
         // registers its routes.
         \Laravel\Passport\Passport::$deviceCodeGrantEnabled = false;
@@ -80,11 +80,14 @@ class AppServiceProvider extends ServiceProvider
         // After an update with the zip package: clear old views and caches once.
         \App\Support\Release::refreshIfNew();
 
-        // The Claude connection (App\Support\ClaudeConnection): short-lived
-        // tokens that Claude renews itself, and our own "Allow" screen.
-        \Laravel\Passport\Passport::tokensExpireIn(now()->addHours(\App\Support\ClaudeConnection::ACCESS_TOKEN_HOURS));
-        \Laravel\Passport\Passport::refreshTokensExpireIn(now()->addDays(\App\Support\ClaudeConnection::REFRESH_TOKEN_DAYS));
-        \Laravel\Passport\Passport::authorizationView(fn (array $parameters) => view('claude.authorize', $parameters));
+        // Live, every link (also in mails) uses APP_URL, not the Host header.
+        \App\Support\SiteUrl::pinToAppUrl();
+
+        // The AI connection (App\Support\McpConnection): short-lived tokens
+        // that the app renews itself, and our own "Allow" screen.
+        \Laravel\Passport\Passport::tokensExpireIn(now()->addHours(\App\Support\McpConnection::ACCESS_TOKEN_HOURS));
+        \Laravel\Passport\Passport::refreshTokensExpireIn(now()->addDays(\App\Support\McpConnection::REFRESH_TOKEN_DAYS));
+        \Laravel\Passport\Passport::authorizationView(fn (array $parameters) => view('mcp.authorize', $parameters));
 
         // Row buttons in every admin table: an icon with the name as tooltip,
         // so tables stay narrow enough to fit without scrolling sideways.

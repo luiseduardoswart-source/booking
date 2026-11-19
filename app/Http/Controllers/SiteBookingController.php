@@ -105,7 +105,7 @@ class SiteBookingController extends Controller
             'children' => ['nullable', 'integer', 'min:0'],
             'infants' => $property->babyRule(),
             'pets' => $property->petsRule(),
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^[^\p{Cc}]*$/u'],
             'email' => ['required', 'email', 'max:255'],
             // The last four digits are the door code: then a phone number is needed.
             'phone' => $property->phoneRequired()

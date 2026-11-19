@@ -3,7 +3,7 @@
 namespace App\Filament\Statistics;
 
 use App\Filament\Resources\Properties\PropertyResource;
-use App\Models\ListingEvent;
+use App\Filament\Statistics\Concerns\FiltersByAccommodation;
 use App\Models\Property;
 use Filament\Widgets\Widget;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -16,22 +16,20 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 class TopPhotos extends Widget
 {
+    use FiltersByAccommodation;
+
     protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 'full';
 
     protected string $view = 'filament.statistics.top-photos';
 
-    private const DAYS = 30;
-
     private const LIMIT = 12;
 
     protected function getViewData(): array
     {
-        $counts = ListingEvent::query()
+        $counts = $this->events('photo_view')
             ->join('media', 'media.id', '=', 'listing_events.media_id')
-            ->where('listing_events.type', 'photo_view')
-            ->where('listing_events.created_at', '>=', now()->subDays(self::DAYS - 1)->startOfDay())
             ->selectRaw('listing_events.media_id, count(*) as views')
             ->groupBy('listing_events.media_id')
             ->orderByDesc('views')

@@ -3,7 +3,7 @@
 namespace App\Filament\Statistics;
 
 use App\Filament\Statistics\Concerns\ChartColors;
-use App\Models\ListingEvent;
+use App\Filament\Statistics\Concerns\FiltersByAccommodation;
 use App\Models\Property;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
@@ -11,6 +11,7 @@ use Illuminate\Contracts\Support\Htmlable;
 class ConversionFunnelChart extends ChartWidget
 {
     use ChartColors;
+    use FiltersByAccommodation;
 
     protected static ?int $sort = 4;
 
@@ -28,10 +29,7 @@ class ConversionFunnelChart extends ChartWidget
 
     protected function getData(): array
     {
-        $since = now()->subDays(29)->startOfDay();
-
-        $topIds = ListingEvent::where('type', 'page_view')
-            ->where('created_at', '>=', $since)
+        $topIds = $this->events('page_view')
             ->whereNotNull('property_id')
             ->selectRaw('property_id, count(*) as count')
             ->groupBy('property_id')
@@ -43,9 +41,8 @@ class ConversionFunnelChart extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        $counts = ListingEvent::whereIn('property_id', $topIds)
-            ->where('created_at', '>=', $since)
-            ->whereIn('type', ['page_view', 'quote', 'booking'])
+        $counts = $this->events(['page_view', 'quote', 'booking'])
+            ->whereIn('property_id', $topIds)
             ->selectRaw('property_id, type, count(*) as count')
             ->groupBy('property_id', 'type')
             ->get()

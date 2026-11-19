@@ -51,6 +51,12 @@
             .bg-rose-50 { background-color: color-mix(in srgb, var(--color-accent) 8%, white) !important; }
             .from-rose-50 { --tw-gradient-from: color-mix(in srgb, var(--color-accent) 6%, white) !important; }
             @endif
+            @if ($labelColor)
+            {{-- Photo viewer: the arrows and the current thumbnail; the white outer ring keeps a dark colour visible on the black background. --}}
+            [data-photo-prev], [data-photo-next] { background-color: var(--color-label) !important; color: #fff !important; }
+            [data-photo-prev]:hover, [data-photo-next]:hover { filter: brightness(1.15); }
+            [data-photo-thumb][data-active] { box-shadow: 0 0 0 2px var(--color-label), 0 0 0 4px #fff !important; }
+            @endif
             @if ($backgroundColor)
             body { background-color: {{ $backgroundColor }} !important; }
             @endif

@@ -3,7 +3,7 @@
 namespace App\Filament\Statistics;
 
 use App\Filament\Statistics\Concerns\ChartColors;
-use App\Models\ListingEvent;
+use App\Filament\Statistics\Concerns\FiltersByAccommodation;
 use App\Models\Property;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
@@ -11,6 +11,7 @@ use Illuminate\Contracts\Support\Htmlable;
 class ViewsPerAccommodationChart extends ChartWidget
 {
     use ChartColors;
+    use FiltersByAccommodation;
 
     protected static ?int $sort = 3;
 
@@ -28,10 +29,7 @@ class ViewsPerAccommodationChart extends ChartWidget
 
     protected function getData(): array
     {
-        $since = now()->subDays(29)->startOfDay();
-
-        $rows = ListingEvent::where('type', 'page_view')
-            ->where('created_at', '>=', $since)
+        $rows = $this->events('page_view')
             ->whereNotNull('property_id')
             ->selectRaw('property_id, count(*) as count')
             ->groupBy('property_id')

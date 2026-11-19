@@ -3,13 +3,14 @@
 namespace App\Filament\Statistics;
 
 use App\Filament\Statistics\Concerns\ChartColors;
-use App\Models\ListingEvent;
+use App\Filament\Statistics\Concerns\FiltersByAccommodation;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
 
 class DeviceChart extends ChartWidget
 {
     use ChartColors;
+    use FiltersByAccommodation;
 
     protected static ?int $sort = 6;
 
@@ -25,10 +26,7 @@ class DeviceChart extends ChartWidget
 
     protected function getData(): array
     {
-        $since = now()->subDays(29)->startOfDay();
-
-        $rows = ListingEvent::where('type', 'page_view')
-            ->where('created_at', '>=', $since)
+        $rows = $this->events('page_view')
             ->whereNotNull('device')
             ->selectRaw('device, count(*) as count')
             ->groupBy('device')

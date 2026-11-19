@@ -92,6 +92,23 @@ class PhotoViewerTest extends TestCase
         $this->assertStringNotContainsString('photo_dialog.showModal()', $html);
     }
 
+    /** The colour from Settings → Colours & style colours the arrows and the current thumbnail. */
+    public function test_the_photo_viewer_colour_is_used_for_the_arrows_and_the_current_thumbnail(): void
+    {
+        $property = $this->accommodation();
+        $rule = '[data-photo-prev], [data-photo-next] { background-color: var(--color-label)';
+
+        // Empty: the default white arrows.
+        $this->assertStringNotContainsString($rule, $this->get("/{$property->slug}")->getContent());
+
+        \App\Models\Setting::set('frontend', 'label_color', '#155e75');
+        $html = $this->get("/{$property->slug}")->assertOk()->getContent();
+
+        $this->assertStringContainsString('--color-label: #155e75', $html);
+        $this->assertStringContainsString($rule, $html);
+        $this->assertStringContainsString('[data-photo-thumb][data-active] { box-shadow: 0 0 0 2px var(--color-label)', $html);
+    }
+
     /** Statistics: the most viewed photos as photos, with accommodation and number of views. */
     public function test_the_statistics_show_the_most_viewed_photos_with_their_accommodation(): void
     {

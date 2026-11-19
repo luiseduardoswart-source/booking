@@ -796,7 +796,8 @@ class Settings extends Page implements HasActions, HasForms
                                         ColorPicker::make('frontend_accent_color')
                                             ->label(__('Button and accent colour')),
                                         ColorPicker::make('frontend_label_color')
-                                            ->label(__('Photo label colour')),
+                                            ->label(__('Photo viewer colour'))
+                                            ->helperText(__('The arrows and the current photo in the photo viewer. Empty = white.')),
                                         ColorPicker::make('frontend_background_color')
                                             ->label(__('Background colour')),
                                         Select::make('frontend_header_style')

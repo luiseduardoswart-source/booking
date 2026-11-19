@@ -10,9 +10,13 @@ use App\Filament\Statistics\StatisticsOverview;
 use App\Filament\Statistics\LanguageChart;
 use App\Filament\Statistics\TopPhotos;
 use App\Filament\Statistics\ViewsPerAccommodationChart;
+use App\Models\Property;
 use BackedEnum;
 use App\Support\Access;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard;
+use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -25,9 +29,15 @@ use Illuminate\Contracts\Support\Htmlable;
  * App\Filament\Widgets — only the latter is discovered by the panel and
  * shown on the Dashboard, so the dashboard widgets (revenue,
  * calendar) and these statistics stay neatly separated.
+ *
+ * At the top: a filter per accommodation that narrows every widget at once
+ * (see Concerns\FiltersByAccommodation). Statistics are platform-wide
+ * (Access::SCREENS), so every accommodation can be chosen.
  */
 class Statistics extends Dashboard
 {
+    use HasFiltersForm;
+
     protected static string $routePath = '/statistics';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
@@ -47,6 +57,17 @@ class Statistics extends Dashboard
     public function getTitle(): string|Htmlable
     {
         return __('Statistics');
+    }
+
+    public function filtersForm(Schema $schema): Schema
+    {
+        return $schema->components([
+            Select::make('property_id')
+                ->label(__('Accommodation'))
+                ->placeholder(__('All accommodations'))
+                ->options(fn (): array => Property::query()->orderBy('name')->pluck('name', 'id')->all())
+                ->searchable(),
+        ]);
     }
 
     public function getWidgets(): array

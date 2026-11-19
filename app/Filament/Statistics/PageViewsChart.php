@@ -3,13 +3,14 @@
 namespace App\Filament\Statistics;
 
 use App\Filament\Statistics\Concerns\ChartColors;
-use App\Models\ListingEvent;
+use App\Filament\Statistics\Concerns\FiltersByAccommodation;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
 
 class PageViewsChart extends ChartWidget
 {
     use ChartColors;
+    use FiltersByAccommodation;
 
     protected static ?int $sort = 2;
 
@@ -27,10 +28,7 @@ class PageViewsChart extends ChartWidget
 
     protected function getData(): array
     {
-        $since = now()->subDays(29)->startOfDay();
-
-        $perDay = ListingEvent::where('type', 'page_view')
-            ->where('created_at', '>=', $since)
+        $perDay = $this->events('page_view')
             ->get(['created_at'])
             ->groupBy(fn ($e) => $e->created_at->format('Y-m-d'))
             ->map->count();

@@ -20,8 +20,21 @@ class SetLocale
 
     public function handle(Request $request, Closure $next)
     {
+        WebsiteTexts::usage($this->languages === Languages::class);
+
+        $locale = $this->locale($request);
+
+        app()->setLocale($locale);
+        Carbon::setLocale($locale);
+        CarbonImmutable::setLocale($locale);
+
+        return $next($request);
+    }
+
+    /** The language for this request, from this middleware's list of languages. */
+    protected function locale(Request $request): string
+    {
         $languages = $this->languages;
-        WebsiteTexts::usage($languages === Languages::class);
         $active = $languages::active();
         $default = $languages::default();
 
@@ -29,15 +42,7 @@ class SetLocale
         // without a match Symfony returns the first language in the list.
         $locale = $this->chosen($request) ?? $request->getPreferredLanguage([$default, ...$active]);
 
-        if (! in_array($locale, $active, true)) {
-            $locale = $default;
-        }
-
-        app()->setLocale($locale);
-        Carbon::setLocale($locale);
-        CarbonImmutable::setLocale($locale);
-
-        return $next($request);
+        return in_array($locale, $active, true) ? $locale : $default;
     }
 
     /**

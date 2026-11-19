@@ -16,7 +16,9 @@ use App\Services\Ai\ClaudeTextGenerator;
 use App\Services\Ai\GeminiTextGenerator;
 use App\Services\Ai\SiteChat;
 use App\Services\MachineTranslator;
+use App\Support\ClaudeConnection;
 use App\Support\SiteLayouts;
+use App\Support\StyleHistory;
 use App\Support\SiteTemplates;
 use App\Support\AdminLanguages;
 use App\Support\Favicon;
@@ -224,6 +226,8 @@ class Settings extends Page implements HasActions, HasForms
         $values['reviews_auto_approve_from'] = $values['reviews_auto_approve_from'] ?? '4';
         $values['cookie_on'] = ($values['cookie_on'] ?? '0') === '1';
         $values['cookie_marketing_on'] = ($values['cookie_marketing_on'] ?? '0') === '1';
+        $values['claude_enabled'] = ClaudeConnection::enabled();
+        $values['claude_url'] = ClaudeConnection::url();
 
         // Migration of the old single-language values to the NL field.
         $values['company_slogan_nl'] = $values['company_slogan_nl'] ?? Setting::get('company', 'slogan');
@@ -693,7 +697,8 @@ class Settings extends Page implements HasActions, HasForms
                                                 ->label(__('Open the style editor'))
                                                 ->icon(Heroicon::OutlinedCursorArrowRays)
                                                 ->url(StyleEditor::getUrl()),
-                                        ]),
+                                            $this->undoClaudeStyleAction(),
+                                        ])->key('style_editor_actions'),
                                     ]),
 
                                 Section::make(__('Layout'))
@@ -1004,6 +1009,10 @@ class Settings extends Page implements HasActions, HasForms
                                     ]),
                             ]),
 
+                        Tab::make(__('Claude'))
+                            ->icon(Heroicon::OutlinedSparkles)
+                            ->components([self::claudeSection()]),
+
                         Tab::make(__('AI chat'))
                             ->icon(Heroicon::OutlinedChatBubbleLeftRight)
                             ->components([
@@ -1289,6 +1298,112 @@ class Settings extends Page implements HasActions, HasForms
                         : __('Language file created for: :languages', ['languages' => implode(', ', $done)]))
                     ->success()
                     ->send();
+            });
+    }
+
+    /**
+     * The Claude connection (App\Support\ClaudeConnection): switch it on, the
+     * address and steps for Claude, who is connected, and disconnecting.
+     */
+    private static function claudeSection(): Section
+    {
+        $on = fn (Get $get): bool => (bool) $get('claude_enabled');
+
+        return Section::make(__('Claude connection'))
+            ->description(__('Work on this website from Claude: ask in plain language for your bookings, change prices, texts and the calendar, or have the layout adjusted. Claude gets exactly the rights of the person who connects: an owner everything, a host only their own accommodations. Payments, refunds, deleting, settings and users stay in the admin.'))
+            ->components([
+                Switches::direct(Toggle::make('claude_enabled')->label(__('Claude connection on')), function (bool $on): bool {
+                    abort_unless(static::canAccess(), 403);
+
+                    $wasOn = ClaudeConnection::enabled();
+                    Setting::set('claude', 'enabled', $on ? '1' : '0');
+
+                    try {
+                        ClaudeConnection::switched($wasOn);
+                    } catch (\Throwable $e) {
+                        // Without signing keys no connection works: back to how it was.
+                        Setting::set('claude', 'enabled', $wasOn ? '1' : '0');
+                        report($e);
+                        Notification::make()->title(__('The Claude connection could not be switched on'))->body($e->getMessage())->danger()->send();
+
+                        return false;
+                    }
+
+                    return true;
+                })->helperText(__('Off = the connection does not exist and every connected Claude loses access at once.')),
+                TextInput::make('claude_url')
+                    ->label(__('Address for Claude'))
+                    ->readOnly()
+                    ->copyable(copyMessage: __('Copied'))
+                    ->dehydrated(false)
+                    ->visible($on),
+                Placeholder::make('claude_steps')
+                    ->label(__('How to connect'))
+                    ->visible($on)
+                    ->content(fn () => new HtmlString('<ol style="list-style: decimal; padding-left: 1.25rem; line-height: 1.7;">'
+                        .'<li>'.e(__('In Claude (claude.ai or the app): Settings → Connectors → Add custom connector.')).'</li>'
+                        .'<li>'.e(__('Give it a name, for example the name of your website, and paste the address above.')).'</li>'
+                        .'<li>'.e(__('Click Connect, log in to this admin and click Allow.')).'</li>'
+                        .'<li>'.e(__('In a chat, switch the connector on and ask, for example: "Show my accommodations".')).'</li>'
+                        .'</ol>'
+                        .'<p style="margin-top: .5rem; opacity: .75;">'.e(__('Every staff member or host connects with their own login.')).'</p>')),
+                Placeholder::make('claude_connections')
+                    ->label(__('Connected now'))
+                    ->visible($on)
+                    ->content(function (): HtmlString|string {
+                        $connections = ClaudeConnection::connections();
+
+                        if ($connections->isEmpty()) {
+                            return __('Nobody yet.');
+                        }
+
+                        return new HtmlString($connections->map(fn (array $connection) => e(__(':user via :app, since :date', [
+                            'user' => $connection['user'],
+                            'app' => $connection['app'],
+                            'date' => $connection['since']->translatedFormat('j F Y'),
+                        ])))->implode('<br>'));
+                    }),
+                Actions::make([
+                    Action::make('claudeDisconnect')
+                        ->label(__('Disconnect everyone'))
+                        ->icon(Heroicon::OutlinedLinkSlash)
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalDescription(__('Every connected Claude loses access. Whoever wants to use it again connects again and clicks Allow.'))
+                        ->action(function (): void {
+                            abort_unless(static::canAccess(), 403);
+                            ClaudeConnection::disconnectAll();
+                            Notification::make()->title(__('Everyone is disconnected'))->success()->send();
+                        }),
+                ])->visible(fn (Get $get): bool => $on($get) && ClaudeConnection::connections()->isNotEmpty()),
+            ]);
+    }
+
+    /**
+     * Undo for layout changes made through Claude (App\Support\StyleHistory),
+     * also here so the owner does not need Claude for it.
+     */
+    private function undoClaudeStyleAction(): Action
+    {
+        return Action::make('undoClaudeStyle')
+            ->label(__('Undo the last change made through Claude'))
+            ->icon(Heroicon::OutlinedArrowUturnLeft)
+            ->color('gray')
+            ->visible(fn (): bool => StyleHistory::last() !== null)
+            ->requiresConfirmation()
+            ->modalDescription(fn (): string => __('The look of the website goes back to how it was before this change: :change', ['change' => (string) StyleHistory::last()]))
+            ->action(function (): void {
+                abort_unless(static::canAccess(), 403);
+                StyleHistory::undo();
+
+                // Show the restored values; nothing left unsaved.
+                foreach (array_diff(StyleHistory::KEYS, ['visual_css']) as $key) {
+                    $this->data["frontend_{$key}"] = Setting::get('frontend', $key);
+                }
+                $this->data['frontend_layout'] ??= SiteLayouts::DEFAULT;
+                $this->rememberData();
+
+                Notification::make()->title(__('Change undone'))->success()->send();
             });
     }
 

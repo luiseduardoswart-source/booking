@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // The Claude connection logs in through the browser (authorization
+        // code): no device login and no routes for it. Here, before Passport
+        // registers its routes.
+        \Laravel\Passport\Passport::$deviceCodeGrantEnabled = false;
+
         // The active payment provider comes from the settings; new providers
         // (Stripe) are one extra match line here.
         $this->app->bind(\App\Services\MachineTranslator::class, \App\Services\DeeplTranslator::class);
@@ -74,6 +79,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // After an update with the zip package: clear old views and caches once.
         \App\Support\Release::refreshIfNew();
+
+        // The Claude connection (App\Support\ClaudeConnection): short-lived
+        // tokens that Claude renews itself, and our own "Allow" screen.
+        \Laravel\Passport\Passport::tokensExpireIn(now()->addHours(\App\Support\ClaudeConnection::ACCESS_TOKEN_HOURS));
+        \Laravel\Passport\Passport::refreshTokensExpireIn(now()->addDays(\App\Support\ClaudeConnection::REFRESH_TOKEN_DAYS));
+        \Laravel\Passport\Passport::authorizationView(fn (array $parameters) => view('claude.authorize', $parameters));
 
         // Row buttons in every admin table: an icon with the name as tooltip,
         // so tables stay narrow enough to fit without scrolling sideways.

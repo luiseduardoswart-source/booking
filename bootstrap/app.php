@@ -33,6 +33,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // server-side, so do not encrypt that cookie.
         $middleware->encryptCookies(except: ['cookie_consent']);
 
+        // Not logged in on a page that requires it: the admin login, which
+        // then returns to the page. The only such page outside the admin is
+        // the Claude connection's "Allow" screen (/oauth/authorize).
+        $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
+
         $middleware->web(append: [
             // First: without a user the site is not set up yet and
             // visitors go to the wizard. Must come before the middleware below,
@@ -47,8 +52,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            // The site chat also speaks JSON (see SiteChatController).
-            fn (Request $request) => $request->is('api/*', 'chat'),
+            // The site chat also speaks JSON (see SiteChatController), and so
+            // does the Claude connection (routes/ai.php): without a valid
+            // token it must get a 401, not the login page.
+            fn (Request $request) => $request->is('api/*', 'chat', 'mcp'),
         );
     })->create();
 

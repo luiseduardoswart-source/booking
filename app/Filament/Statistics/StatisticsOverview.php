@@ -3,6 +3,7 @@
 namespace App\Filament\Statistics;
 
 use App\Filament\Statistics\Concerns\FiltersByAccommodation;
+use App\Support\ListingStatistics;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -14,11 +15,8 @@ class StatisticsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $views = $this->events('page_view')->count();
-        $visitors = $this->events('page_view')->distinct('session_id')->count('session_id');
-        $quotes = $this->events('quote')->count();
-        $bookings = $this->events('booking')->count();
-        $conversion = $views > 0 ? round($bookings / $views * 100, 1) : 0;
+        ['views' => $views, 'visitors' => $visitors, 'quotes' => $quotes, 'bookings' => $bookings, 'conversion' => $conversion]
+            = ListingStatistics::summary($this->accommodationId());
 
         $number = fn (int $n) => number_format($n, 0, ',', '.');
 

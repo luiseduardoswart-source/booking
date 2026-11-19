@@ -39,6 +39,31 @@ trait HasTranslations
             : $source;
     }
 
+    /**
+     * The own text of a field in one language, without falling back: the
+     * column for the source language, otherwise its translation (null = none).
+     */
+    public function ownText(string $field, string $locale): ?string
+    {
+        return $locale === $this->sourceLanguage()
+            ? $this->{$field}
+            : ($this->{"{$field}_translations"}[$locale] ?? null);
+    }
+
+    /** Sets the own text of a field in one language; empty removes a translation. */
+    public function setOwnText(string $field, string $locale, ?string $text): void
+    {
+        if ($locale === $this->sourceLanguage()) {
+            $this->{$field} = $text;
+
+            return;
+        }
+
+        $translations = $this->{"{$field}_translations"} ?? [];
+        $translations[$locale] = $text;
+        $this->{"{$field}_translations"} = array_filter($translations, fn ($value) => filled($value));
+    }
+
     /** The language of the text in the column itself. */
     public function sourceLanguage(): string
     {

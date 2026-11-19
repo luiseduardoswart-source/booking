@@ -13,6 +13,15 @@ class SetAdminLocale extends SetLocale
 {
     protected string $languages = AdminLanguages::class;
 
+    /**
+     * The admin language for a page outside the admin that belongs to it,
+     * such as the "Allow" screen of the Claude connection.
+     */
+    public static function localeFor(Request $request): string
+    {
+        return (new static)->locale($request);
+    }
+
     protected function chosen(Request $request): ?string
     {
         return $request->user()?->locale;

@@ -99,6 +99,21 @@ class SiteTemplates
     }
 
     /**
+     * The fixed choices per style field; the colour fields take a colour
+     * value (see isColor()).
+     *
+     * @return array<string, list<string>>
+     */
+    public static function choices(): array
+    {
+        return [
+            'header_style' => self::HEADER_STYLES,
+            'font_style' => self::FONT_STYLES,
+            'button_style' => self::BUTTON_STYLES,
+        ];
+    }
+
+    /**
      * Validates and cleans a set of tokens (from a preset or imported file):
      * colours must be real colour values and the style choices must exist.
      * Unknown keys and invalid values are silently dropped.
@@ -116,9 +131,7 @@ class SiteTemplates
 
             $valid = match ($field) {
                 'accent_color', 'label_color', 'background_color' => $value === null || self::isColor($value),
-                'header_style' => $value === null || in_array($value, self::HEADER_STYLES, true),
-                'font_style' => $value === null || in_array($value, self::FONT_STYLES, true),
-                'button_style' => $value === null || in_array($value, self::BUTTON_STYLES, true),
+                'header_style', 'font_style', 'button_style' => $value === null || in_array($value, self::choices()[$field], true),
             };
 
             $clean[$field] = $valid ? $value : null;

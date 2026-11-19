@@ -3,6 +3,7 @@
 namespace App\Filament\Statistics\Concerns;
 
 use App\Models\ListingEvent;
+use App\Support\ListingStatistics;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -15,8 +16,6 @@ trait FiltersByAccommodation
 {
     use InteractsWithPageFilters;
 
-    protected const DAYS = 30;
-
     /** The chosen accommodation, or null for all of them. */
     protected function accommodationId(): ?int
     {
@@ -27,17 +26,13 @@ trait FiltersByAccommodation
 
     /**
      * Events of the given type(s) in the last 30 days, of the chosen
-     * accommodation only when one is chosen. Columns are qualified, so the
-     * query can be joined.
+     * accommodation only when one is chosen (see ListingStatistics).
      *
      * @param  string|list<string>  $types
      * @return Builder<ListingEvent>
      */
     protected function events(string|array $types): Builder
     {
-        return ListingEvent::query()
-            ->whereIn('listing_events.type', (array) $types)
-            ->where('listing_events.created_at', '>=', now()->subDays(self::DAYS - 1)->startOfDay())
-            ->when($this->accommodationId(), fn (Builder $query, int $id) => $query->where('listing_events.property_id', $id));
+        return ListingStatistics::events($types, $this->accommodationId());
     }
 }

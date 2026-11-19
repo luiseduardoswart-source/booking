@@ -130,11 +130,17 @@ rental business.
   website. Each user can choose their own.
 - **Updates in one click**: after uploading a new version, a button on the
   dashboard updates the database.
+- **Work from Claude**: connect Claude (claude.ai, the app or Claude Code) and
+  ask in plain language for your bookings, change prices, texts and the
+  calendar, or have the look of the website adjusted. Off until you switch it
+  on; see [Working from Claude](#working-from-claude).
 
 ### For developers
 
 - **API** for properties, prices, availability and bookings (bookings require a
   token).
+- **MCP server** for Claude, with OAuth sign-in through the admin (see
+  [Working from Claude](#working-from-claude)).
 
 ---
 
@@ -340,6 +346,69 @@ At the next login you set it up again.
 
 ---
 
+## Working from Claude
+
+You can manage the website from Claude instead of clicking through the admin:
+"Which guests arrive this week?", "Set the cleaning fee of the beach house to
+45 euros", "Block 10 to 12 June for painting", "Make the buttons dark green and
+the headings larger". Claude uses the website's own rules, so a price it sets is
+the price a guest gets.
+
+### Switching it on
+
+1. In the admin go to **Settings → Claude** and switch on **Claude connection
+   on**. The address for Claude appears, for example
+   `https://your-domain.com/mcp`.
+2. In Claude (claude.ai or the app): **Settings → Connectors → Add custom
+   connector**. Give it a name and paste that address.
+3. Click **Connect**. Your own admin opens: log in (with your two-factor code if
+   you use one) and click **Allow**.
+4. In a chat, switch the connector on and ask, for example: "Show my
+   accommodations".
+
+With Claude Code on your own computer:
+`claude mcp add --transport http booking https://your-domain.com/mcp`, then
+`/mcp` to log in.
+
+Claude reaches your website over the internet, so the address must be your
+live domain with https; a local test site such as `airbnb.test` only works with
+Claude Code on the same computer.
+
+### What Claude can and cannot do
+
+Everyone connects with their own login and gets exactly the rights they have in
+the admin: the owner everything below, a host only their own accommodations,
+a staff member only the screens the owner gave them.
+
+- **Read**: accommodations with their texts and prices, the calendar, a price
+  calculation for any dates, bookings (one booking with the guest's contact
+  details), statistics and the content pages.
+- **Change**: the name, short description, description and house rules per
+  language; prices (base price, weekend adjustment, cleaning fee, tourist tax
+  and how it is charged, guests included, extra guest and pet fee); blocking and
+  freeing nights; the title and text of content pages.
+- **The look (owner only)**: a style template, the colours, header, font and
+  buttons, the page layout, and style rules per element like the style editor.
+  Before every change the whole look is remembered: ask Claude to undo it, or
+  click **Undo the last change made through Claude** under **Settings → Layout
+  & style**. The last 20 changes can be undone.
+- **Not possible**: payments and refunds, deleting accommodations or bookings,
+  Settings and users, installing layout templates and your own scripts. Those
+  stay in the admin. Texts that contain photos or videos are also left to the
+  admin, so nothing gets lost.
+
+Every change is in the activity log under the name of the person who connected.
+
+### Disconnecting
+
+**Settings → Claude** shows who is connected. **Disconnect everyone** ends all
+connections; switching the connection off does the same, and the address then
+no longer exists. A user whose role changes so they can no longer use the admin
+loses access at once. A connection that has not been used for 60 days asks to
+log in again.
+
+---
+
 ## For developers
 
 Built with Laravel 13, Filament 5, Livewire 4 and Tailwind 4. Code, comments,
@@ -479,6 +548,7 @@ and calendar sync all follow the same rules:
 | Notifications | `app/Engines/NotificationEngine.php` | Guest emails |
 | Pricing services | `app/Services/*Provider.php` | PriceLabs, Beyond, Wheelhouse |
 | Admin | `app/Filament/` | Filament screens |
+| Claude connection | `app/Mcp/`, `routes/ai.php`, `app/Support/ClaudeConnection.php` | MCP server (laravel/mcp) with OAuth through Passport; every tool checks the same rights as the admin (`app/Support/Access.php`) |
 
 Amounts are stored in cents. Everything is date-based: one night is one date.
 
@@ -501,4 +571,5 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 
 `GET /api/v1/properties`, `/properties/{id}`, `/properties/{id}/quote` and
 `/properties/{id}/unavailable-dates` are public. `/api/v1/bookings` requires a
-Sanctum token.
+Sanctum token and follows the rights of that user in the admin: the permission
+for bookings, and a host only sees and books their own accommodations.

@@ -1740,6 +1740,8 @@
     "The guest has been logged out.": "客人已退出登录。",
     "Previous photo": "上一张照片",
     "Next photo": "下一张照片",
+    "Show earlier thumbnails": "显示前面的缩略图",
+    "Show later thumbnails": "显示后面的缩略图",
     "Show photo :number": "显示第 :number 张照片",
     "No photo views in the last 30 days.": "过去 30 天内没有照片浏览记录。",
     "{1} 1 view|[2,*] :count views": "{1} 1 次浏览|[2,*] :count 次浏览"

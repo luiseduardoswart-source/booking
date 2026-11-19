@@ -42,16 +42,28 @@
             @endif
         </div>
 
-        {{-- Thumbnails: jump straight to a photo --}}
+        {{-- Thumbnails: jump straight to a photo. No scrollbar: the arrows at
+             either end scroll the row and disappear at its start and end
+             (a finger can still swipe the row). --}}
         @if ($photos->count() > 1)
-            <div class="flex gap-2 overflow-x-auto px-4 py-3 sm:px-8 sm:py-4" data-photo-thumbs>
-                @foreach ($photos as $index => $photo)
-                    <button type="button" data-photo-thumb data-index="{{ $index }}"
-                            aria-label="{{ __('Show photo :number', ['number' => $index + 1]) }}"
-                            class="relative h-14 w-20 shrink-0 overflow-hidden rounded-md opacity-60 ring-white transition hover:opacity-100 data-[active]:opacity-100 data-[active]:ring-2 sm:h-20 sm:w-28">
-                        <x-property-media :media="$photo" conversion="thumb" alt="" loading="lazy" class="h-full w-full object-cover" />
-                    </button>
-                @endforeach
+            <div class="flex items-center gap-1 px-2 py-2 sm:gap-2 sm:px-4 sm:py-3">
+                <button type="button" data-photo-thumbs-prev aria-label="{{ __('Show earlier thumbnails') }}" disabled
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/20 disabled:invisible">
+                    <x-site-icon name="chevron-left" class="h-5 w-5" />
+                </button>
+                <div class="flex min-w-0 flex-1 gap-2 overflow-x-auto p-1" data-photo-thumbs>
+                    @foreach ($photos as $index => $photo)
+                        <button type="button" data-photo-thumb data-index="{{ $index }}"
+                                aria-label="{{ __('Show photo :number', ['number' => $index + 1]) }}"
+                                class="relative h-14 w-20 shrink-0 overflow-hidden rounded-md opacity-60 ring-white transition hover:opacity-100 data-[active]:opacity-100 data-[active]:ring-2 sm:h-20 sm:w-28">
+                            <x-property-media :media="$photo" conversion="thumb" alt="" loading="lazy" class="h-full w-full object-cover" />
+                        </button>
+                    @endforeach
+                </div>
+                <button type="button" data-photo-thumbs-next aria-label="{{ __('Show later thumbnails') }}" disabled
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/20 disabled:invisible">
+                    <x-site-icon name="chevron-right" class="h-5 w-5" />
+                </button>
             </div>
         @endif
     </div>

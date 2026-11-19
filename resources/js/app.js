@@ -392,6 +392,9 @@ if (mapElement) {
     const thumbs = [...dialog.querySelectorAll('[data-photo-thumb]')];
     const caption = dialog.querySelector('[data-photo-caption]');
     const counter = dialog.querySelector('[data-photo-counter]');
+    const strip = dialog.querySelector('[data-photo-thumbs]');
+    const stripPrev = dialog.querySelector('[data-photo-thumbs-prev]');
+    const stripNext = dialog.querySelector('[data-photo-thumbs-next]');
     const propertyId = dialog.dataset.property;
     const tracked = new Set();
     let current = 0;
@@ -441,11 +444,22 @@ if (mapElement) {
         if (dialog.open) track(slides[index]);
     };
 
+    // The arrows beside the thumbnails: each one only while there is more
+    // to see on its side.
+    const updateStrip = () => {
+        if (!strip) return;
+        const end = strip.scrollWidth - strip.clientWidth;
+        stripPrev.disabled = strip.scrollLeft <= 1;
+        stripNext.disabled = strip.scrollLeft >= end - 1;
+    };
+    const scrollStrip = (direction) => strip.scrollBy({ left: direction * strip.clientWidth * 0.8, behavior: 'smooth' });
+
     // The page behind does not scroll while the viewer is open: see
     // html:has([data-photo-viewer][open]) in resources/css/app.css.
     const open = (index) => {
         dialog.showModal();
         show(index);
+        updateStrip();
     };
 
     document.querySelectorAll('[data-photo-open]').forEach((button) => {
@@ -455,6 +469,10 @@ if (mapElement) {
     dialog.querySelector('[data-photo-prev]')?.addEventListener('click', () => show(current - 1));
     dialog.querySelector('[data-photo-next]')?.addEventListener('click', () => show(current + 1));
     thumbs.forEach((thumb) => thumb.addEventListener('click', () => show(Number(thumb.dataset.index))));
+    stripPrev?.addEventListener('click', () => scrollStrip(-1));
+    stripNext?.addEventListener('click', () => scrollStrip(1));
+    strip?.addEventListener('scroll', updateStrip, { passive: true });
+    window.addEventListener('resize', () => { if (dialog.open) updateStrip(); });
 
     dialog.addEventListener('close', () => {
         clearTimeout(viewTimer);

@@ -1740,6 +1740,8 @@
     "The guest has been logged out.": "Le voyageur a été déconnecté.",
     "Previous photo": "Photo précédente",
     "Next photo": "Photo suivante",
+    "Show earlier thumbnails": "Afficher les miniatures précédentes",
+    "Show later thumbnails": "Afficher les miniatures suivantes",
     "Show photo :number": "Afficher la photo :number",
     "No photo views in the last 30 days.": "Aucune photo vue au cours des 30 derniers jours.",
     "{1} 1 view|[2,*] :count views": "{1} 1 vue|[2,*] :count vues"

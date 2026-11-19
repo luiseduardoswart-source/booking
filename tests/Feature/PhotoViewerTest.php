@@ -72,6 +72,9 @@ class PhotoViewerTest extends TestCase
         $this->assertStringContainsString('data-caption="Rooftop pool"', $html);
         $this->assertStringContainsString('aria-label="'.__('Next photo').'"', $html);
         $this->assertStringContainsString('aria-label="'.__('Previous photo').'"', $html);
+        // The row of thumbnails scrolls with an arrow at either end.
+        $this->assertStringContainsString('data-photo-thumbs-prev aria-label="'.__('Show earlier thumbnails').'"', $html);
+        $this->assertStringContainsString('data-photo-thumbs-next aria-label="'.__('Show later thumbnails').'"', $html);
 
         // Every photo is tracked from the viewer.
         foreach ($photos as $photo) {

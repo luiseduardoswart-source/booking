@@ -1751,6 +1751,8 @@
     "The guest has been logged out.": "The guest has been logged out.",
     "Previous photo": "Previous photo",
     "Next photo": "Next photo",
+    "Show earlier thumbnails": "Show earlier thumbnails",
+    "Show later thumbnails": "Show later thumbnails",
     "Show photo :number": "Show photo :number",
     "No photo views in the last 30 days.": "No photo views in the last 30 days.",
     "{1} 1 view|[2,*] :count views": "{1} 1 view|[2,*] :count views"

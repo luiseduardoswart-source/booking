@@ -75,3 +75,12 @@
 html:has([data-photo-viewer][open]) {
     overflow: hidden;
 }
+
+/* The row of thumbnails scrolls with its arrow buttons, without a scrollbar. */
+[data-photo-thumbs] {
+    scrollbar-width: none;
+}
+
+[data-photo-thumbs]::-webkit-scrollbar {
+    display: none;
+}

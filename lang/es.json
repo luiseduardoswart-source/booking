@@ -1740,6 +1740,8 @@
     "The guest has been logged out.": "Se ha cerrado la sesión del huésped.",
     "Previous photo": "Foto anterior",
     "Next photo": "Foto siguiente",
+    "Show earlier thumbnails": "Mostrar miniaturas anteriores",
+    "Show later thumbnails": "Mostrar miniaturas siguientes",
     "Show photo :number": "Mostrar foto :number",
     "No photo views in the last 30 days.": "No se han visto fotos en los últimos 30 días.",
     "{1} 1 view|[2,*] :count views": "{1} 1 visualización|[2,*] :count visualizaciones"

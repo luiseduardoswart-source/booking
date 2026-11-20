@@ -8,6 +8,7 @@ use App\Engines\Exceptions\UnavailableForBookingException;
 use App\Engines\PaymentEngine;
 use App\Engines\PricingEngine;
 use App\Models\Booking;
+use App\Models\Coupon;
 use App\Models\Form;
 use App\Models\Property;
 use App\Support\FormAnswers;
@@ -16,11 +17,17 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use InvalidArgumentException;
 
 class SiteBookingController extends Controller
 {
+    /** Wrong coupon codes a visitor may enter per WRONG_COUPON_SECONDS. */
+    private const WRONG_COUPONS = 5;
+
+    private const WRONG_COUPON_SECONDS = 600;
+
     /**
      * Step 1: summary + guest details form.
      */
@@ -55,14 +62,7 @@ class SiteBookingController extends Controller
         }
 
         // Coupon code: valid → included in the price; invalid → show a clear message.
-        $couponError = null;
-        $coupon = \App\Models\Coupon::search($validated['coupon'] ?? null);
-
-        if (filled($validated['coupon'] ?? null) && $coupon === null) {
-            $couponError = __('This coupon code does not exist.');
-        } elseif ($coupon !== null && ($couponError = $coupon->invalidBecause($property, $arrival)) !== null) {
-            $coupon = null;
-        }
+        [$coupon, $couponError] = $this->coupon($request, $property, $arrival, $validated['coupon'] ?? null);
 
         try {
             $quote = $pricing->quote($property, $arrival, $departure, (int) $validated['guests'], (int) ($validated['pets'] ?? 0), $coupon);
@@ -85,6 +85,40 @@ class SiteBookingController extends Controller
                 'pets' => $validated['pets'] ?? 0,
             ],
         ]);
+    }
+
+    /**
+     * The coupon code entered on the booking page, with the message for the
+     * guest when it cannot be used. Wrong codes count per visitor: after
+     * WRONG_COUPONS wrong ones no code is looked up for a while, so nobody
+     * can find valid codes by trying them out. A good code does not count.
+     *
+     * @return array{0: ?Coupon, 1: ?string}
+     */
+    private function coupon(Request $request, Property $property, CarbonImmutable $arrival, ?string $code): array
+    {
+        if (blank($code)) {
+            return [null, null];
+        }
+
+        $tries = 'wrong-coupons:'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($tries, self::WRONG_COUPONS)) {
+            return [null, __('Too many wrong coupon codes. Try again in :minutes minutes.', [
+                'minutes' => max(1, (int) ceil(RateLimiter::availableIn($tries) / 60)),
+            ])];
+        }
+
+        $coupon = Coupon::search($code);
+        $error = $coupon === null ? __('This coupon code does not exist.') : $coupon->invalidBecause($property, $arrival);
+
+        if ($error !== null) {
+            RateLimiter::hit($tries, self::WRONG_COUPON_SECONDS);
+
+            return [null, $error];
+        }
+
+        return [$coupon, null];
     }
 
     /**

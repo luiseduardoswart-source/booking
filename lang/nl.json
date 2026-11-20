@@ -1280,6 +1280,7 @@
     "This booking has been cancelled.": "Deze boeking is geannuleerd.",
     "This code is not correct.": "Deze code klopt niet.",
     "This coupon code does not exist.": "Deze kortingscode bestaat niet.",
+    "Too many wrong coupon codes. Try again in :minutes minutes.": "Te veel foute kortingscodes. Probeer het over :minutes minuten opnieuw.",
     "This coupon code has already been used the maximum number of times.": "Deze kortingscode is al het maximale aantal keren gebruikt.",
     "This coupon code has expired.": "Deze kortingscode is verlopen.",
     "This coupon code is no longer valid.": "Deze kortingscode is niet meer geldig.",

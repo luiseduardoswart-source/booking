@@ -1273,6 +1273,7 @@
     "This booking has been cancelled.": "Cette réservation a été annulée.",
     "This code is not correct.": "Ce code est incorrect.",
     "This coupon code does not exist.": "Ce code de réduction n’existe pas.",
+    "Too many wrong coupon codes. Try again in :minutes minutes.": "Trop de codes de réduction erronés. Réessayez dans :minutes minutes.",
     "This coupon code has already been used the maximum number of times.": "Ce code de réduction a déjà été utilisé le nombre maximal de fois.",
     "This coupon code has expired.": "Ce code de réduction a expiré.",
     "This coupon code is no longer valid.": "Ce code de réduction n’est plus valable.",

@@ -1273,6 +1273,7 @@
     "This booking has been cancelled.": "此预订已取消。",
     "This code is not correct.": "验证码不正确。",
     "This coupon code does not exist.": "此优惠码不存在。",
+    "Too many wrong coupon codes. Try again in :minutes minutes.": "错误的优惠码过多。请在 :minutes 分钟后重试。",
     "This coupon code has already been used the maximum number of times.": "此优惠码已达到最大使用次数。",
     "This coupon code has expired.": "此优惠码已过期。",
     "This coupon code is no longer valid.": "此优惠码已失效。",

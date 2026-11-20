@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Coupon;
 use App\Models\Property;
 use App\Support\EnvFile;
 use App\Support\SiteLayouts;
@@ -48,6 +49,34 @@ class PublicSiteHardeningTest extends TestCase
         }
 
         $this->get("/{$property->slug}/book?{$query}&coupon=TRY31")->assertStatus(429);
+    }
+
+    public function test_a_visitor_gets_only_five_wrong_coupon_codes_per_ten_minutes(): void
+    {
+        $property = $this->accommodation();
+        Coupon::create(['code' => 'SUMMER', 'type' => 'percent', 'value' => 10]);
+        $arrival = today()->addDays(10);
+        $page = "/{$property->slug}/book?".http_build_query(['arrival' => $arrival->toDateString(), 'departure' => $arrival->copy()->addDays(2)->toDateString(), 'guests' => 2]);
+        $applied = fn ($coupon) => $coupon?->code === 'SUMMER';
+        $refused = fn ($coupon) => $coupon === null;
+
+        // A good code does not count, however often the page is reloaded.
+        for ($i = 0; $i < 6; $i++) {
+            $this->get("{$page}&coupon=summer")->assertOk()->assertViewHas('coupon', $applied);
+        }
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->get("{$page}&coupon=TRY{$i}")->assertOk()->assertViewHas('coupon', $refused)
+                ->assertSee(__('This coupon code does not exist.'));
+        }
+
+        // The sixth try is not even looked up, so a good code is refused too.
+        $this->get("{$page}&coupon=summer")->assertOk()->assertViewHas('coupon', $refused)
+            ->assertSee(__('Too many wrong coupon codes. Try again in :minutes minutes.', ['minutes' => 10]));
+
+        // Ten minutes later the visitor can try again.
+        $this->travel(11)->minutes();
+        $this->get("{$page}&coupon=summer")->assertOk()->assertViewHas('coupon', $applied);
     }
 
     public function test_photo_tracking_is_limited(): void

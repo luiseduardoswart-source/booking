@@ -1280,6 +1280,7 @@
     "This booking has been cancelled.": "This booking has been cancelled.",
     "This code is not correct.": "This code is not correct.",
     "This coupon code does not exist.": "This coupon code does not exist.",
+    "Too many wrong coupon codes. Try again in :minutes minutes.": "Too many wrong coupon codes. Try again in :minutes minutes.",
     "This coupon code has already been used the maximum number of times.": "This coupon code has already been used the maximum number of times.",
     "This coupon code has expired.": "This coupon code has expired.",
     "This coupon code is no longer valid.": "This coupon code is no longer valid.",

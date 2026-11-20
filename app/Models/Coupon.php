@@ -44,11 +44,14 @@ class Coupon extends Model
     /**
      * Codes are case-insensitive and without spaces.
      */
-    public static function search(?string $code): ?self
+    public static function search(?string $code, bool $lock = false): ?self
     {
         $code = strtoupper(trim((string) $code));
 
-        return $code === '' ? null : static::query()->whereRaw('upper(code) = ?', [$code])->first();
+        return $code === '' ? null : static::query()
+            ->whereRaw('upper(code) = ?', [$code])
+            ->when($lock, fn ($query) => $query->lockForUpdate())
+            ->first();
     }
 
     /**

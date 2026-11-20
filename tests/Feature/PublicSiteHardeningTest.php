@@ -37,6 +37,19 @@ class PublicSiteHardeningTest extends TestCase
         $this->post("/{$property->slug}/book", [])->assertStatus(429);
     }
 
+    public function test_coupon_codes_cannot_be_tried_out_by_the_thousand(): void
+    {
+        $property = $this->accommodation();
+        $arrival = today()->addDays(10);
+        $query = http_build_query(['arrival' => $arrival->toDateString(), 'departure' => $arrival->copy()->addDays(2)->toDateString(), 'guests' => 2]);
+
+        for ($i = 0; $i < 30; $i++) {
+            $this->get("/{$property->slug}/book?{$query}&coupon=TRY{$i}")->assertOk();
+        }
+
+        $this->get("/{$property->slug}/book?{$query}&coupon=TRY31")->assertStatus(429);
+    }
+
     public function test_photo_tracking_is_limited(): void
     {
         for ($i = 0; $i < 60; $i++) {

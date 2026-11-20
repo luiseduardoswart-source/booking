@@ -177,8 +177,11 @@ class PaymentEngine
 
             // A booking made on the site that holds its dates: the time counts
             // from the moment the guest goes to pay (after any ID check).
+            // Never longer than twice the hold time after booking, so
+            // repeating the ID check cannot hold the dates for ever.
             if ($booking->hold_until !== null) {
-                $booking->update(['hold_until' => now()->addMinutes(Booking::HOLD_MINUTES)]);
+                $booking->update(['hold_until' => now()->addMinutes(Booking::HOLD_MINUTES)
+                    ->min($booking->created_at->copy()->addMinutes(2 * Booking::HOLD_MINUTES))]);
             }
 
             return $checkoutUrl;

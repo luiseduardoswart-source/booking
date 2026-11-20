@@ -194,6 +194,8 @@ Route::get('/api/search_suggestions', \App\Http\Controllers\Api\SearchSuggestion
 
 // Accommodation routes at root level — at the BOTTOM so all fixed paths take precedence.
 Route::get('/{property:slug}/book', [SiteBookingController::class, 'create'])
+    // It also says whether a coupon code exists: no trying out codes by the thousand.
+    ->middleware('throttle:30,1')
     ->name('bookings.create')
     ->where('property', $slugPattern);
 Route::post('/{property:slug}/book', [SiteBookingController::class, 'store'])

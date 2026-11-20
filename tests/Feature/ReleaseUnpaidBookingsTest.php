@@ -101,6 +101,20 @@ class ReleaseUnpaidBookingsTest extends TestCase
         $this->assertSame(PaymentTransactionStatus::Paid, $booking->payments()->sole()->status);
     }
 
+    public function test_repeating_the_payment_start_cannot_hold_the_dates_for_ever(): void
+    {
+        $booking = $this->bookOnTheSite();
+
+        // For example by doing the ID check again and again.
+        $this->travel(110)->minutes();
+        app(\App\Engines\PaymentEngine::class)->checkoutOrConfirmationUrl($booking->refresh());
+
+        $this->assertLessThanOrEqual(
+            $booking->created_at->copy()->addMinutes(2 * Booking::HOLD_MINUTES)->timestamp,
+            $booking->refresh()->hold_until->timestamp,
+        );
+    }
+
     public function test_a_booking_made_in_the_admin_never_expires(): void
     {
         $booking = app(BookingEngine::class)->create(

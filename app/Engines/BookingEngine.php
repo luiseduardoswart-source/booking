@@ -59,8 +59,10 @@ class BookingEngine
             }
 
             // Coupon code: only apply if it is (still) valid — inside the
-            // transaction, so max_uses cannot be exceeded.
-            $coupon = \App\Models\Coupon::search($couponCode);
+            // transaction and with the coupon row locked, so max_uses cannot
+            // be exceeded, also not by two bookings of different
+            // accommodations at the same moment.
+            $coupon = \App\Models\Coupon::search($couponCode, lock: true);
 
             if ($coupon !== null && $coupon->invalidBecause($property, $arrival) !== null) {
                 $coupon = null;

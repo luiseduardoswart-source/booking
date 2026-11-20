@@ -27,7 +27,7 @@ use LogicException;
  */
 #[Fillable([
     'name', 'title', 'title_translations', 'success_message', 'success_message_translations',
-    'submit_label', 'submit_label_translations', 'fields', 'hidden_fields', 'recipients', 'active',
+    'submit_label', 'submit_label_translations', 'fields', 'fixed_fields', 'recipients', 'active',
 ])]
 class Form extends Model
 {
@@ -58,26 +58,37 @@ class Form extends Model
     /** Types with a placeholder text in the input. */
     public const PLACEHOLDER_TYPES = ['text', 'email', 'phone', 'number', 'textarea'];
 
+    /** How a fixed field is on the form: the guest must fill it in, may fill it in, or does not see it. */
+    public const REQUIRED = 'required';
+
+    public const OPTIONAL = 'optional';
+
+    public const HIDDEN = 'hidden';
+
+    public const MODES = [self::REQUIRED, self::OPTIONAL, self::HIDDEN];
+
     /**
      * The fixed fields of the fixed forms: key => [label (language file key),
-     * may the owner hide it]. They are built into the booking and contact
-     * pages themselves; listed here for the admin and the submissions.
+     * default mode, may the owner change it]. They are built into the booking
+     * and contact pages themselves; listed here for the admin and the
+     * submissions. Name, email address and the terms always stay required:
+     * without them there is no booking.
      */
     public const FIXED_FIELDS = [
         self::BOOKING => [
-            'name' => ['Full name', false],
-            'email' => ['Email address', false],
-            'phone' => ['Phone', false],
-            'address' => ['Address', true],
-            'postal_code' => ['Postal code', true],
-            'city' => ['City', true],
-            'notes' => ['Remarks', false],
-            'terms' => ['I agree to the house rules and cancellation policy.', false],
+            'name' => ['Full name', self::REQUIRED, false],
+            'email' => ['Email address', self::REQUIRED, false],
+            'phone' => ['Phone', self::OPTIONAL, true],
+            'address' => ['Address', self::OPTIONAL, true],
+            'postal_code' => ['Postal code', self::OPTIONAL, true],
+            'city' => ['City', self::OPTIONAL, true],
+            'notes' => ['Remarks', self::OPTIONAL, true],
+            'terms' => ['I agree to the house rules and cancellation policy.', self::REQUIRED, false],
         ],
         self::CONTACT => [
-            'name' => ['Name', false],
-            'email' => ['Email address', false],
-            'message' => ['Message', false],
+            'name' => ['Name', self::REQUIRED, false],
+            'email' => ['Email address', self::REQUIRED, false],
+            'message' => ['Message', self::REQUIRED, false],
         ],
     ];
 
@@ -85,8 +96,14 @@ class Form extends Model
     {
         static::saving(function (self $form): void {
             $form->fields = self::withKeys(is_array($form->fields) ? $form->fields : []);
-            $hideable = array_keys(array_filter(self::FIXED_FIELDS[$form->system] ?? [], fn (array $fixed) => $fixed[1]));
-            $form->hidden_fields = array_values(array_intersect((array) $form->hidden_fields, $hideable)) ?: null;
+
+            // Only fields the owner may change, and only a known mode.
+            $adjustable = array_filter(self::FIXED_FIELDS[$form->system] ?? [], fn (array $fixed) => $fixed[2]);
+            $modes = array_filter(
+                array_intersect_key((array) $form->fixed_fields, $adjustable),
+                fn ($mode) => in_array($mode, self::MODES, true),
+            );
+            $form->fixed_fields = $modes ?: null;
         });
 
         static::deleting(function (self $form): void {
@@ -103,7 +120,7 @@ class Form extends Model
             'success_message_translations' => 'array',
             'submit_label_translations' => 'array',
             'fields' => 'array',
-            'hidden_fields' => 'array',
+            'fixed_fields' => 'array',
             'active' => 'boolean',
         ];
     }
@@ -127,10 +144,55 @@ class Form extends Model
         return $this->system !== null;
     }
 
-    /** Is this fixed field shown? Only the hideable ones can be hidden. */
-    public function shows(string $fixedField): bool
+    /**
+     * Required, optional or hidden: as the owner set it, otherwise the
+     * default. A field the owner may not change always has its default.
+     */
+    public function mode(string $fixedField): string
     {
-        return ! in_array($fixedField, (array) $this->hidden_fields, true);
+        [, $default, $adjustable] = self::FIXED_FIELDS[$this->system][$fixedField] ?? [null, self::OPTIONAL, false];
+        $mode = ((array) $this->fixed_fields)[$fixedField] ?? null;
+
+        return $adjustable && in_array($mode, self::MODES, true) ? $mode : $default;
+    }
+
+    /**
+     * The mode of a fixed booking form field on this accommodation. Where the
+     * last four digits of the phone number are the door code, the phone
+     * number is always asked and required.
+     */
+    public function modeAt(string $fixedField, Property $property): string
+    {
+        return $fixedField === 'phone' && $property->phoneRequired() ? self::REQUIRED : $this->mode($fixedField);
+    }
+
+    /**
+     * All fixed fields of this form with their mode on this accommodation.
+     *
+     * @return array<string, string>
+     */
+    public function modesAt(Property $property): array
+    {
+        return collect(self::FIXED_FIELDS[$this->system] ?? [])
+            ->map(fn (array $fixed, string $key) => $this->modeAt($key, $property))
+            ->all();
+    }
+
+    /**
+     * Validation of a fixed field as set for this accommodation: required,
+     * optional, or left out when hidden, so whatever is sent anyway is not
+     * stored.
+     *
+     * @param  array<int, mixed>  $rules  the rules for a filled-in value
+     * @return array<int, mixed>
+     */
+    public function ruleAt(string $fixedField, Property $property, array $rules): array
+    {
+        return match ($this->modeAt($fixedField, $property)) {
+            self::REQUIRED => ['required', ...$rules],
+            self::HIDDEN => ['exclude'],
+            default => ['nullable', ...$rules],
+        };
     }
 
     /**

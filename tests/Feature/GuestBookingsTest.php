@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Engines\BookingEngine;
 use App\Engines\PaymentEngine;
+use App\Enums\BookingStatus;
 use App\Enums\MailType;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
@@ -230,6 +231,82 @@ class GuestBookingsTest extends TestCase
 
         $this->get(route('guest.booking', $someoneElses))->assertRedirect(route('guest.bookings'));
         $this->get(route('guest.document', ['booking' => $someoneElses->id, 'kind' => 'confirmation']))->assertForbidden();
+    }
+
+    public function test_a_guest_who_booked_without_a_phone_number_adds_it_through_the_confirmation_email(): void
+    {
+        $booking = $this->booking();
+        $url = GuestAccess::bookingUrl($booking);
+
+        // The confirmation asks for it, with a button straight to the field.
+        $html = Mail::queued(BookingMail::class, fn (BookingMail $mail) => $mail->type === MailType::Confirmation)->sole()->locale('en')->render();
+        $this->assertStringContainsString(e($url.'#phone'), $html);
+        $this->assertStringContainsString(__('Add your phone number', [], 'en'), $html);
+
+        $this->get($url)->assertOk()->assertSee(__('Save phone number'));
+
+        $this->post(route('guest.phone', $booking), ['phone' => 'call me'])
+            ->assertSessionHasErrors(['phone' => __('Enter a valid phone number.')]);
+        $this->post(route('guest.phone', $booking), ['phone' => "06 1234\n5678"])->assertSessionHasErrors('phone');
+        $this->assertNull($booking->refresh()->guest_phone);
+
+        $this->post(route('guest.phone', $booking), ['phone' => '+31 6 1234 5678'])
+            ->assertRedirect(route('guest.booking', $booking))
+            ->assertSessionHas('guest_status', __('Thank you, we have saved your phone number.'));
+        $this->assertSame('+31 6 1234 5678', $booking->refresh()->guest_phone);
+
+        // Saved: the guest sees the number, the field is gone.
+        $this->get(route('guest.booking', $booking))->assertOk()->assertSee('+31 6 1234 5678')->assertDontSee(__('Save phone number'));
+    }
+
+    public function test_a_phone_number_that_is_known_is_never_asked_or_changed(): void
+    {
+        // Its last digits can be the door code.
+        $booking = $this->booking();
+        $booking->update(['guest_phone' => '06 1111 2222']);
+
+        $html = (new BookingMail($booking, MailType::Confirmation))->locale('en')->render();
+        $this->assertStringNotContainsString(__('Add your phone number', [], 'en'), $html);
+
+        $this->get(GuestAccess::bookingUrl($booking))->assertOk()->assertDontSee(__('Save phone number'));
+        $this->post(route('guest.phone', $booking), ['phone' => '06 9999 8888'])->assertRedirect(route('guest.booking', $booking));
+
+        $this->assertSame('06 1111 2222', $booking->refresh()->guest_phone);
+    }
+
+    public function test_only_the_guest_of_the_booking_adds_a_phone_number(): void
+    {
+        $booking = $this->booking('jan@example.com');
+
+        // Without the link from the email and without logging in.
+        $this->post(route('guest.phone', $booking), ['phone' => '06 1234 5678'])
+            ->assertRedirect(route('guest.bookings'))->assertSessionHas('guest_error');
+
+        // Logged in as somebody else.
+        $this->booking('piet@example.com');
+        $this->logIn('piet@example.com');
+        $this->post(route('guest.phone', $booking), ['phone' => '06 1234 5678'])->assertRedirect(route('guest.bookings'));
+
+        $this->assertNull($booking->refresh()->guest_phone);
+    }
+
+    public function test_no_phone_number_is_asked_for_a_cancelled_booking_or_after_the_stay(): void
+    {
+        $cancelled = $this->booking();
+        $cancelled->update(['status' => BookingStatus::Cancelled]);
+        $this->get(GuestAccess::bookingUrl($cancelled))->assertOk()->assertDontSee(__('Save phone number'));
+        $this->post(route('guest.phone', $cancelled), ['phone' => '06 1234 5678']);
+        $this->assertNull($cancelled->refresh()->guest_phone);
+
+        // Departure 12 March: on the day itself still, the day after no more.
+        $over = $this->booking('piet@example.com');
+        $url = GuestAccess::bookingUrl($over);
+        $this->travelTo('2026-03-12 20:00:00');
+        $this->get($url)->assertOk()->assertSee(__('Save phone number'));
+        $this->travelTo('2026-03-13 08:00:00');
+        $this->get($url)->assertOk()->assertDontSee(__('Save phone number'));
+        $this->post(route('guest.phone', $over), ['phone' => '06 1234 5678']);
+        $this->assertNull($over->refresh()->guest_phone);
     }
 
     public function test_the_documents_download_as_pdf(): void

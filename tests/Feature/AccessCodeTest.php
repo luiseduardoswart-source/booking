@@ -10,6 +10,7 @@ use App\Filament\Resources\Properties\Pages\EditDefaults;
 use App\Filament\Resources\Properties\Pages\EditProperty;
 use App\Mail\BookingMail;
 use App\Models\Booking;
+use App\Models\Form;
 use App\Models\Property;
 use App\Models\User;
 use App\Support\MailPlaceholders;
@@ -172,15 +173,33 @@ class AccessCodeTest extends TestCase
         $fixed = $this->accommodation(['access_code_kind' => 'fixed', 'access_code' => '4711']);
         $dates = ['arrival' => today()->addDays(30)->toDateString(), 'departure' => today()->addDays(33)->toDateString(), 'guests' => 2];
 
+        // Translated after the request: the page sets the language of the site.
+        $reason = fn () => __('So we can reach you about your arrival, for example via WhatsApp.');
         $this->get(route('bookings.create', ['property' => $phone->slug, ...$dates]))
-            ->assertOk()->assertSee(__('The last four digits are the code of the door.'));
+            ->assertOk()->assertSee(__('The last four digits are the code of the door.'))->assertDontSee($reason());
+        // Not required: the field says why it is worth filling in.
         $this->get(route('bookings.create', ['property' => $fixed->slug, ...$dates]))
-            ->assertOk()->assertDontSee(__('The last four digits are the code of the door.'));
+            ->assertOk()->assertDontSee(__('The last four digits are the code of the door.'))->assertSee($reason());
 
         $guest = ['name' => 'Jan', 'email' => 'jan@example.com', 'terms' => '1', ...$dates];
         $this->post(route('bookings.store', $phone->slug), $guest)->assertSessionHasErrors('phone');
         $this->post(route('bookings.store', $phone->slug), [...$guest, 'phone' => '12'])->assertSessionHasErrors('phone');
         $this->post(route('bookings.store', $fixed->slug), $guest)->assertSessionDoesntHaveErrors('phone');
+    }
+
+    public function test_the_door_code_keeps_the_phone_number_asked_even_when_the_form_hides_it(): void
+    {
+        $this->withoutVite();
+        Form::fixed(Form::BOOKING)->update(['fixed_fields' => ['phone' => Form::HIDDEN]]);
+        $phone = $this->accommodation(['access_code_kind' => 'phone']);
+        $fixed = $this->accommodation(['access_code_kind' => 'fixed', 'access_code' => '4711']);
+        $dates = ['arrival' => today()->addDays(30)->toDateString(), 'departure' => today()->addDays(33)->toDateString(), 'guests' => 2];
+
+        $this->get(route('bookings.create', ['property' => $phone->slug, ...$dates]))->assertOk()->assertSee('name="phone"', false);
+        $this->get(route('bookings.create', ['property' => $fixed->slug, ...$dates]))->assertOk()->assertDontSee('name="phone"', false);
+
+        $guest = ['name' => 'Jan', 'email' => 'jan@example.com', 'terms' => '1', ...$dates];
+        $this->post(route('bookings.store', $phone->slug), $guest)->assertSessionHasErrors('phone');
     }
 
     public function test_code_and_fields_are_saved_from_the_admin(): void

@@ -63,6 +63,14 @@
 </x-mail::button>
 @endif
 
+@if ($phoneMissing ?? false)
+{{ __('Add your phone number so we can reach you about your arrival, for example via WhatsApp.') }}
+
+<x-mail::button :url="$bookingUrl.'#phone'">
+{{ __('Add your phone number') }}
+</x-mail::button>
+@endif
+
 {{ __('Questions or changes? Reply to this email and we will be happy to help.') }}
 
 @include('mail.partials.booking-link')

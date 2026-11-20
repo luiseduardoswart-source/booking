@@ -69,6 +69,32 @@ class Booking extends Model
         return ['arrival.after_or_equal' => __('The arrival date is in the past.')];
     }
 
+    /**
+     * Validation of the guest's phone number. Required when its last four
+     * digits are the door code, and when the guest adds it later: then it
+     * needs at least four digits. Always one line of text.
+     *
+     * @return array<int, string>
+     */
+    public static function phoneRule(bool $required): array
+    {
+        return $required
+            ? ['required', 'string', 'max:50', 'regex:/(\D*\d){4}/', 'not_regex:/\p{Cc}/u']
+            : ['nullable', 'string', 'max:50', 'not_regex:/\p{Cc}/u'];
+    }
+
+    /**
+     * A guest who booked without a phone number can add one later, until
+     * the stay is over. Only add, never change: its last digits can be the
+     * door code.
+     */
+    public function phoneCanBeAdded(): bool
+    {
+        return blank($this->guest_phone)
+            && ! in_array($this->status, [BookingStatus::Cancelled, BookingStatus::NoShow, BookingStatus::Completed], true)
+            && ! $this->departure_date->lt(today());
+    }
+
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);

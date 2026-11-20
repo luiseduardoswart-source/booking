@@ -108,6 +108,8 @@ class BookingMail extends Mailable implements ShouldQueue
                 'verificationUrl' => URL::signedRoute('identity.start', $this->booking),
                 // The booking and its documents online, until three months after departure.
                 'bookingUrl' => \App\Support\GuestAccess::bookingUrl($this->booking),
+                // Booked without a phone number: the confirmation asks for it.
+                'phoneMissing' => $this->booking->phoneCanBeAdded(),
             ],
         );
     }

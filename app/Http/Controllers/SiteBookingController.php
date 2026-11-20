@@ -72,9 +72,13 @@ class SiteBookingController extends Controller
                 ->withErrors(['availability' => $e->getMessage()]);
         }
 
+        $bookingForm = Form::fixed(Form::BOOKING);
+
         return view('site.bookings.create', [
             'property' => $property,
-            'bookingForm' => Form::fixed(Form::BOOKING),
+            'bookingForm' => $bookingForm,
+            // Per fixed field: required, optional or hidden on this accommodation.
+            'fieldModes' => $bookingForm->modesAt($property),
             'quote' => $quote,
             'coupon' => $coupon,
             'couponError' => $couponError,
@@ -130,6 +134,8 @@ class SiteBookingController extends Controller
 
         $bookingForm = Form::fixed(Form::BOOKING);
         [$ownRules, $ownNames] = FormAnswers::rules($bookingForm);
+        // The owner chooses per field: required, optional or hidden (Forms → Booking form).
+        $phone = $bookingForm->modeAt('phone', $property);
 
         $validated = $request->validate([
             'arrival' => Booking::arrivalRule(),
@@ -141,21 +147,21 @@ class SiteBookingController extends Controller
             'pets' => $property->petsRule(),
             'name' => ['required', 'string', 'max:255', 'regex:/^[^\p{Cc}]*$/u'],
             'email' => ['required', 'email', 'max:255'],
-            // The last four digits are the door code: then a phone number is needed.
-            'phone' => $property->phoneRequired()
-                ? ['required', 'string', 'max:50', 'regex:/(\D*\d){4}/']
-                : ['nullable', 'string', 'max:50'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
-            'city' => ['nullable', 'string', 'max:100'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            // Required as well where its last four digits are the door code.
+            'phone' => $phone === Form::HIDDEN ? ['exclude'] : Booking::phoneRule($phone === Form::REQUIRED),
+            'address' => $bookingForm->ruleAt('address', $property, ['string', 'max:255']),
+            'postal_code' => $bookingForm->ruleAt('postal_code', $property, ['string', 'max:20']),
+            'city' => $bookingForm->ruleAt('city', $property, ['string', 'max:100']),
+            'notes' => $bookingForm->ruleAt('notes', $property, ['string', 'max:2000']),
             'coupon' => ['nullable', 'string', 'max:50'],
             'terms' => ['accepted'],
             ...$ownRules,
         ], [
             'terms.accepted' => __('You must agree to the conditions in order to book.'),
-            'phone.required' => __('Your phone number is needed: its last four digits are the code of the door.'),
-            'phone.regex' => __('Your phone number is needed: its last four digits are the code of the door.'),
+            ...($property->phoneRequired() ? [
+                'phone.required' => __('Your phone number is needed: its last four digits are the code of the door.'),
+                'phone.regex' => __('Your phone number is needed: its last four digits are the code of the door.'),
+            ] : ['phone.regex' => __('Enter a valid phone number.')]),
             ...$property->guestsNotifications(),
             ...Booking::arrivalNotification(),
         ], $ownNames);

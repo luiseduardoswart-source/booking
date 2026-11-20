@@ -121,6 +121,35 @@ class GuestBookingController extends Controller
         ]);
     }
 
+    /**
+     * A guest who booked without a phone number adds it here (the
+     * confirmation email asks for it). Never changes an existing number:
+     * its last digits can be the door code.
+     */
+    public function addPhone(Request $request, Booking $booking): RedirectResponse
+    {
+        if (! GuestAccess::mayView($request, $booking)) {
+            return redirect()->route('guest.bookings')->with('guest_error', __('Log in to see this booking.'));
+        }
+
+        if (! $booking->phoneCanBeAdded()) {
+            return redirect()->route('guest.booking', $booking);
+        }
+
+        $phone = $request->validate(
+            ['phone' => Booking::phoneRule(required: true)],
+            ['phone.*' => __('Enter a valid phone number.')],
+        )['phone'];
+
+        // Only while still empty, also when two tabs send it at the same moment.
+        Booking::query()
+            ->whereKey($booking->id)
+            ->where(fn ($query) => $query->whereNull('guest_phone')->orWhere('guest_phone', ''))
+            ->update(['guest_phone' => $phone]);
+
+        return redirect()->route('guest.booking', $booking)->with('guest_status', __('Thank you, we have saved your phone number.'));
+    }
+
     public function document(Request $request, DocumentEngine $documents, Booking $booking, string $kind, ?Payment $payment = null): Response
     {
         abort_unless(GuestAccess::mayView($request, $booking), 403);

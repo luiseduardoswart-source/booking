@@ -178,6 +178,7 @@ Route::prefix('my-bookings')->name('guest.')->controller(\App\Http\Controllers\G
     Route::post('/login/{token}', 'login')->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:10,1')->name('login.use');
     Route::post('/logout', 'logout')->name('logout');
     Route::get('/{booking}', 'show')->whereNumber('booking')->name('booking');
+    Route::post('/{booking}/phone', 'addPhone')->whereNumber('booking')->middleware('throttle:10,1')->name('phone');
     Route::get('/{booking}/documents/{kind}/{payment?}', 'document')
         ->whereNumber('booking')->whereIn('kind', ['confirmation', 'invoice', 'receipt'])->whereNumber('payment')
         ->middleware('throttle:30,1')->name('document');

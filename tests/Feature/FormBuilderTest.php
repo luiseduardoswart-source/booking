@@ -286,7 +286,7 @@ class FormBuilderTest extends TestCase
 
     public function test_the_owner_can_hide_the_address_fields_of_the_booking_form(): void
     {
-        Form::fixed(Form::BOOKING)->update(['hidden_fields' => ['address', 'city', 'name']]);
+        Form::fixed(Form::BOOKING)->update(['fixed_fields' => ['address' => 'hidden', 'city' => 'hidden', 'name' => 'hidden', 'phone' => 'gone']]);
         $property = $this->property();
 
         $page = $this->get("/{$property->slug}/book?arrival=2026-03-02&departure=2026-03-05&guests=2")->assertOk();
@@ -296,7 +296,63 @@ class FormBuilderTest extends TestCase
             ->assertSee('name="postal_code"', false)
             // Name cannot be hidden.
             ->assertSee('name="name"', false);
-        $this->assertSame(['address', 'city'], Form::fixed(Form::BOOKING)->hidden_fields);
+        // Only fields that may be changed, and only a known choice.
+        $this->assertSame(['address' => 'hidden', 'city' => 'hidden'], Form::fixed(Form::BOOKING)->fixed_fields);
+    }
+
+    public function test_the_owner_chooses_per_fixed_field_required_optional_or_hidden(): void
+    {
+        Form::fixed(Form::BOOKING)->update(['fixed_fields' => ['phone' => 'required', 'address' => 'required', 'notes' => 'hidden']]);
+        $property = $this->property();
+
+        $this->get("/{$property->slug}/book?arrival=2026-03-02&departure=2026-03-05&guests=2")->assertOk()
+            ->assertSee(__('Phone').' *')
+            ->assertSee(__('Address').' *')
+            ->assertSee('name="city"', false)
+            ->assertDontSee(__('City').' *')
+            ->assertDontSee('name="notes"', false);
+
+        // Required: without it no booking.
+        $this->bookingPost($property)->assertSessionHasErrors(['phone', 'address']);
+        $this->bookingPost($property, ['phone' => 'none', 'address' => 'Dorpsstraat 1'])
+            ->assertSessionHasErrors(['phone' => __('Enter a valid phone number.')]);
+        $this->assertSame(0, Booking::count());
+
+        // Hidden: what is sent anyway is not stored.
+        $this->bookingPost($property, ['phone' => '06 1234 5678', 'address' => 'Dorpsstraat 1', 'notes' => 'Sent anyway'])
+            ->assertSessionHasNoErrors();
+        $booking = Booking::sole();
+        $this->assertSame('06 1234 5678', $booking->guest_phone);
+        $this->assertSame('Dorpsstraat 1', $booking->guest_address);
+        $this->assertNull($booking->notes);
+    }
+
+    public function test_the_owner_sets_the_fixed_fields_in_the_admin(): void
+    {
+        $form = Form::fixed(Form::BOOKING);
+
+        $page = Livewire::actingAs($this->owner())
+            ->test(EditForm::class, ['record' => $form->getKey()])
+            // Not set yet: the default.
+            ->assertSchemaStateSet(['fixed_fields.phone' => 'optional', 'fixed_fields.address' => 'optional'])
+            // Name, email address and the terms always stay required.
+            ->assertFormFieldDoesNotExist('fixed_fields.name')
+            ->assertFormFieldDoesNotExist('fixed_fields.email')
+            ->assertFormFieldDoesNotExist('fixed_fields.terms');
+
+        $page->fillForm(['fixed_fields.phone' => 'required', 'fixed_fields.notes' => 'hidden'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('required', $form->refresh()->mode('phone'));
+        $this->assertSame('hidden', $form->mode('notes'));
+        $this->assertSame('optional', $form->mode('city'));
+        $this->assertSame('required', $form->mode('name'));
+
+        // The contact form has no choices.
+        Livewire::actingAs($this->owner())
+            ->test(EditForm::class, ['record' => Form::fixed(Form::CONTACT)->getKey()])
+            ->assertFormFieldHidden('fixed_fields.phone');
     }
 
     public function test_the_owner_builds_a_form_in_the_admin(): void

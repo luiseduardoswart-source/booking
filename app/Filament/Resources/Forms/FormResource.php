@@ -18,13 +18,13 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
@@ -125,20 +125,18 @@ class FormResource extends Resource
                 )->hidden($isBooking)->columnSpanFull(),
 
                 Section::make(__('Fixed fields'))
-                    ->description(__('These fields are always on this form and cannot be removed. Add your own fields below.'))
+                    ->description(fn (?Form $record): string => $record?->system === Form::BOOKING
+                        ? __('These fields are always on this form and cannot be removed. Per field you choose whether the guest must fill it in, may fill it in, or does not see it.')
+                        : __('These fields are always on this form and cannot be removed. Add your own fields below.'))
                     ->visible($isSystem)
                     ->components([
-                        Text::make(fn (?Form $record): string => collect(Form::FIXED_FIELDS[$record?->system] ?? [])
-                            ->map(fn (array $fixed) => __($fixed[0]))
-                            ->implode(' · ')),
-                        CheckboxList::make('hidden_fields')
-                            ->label(__('Hide on the booking form'))
-                            ->options(fn (): array => collect(Form::FIXED_FIELDS[Form::BOOKING])
-                                ->filter(fn (array $fixed) => $fixed[1])
+                        // The fields that always stay required (the booking form) or all of them (the contact form).
+                        Text::make(fn (?Form $record): string => ($record?->system === Form::BOOKING ? __('Always required').': ' : '')
+                            .collect(Form::FIXED_FIELDS[$record?->system] ?? [])
+                                ->reject(fn (array $fixed) => $fixed[2])
                                 ->map(fn (array $fixed) => __($fixed[0]))
-                                ->all())
-                            ->columns(3)
-                            ->visible($isBooking),
+                                ->implode(' · ')),
+                        ...self::fixedFieldModes($isBooking),
                     ]),
 
                 Section::make(__('Own fields'))
@@ -147,6 +145,39 @@ class FormResource extends Resource
                         : __('Drag to change the order. Label and options per language; empty = the English text.'))
                     ->components([self::fieldsBuilder()]),
             ]);
+    }
+
+    /**
+     * Per fixed field of the booking form that the owner may change:
+     * required, optional or hidden. Saved in fixed_fields (key => mode).
+     *
+     * @return array<int, ToggleButtons>
+     */
+    private static function fixedFieldModes(Closure $isBooking): array
+    {
+        return collect(Form::FIXED_FIELDS[Form::BOOKING])
+            ->filter(fn (array $fixed) => $fixed[2])
+            ->map(fn (array $fixed, string $key) => ToggleButtons::make("fixed_fields.{$key}")
+                ->label(__($fixed[0]))
+                ->options([
+                    Form::REQUIRED => __('Required'),
+                    Form::OPTIONAL => __('Optional'),
+                    Form::HIDDEN => __('Hidden'),
+                ])
+                ->icons([
+                    Form::REQUIRED => Heroicon::OutlinedCheckCircle,
+                    Form::OPTIONAL => Heroicon::OutlinedEye,
+                    Form::HIDDEN => Heroicon::OutlinedEyeSlash,
+                ])
+                ->inline()
+                // Not set yet: the default of the field.
+                ->afterStateHydrated(fn (ToggleButtons $component, $state) => $component->state($state ?? $fixed[1]))
+                ->helperText($key === 'phone'
+                    ? __('Always required on an accommodation where the last four digits of the phone number are the door code.')
+                    : null)
+                ->visible($isBooking))
+            ->values()
+            ->all();
     }
 
     /** The list of own fields: type, label and options per language, required, width. */

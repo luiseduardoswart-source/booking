@@ -42,45 +42,37 @@
                         <input type="email" name="email" required value="{{ old('email') }}"
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
                     </label>
+                    {{-- Per field the owner chooses: required, optional or hidden (Forms → Booking form). --}}
+                    @if ($fieldModes['phone'] !== \App\Models\Form::HIDDEN)
                     <label class="block">
-                        <span class="text-sm font-medium text-stone-700">{{ __('Phone') }}@if ($property->phoneRequired()) *@endif</span>
-                        <input type="tel" name="phone" value="{{ old('phone') }}" @required($property->phoneRequired())
+                        <span class="text-sm font-medium text-stone-700">{{ __('Phone') }}@if ($fieldModes['phone'] === \App\Models\Form::REQUIRED) *@endif</span>
+                        <input type="tel" name="phone" value="{{ old('phone') }}" @required($fieldModes['phone'] === \App\Models\Form::REQUIRED)
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
-                        @if ($property->phoneRequired())
-                            <span class="mt-1 block text-xs text-stone-500">{{ __('The last four digits are the code of the door.') }}</span>
-                        @endif
-                    </label>
-                    @if ($bookingForm->shows('address'))
-                    <label class="block sm:col-span-2">
-                        <span class="text-sm font-medium text-stone-700">{{ __('Address') }}</span>
-                        <input type="text" name="address" value="{{ old('address') }}"
-                               class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
+                        <span class="mt-1 block text-xs text-stone-500">{{ $property->phoneRequired()
+                            ? __('The last four digits are the code of the door.')
+                            : __('So we can reach you about your arrival, for example via WhatsApp.') }}</span>
                     </label>
                     @endif
-                    @if ($bookingForm->shows('postal_code'))
-                    <label class="block">
-                        <span class="text-sm font-medium text-stone-700">{{ __('Postal code') }}</span>
-                        <input type="text" name="postal_code" value="{{ old('postal_code') }}"
-                               class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
-                    </label>
-                    @endif
-                    @if ($bookingForm->shows('city'))
-                    <label class="block">
-                        <span class="text-sm font-medium text-stone-700">{{ __('City') }}</span>
-                        <input type="text" name="city" value="{{ old('city') }}"
-                               class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
-                    </label>
-                    @endif
+                    @foreach (['address' => 'sm:col-span-2', 'postal_code' => '', 'city' => ''] as $field => $width)
+                        @continue($fieldModes[$field] === \App\Models\Form::HIDDEN)
+                        <label class="block {{ $width }}">
+                            <span class="text-sm font-medium text-stone-700">{{ __(\App\Models\Form::FIXED_FIELDS[\App\Models\Form::BOOKING][$field][0]) }}@if ($fieldModes[$field] === \App\Models\Form::REQUIRED) *@endif</span>
+                            <input type="text" name="{{ $field }}" value="{{ old($field) }}" @required($fieldModes[$field] === \App\Models\Form::REQUIRED)
+                                   class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
+                        </label>
+                    @endforeach
                 </div>
 
                 {{-- Own fields from the form builder (Forms → Booking form) --}}
                 @include('site.forms.fields', ['form' => $bookingForm])
 
+                @if ($fieldModes['notes'] !== \App\Models\Form::HIDDEN)
                 <label class="block">
-                    <span class="text-sm font-medium text-stone-700">{{ __('Remarks') }}</span>
-                    <textarea name="notes" rows="3"
+                    <span class="text-sm font-medium text-stone-700">{{ __('Remarks') }}@if ($fieldModes['notes'] === \App\Models\Form::REQUIRED) *@endif</span>
+                    <textarea name="notes" rows="3" @required($fieldModes['notes'] === \App\Models\Form::REQUIRED)
                               class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">{{ old('notes') }}</textarea>
                 </label>
+                @endif
 
                 {{-- Signing, only if the rental terms apply to this stay --}}
                 @if ($property->rentalTermsApply($quote->nights))

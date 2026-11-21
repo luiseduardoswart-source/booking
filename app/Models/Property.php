@@ -36,7 +36,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'rental_terms_translations', 'house_rules_translations', 'cancellation_policy_text_translations',
     'rental_terms_min_nights',
     'min_stay_nights', 'booking_window_months',
-    'id_required', 'id_moment', 'id_deadline_days', 'id_reminder_days', 'id_overdue_action', 'id_cancel_refund', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
+    'id_required', 'id_moment', 'id_deadline_days', 'id_reminder_days', 'id_overdue_action', 'id_cancel_refund', 'signature_moment', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
     'smoking', 'events_allowed', 'commercial_photography_allowed', 'quiet_hours_from', 'quiet_hours_until', 'lock_doors_on_departure',
     'down_payment_percentage', 'vat_percentage', 'pricing_service',
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
@@ -128,6 +128,11 @@ class Property extends Model implements HasMedia
 
     public const ID_REFUND_MANUAL = 'manual';
 
+    /** When the guest signs when booking: only when the rental terms apply, or at every booking. */
+    public const SIGNATURE_RENTAL_TERMS = 'rental_terms';
+
+    public const SIGNATURE_ALWAYS = 'always';
+
     /** Check-in: by themselves (key box, code or smart lock) or welcomed in person by a host. */
     public const CHECK_IN_SELF = 'self';
 
@@ -176,6 +181,7 @@ class Property extends Model implements HasMedia
         'id_reminder_days' => 3,
         'id_overdue_action' => self::ID_OVERDUE_NOTIFY,
         'id_cancel_refund' => self::ID_REFUND_MANUAL,
+        'signature_moment' => self::SIGNATURE_RENTAL_TERMS,
         'prices_in_calendar' => false,
         'discounts_add_up' => false,
         'pets_allowed' => false,
@@ -899,6 +905,18 @@ class Property extends Model implements HasMedia
     {
         return filled($this->effectiveLocalized('rental_terms'))
             && $nights >= (int) ($this->effective('rental_terms_min_nights') ?? 0);
+    }
+
+    /**
+     * Must the guest sign the conditions when booking this stay? When the
+     * rental terms apply, and at every booking if the owner chose so (own
+     * choice, otherwise the default). The guest signs the full text of
+     * bookingTermsText(), whatever it holds.
+     */
+    public function signatureNeeded(int $nights): bool
+    {
+        return $this->rentalTermsApply($nights)
+            || $this->effective('signature_moment') === self::SIGNATURE_ALWAYS;
     }
 
     /**

@@ -12,6 +12,10 @@
 <div data-signature
      data-name-field="{{ $nameField }}"
      data-notification="{{ __('Sign the rental terms below.') }}"
+     data-too-small="{{ __('Your signature is too small. Please sign again using more of the box.') }}"
+     {{-- The same minimum size as the server checks (App\Support\Signature). --}}
+     data-min-width="{{ \App\Support\Signature::MIN_WIDTH_SHARE }}"
+     data-min-height="{{ \App\Support\Signature::MIN_HEIGHT_SHARE }}"
      class="rounded-xl border border-stone-200 bg-stone-50 p-4">
     <div class="flex items-center justify-between gap-3">
         <span class="text-sm font-medium text-stone-700">{{ __('Sign the rental terms') }} *</span>
@@ -29,7 +33,8 @@
         {{ __('Signed by') }}: <strong data-signer></strong>
     </p>
 
-    <input type="hidden" name="signature" value="{{ old('signature') }}" data-output>
+    {{-- A refused signature is not put back: the guest draws a new one. --}}
+    <input type="hidden" name="signature" value="{{ $errors->has('signature') ? '' : old('signature') }}" data-output>
     <p data-error class="mt-1 text-sm text-red-600 {{ $errors->has('signature') ? '' : 'hidden' }}">{{ $errors->first('signature') }}</p>
 </div>
 

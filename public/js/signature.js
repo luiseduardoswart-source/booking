@@ -17,6 +17,10 @@
 
         let drawing = false;
         let drawn = false;
+        // The area drawn on (CSS pixels): a dot or a dash is not a signature.
+        let bounds = null;
+        const minWidth = parseFloat(block.dataset.minWidth) || 0;
+        const minHeight = parseFloat(block.dataset.minHeight) || 0;
 
         // The box at screen resolution, so the line does not get blurry on a
         // sharp screen. A new size clears the drawing, so only as long as
@@ -38,18 +42,34 @@
             return { x: e.clientX - rect.left, y: e.clientY - rect.top };
         }
 
+        function extend(p) {
+            bounds = bounds
+                ? { left: Math.min(bounds.left, p.x), right: Math.max(bounds.right, p.x), top: Math.min(bounds.top, p.y), bottom: Math.max(bounds.bottom, p.y) }
+                : { left: p.x, right: p.x, top: p.y, bottom: p.y };
+        }
+
+        // The same minimum size as the server (App\Support\Signature), as a
+        // share of the box, the line itself included.
+        function bigEnough() {
+            const rect = box.getBoundingClientRect();
+            return bounds !== null
+                && bounds.right - bounds.left + ctx.lineWidth >= rect.width * minWidth
+                && bounds.bottom - bounds.top + ctx.lineWidth >= rect.height * minHeight;
+        }
+
         function clear() {
             ctx.save();
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, box.width, box.height);
             ctx.restore();
             drawn = false;
+            bounds = null;
             output.value = '';
         }
 
-        function showError(tonen) {
-            error.textContent = tonen ? block.dataset.notification : '';
-            error.classList.toggle('hidden', !tonen);
+        function showError(message) {
+            error.textContent = message || '';
+            error.classList.toggle('hidden', !message);
         }
 
         box.addEventListener('pointerdown', (e) => {
@@ -57,6 +77,7 @@
             drawing = true;
             box.setPointerCapture(e.pointerId);
             const p = point(e);
+            extend(p);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
         });
@@ -64,6 +85,7 @@
         box.addEventListener('pointermove', (e) => {
             if (!drawing) return;
             const p = point(e);
+            extend(p);
             ctx.lineTo(p.x, p.y);
             ctx.stroke();
             drawn = true;
@@ -72,9 +94,13 @@
         function stop() {
             if (!drawing) return;
             drawing = false;
-            if (drawn) {
+            // Only a drawing of a real size goes along; a small start (the dot
+            // on an i) can still grow into one, so no message while drawing.
+            if (drawn && bigEnough()) {
                 output.value = box.toDataURL('image/png');
                 showError(false);
+            } else {
+                output.value = '';
             }
         }
 
@@ -103,7 +129,7 @@
             form.addEventListener('submit', (e) => {
                 if (output.value === '') {
                     e.preventDefault();
-                    showError(true);
+                    showError(drawn ? block.dataset.tooSmall : block.dataset.notification);
                     block.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             });
@@ -120,6 +146,8 @@
                 const rect = box.getBoundingClientRect();
                 ctx.drawImage(image, 0, 0, rect.width, rect.height);
                 drawn = true;
+                // Accepted by the server already: counts as big enough.
+                bounds = { left: 0, right: rect.width, top: 0, bottom: rect.height };
             };
             image.src = output.value;
         }

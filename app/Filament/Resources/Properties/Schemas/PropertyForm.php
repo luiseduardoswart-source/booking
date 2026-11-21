@@ -1290,6 +1290,12 @@ class PropertyForm
                                         ])
                                             ->visible(fn (Get $get, ?Property $record): bool => self::idCheckAfterPayment($get, $record)
                                                 && self::formOrDefault($get, $record, 'id_overdue_action') === Property::ID_OVERDUE_CANCEL),
+                                        self::inheritChoice('signature_moment', __('Signature when booking'), [
+                                            Property::SIGNATURE_RENTAL_TERMS => __('Only when the rental conditions apply'),
+                                            Property::SIGNATURE_ALWAYS => __('At every booking'),
+                                        ])
+                                            ->helperText(__('The guest signs the conditions with mouse or finger: the house rules, the cancellation policy and, when they apply, the rental conditions. The signed text is stored with the booking as proof.'))
+                                            ->columnSpanFull(),
                                     ]),
 
                                 // What guests may and may not do: on the accommodation page and in the
@@ -1440,7 +1446,7 @@ class PropertyForm
                                             ->hint(fn (?Property $record) => $record?->is_master
                                                 ? __('0 or empty = for every booking')
                                                 : __('Empty = follow the default'))
-                                            ->helperText(__('For a shorter stay, only the house rules and cancellation policy apply, and the guest does not need to sign.')),
+                                            ->helperText(__('For a shorter stay, only the house rules and cancellation policy apply. The guest then signs only if you ask for a signature at every booking (under ID verification).')),
                                         TranslationFields::languageSection(
                                             __('Text'),
                                             __('Choose a language. Empty = the English text.'),

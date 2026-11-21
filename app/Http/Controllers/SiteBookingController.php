@@ -176,9 +176,10 @@ class SiteBookingController extends Controller
         $departure = CarbonImmutable::parse($validated['departure']);
         $nights = (int) $arrival->diffInDays($departure);
 
-        // If the rental terms apply to this stay, the guest must sign them.
-        // Check before creating: no booking without it.
-        $signature = $property->rentalTermsApply($nights)
+        // When the rental terms apply, or at every booking if the owner chose
+        // so, the guest signs the conditions. Check before creating: no
+        // booking without it.
+        $signature = $property->signatureNeeded($nights)
             ? Signature::offRequest($request, $validated['name'])
             : null;
 

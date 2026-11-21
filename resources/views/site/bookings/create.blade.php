@@ -74,8 +74,8 @@
                 </label>
                 @endif
 
-                {{-- Signing, only if the rental terms apply to this stay --}}
-                @if ($property->rentalTermsApply($quote->nights))
+                {{-- Signing: when the rental terms apply, or at every booking if the owner chose so --}}
+                @if ($property->signatureNeeded($quote->nights))
                     <x-signature-field name-field="name" />
                 @endif
 

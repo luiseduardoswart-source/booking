@@ -30,6 +30,15 @@ final class Signature
     /** Minimum number of drawn pixels (in the sample): not an empty box. */
     private const MIN_INK = 40;
 
+    /**
+     * Minimum size of the drawing as a share of the box, so not a dot or a
+     * dash: as a share, the same on every screen (a phone has far more
+     * pixels per millimetre). The drawing box checks the same (signature.js).
+     */
+    public const MIN_WIDTH_SHARE = 0.25;
+
+    public const MIN_HEIGHT_SHARE = 0.15;
+
     private function __construct(
         private readonly string $png,
         public readonly string $name,
@@ -78,8 +87,17 @@ final class Signature
             imagepalettetotruecolor($image);
         }
 
-        if (self::ink($image) < self::MIN_INK) {
+        [$ink, $width, $height] = self::measure($image);
+
+        // Nothing drawn at all, or something too small to be a signature (a dot, a dash).
+        if ($ink === 0) {
             throw self::error(__('Sign the rental terms below.'));
+        }
+
+        if ($ink < self::MIN_INK
+            || $width < self::MIN_WIDTH_SHARE * imagesx($image)
+            || $height < self::MIN_HEIGHT_SHARE * imagesy($image)) {
+            throw self::error(__('Your signature is too small. Please sign again using more of the box.'));
         }
 
         // Re-encode: only the pixels are kept, nothing else from the file.
@@ -119,13 +137,18 @@ final class Signature
     }
 
     /**
-     * Number of pixels that were drawn on: not transparent and not nearly white, so
-     * that a fully white picture also counts as empty. Sampled every other pixel, since
-     * more is not needed to recognise an empty box.
+     * The pixels that were drawn on (not transparent and not nearly white, so
+     * that a fully white picture also counts as empty), and the width and
+     * height of the drawing in pixels. Sampled every other pixel, since more
+     * is not needed for either.
+     *
+     * @return array{0: int, 1: int, 2: int} number of drawn pixels, width, height
      */
-    private static function ink(GdImage $image): int
+    private static function measure(GdImage $image): array
     {
         $count = 0;
+        $left = $top = PHP_INT_MAX;
+        $right = $bottom = -1;
 
         for ($x = 0, $width = imagesx($image); $x < $width; $x += 2) {
             for ($y = 0, $height = imagesy($image); $y < $height; $y += 2) {
@@ -135,11 +158,15 @@ final class Signature
 
                 if ($transparent < 64 && $brightness < 200) {
                     $count++;
+                    $left = min($left, $x);
+                    $right = max($right, $x);
+                    $top = min($top, $y);
+                    $bottom = max($bottom, $y);
                 }
             }
         }
 
-        return $count;
+        return $count === 0 ? [0, 0, 0] : [$count, $right - $left + 1, $bottom - $top + 1];
     }
 
     private static function error(string $notification): ValidationException

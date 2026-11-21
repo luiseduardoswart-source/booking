@@ -75,6 +75,36 @@ class PetsAndAmenitiesPickerTest extends TestCase
         $this->withSession(['locale' => 'nl'])->get("/{$welcome->slug}")->assertOk()->assertSee('data-pets="1"', false);
     }
 
+    public function test_the_maximum_number_of_pets_is_only_asked_when_pets_are_allowed(): void
+    {
+        Property::master()->update(['pets_allowed' => false]);
+
+        // Defaults screen: "No" hides the maximum, "Yes" shows it right away.
+        Livewire::actingAs($owner = $this->owner())
+            ->test(EditDefaults::class)
+            ->assertFormFieldHidden('max_pets')
+            ->fillForm(['pets_allowed' => '1'])
+            ->assertFormFieldVisible('max_pets');
+
+        // An accommodation that follows the default (No): hidden too.
+        Livewire::actingAs($owner)
+            ->test(EditProperty::class, ['record' => $this->accommodation()->getKey()])
+            ->assertFormFieldHidden('max_pets')
+            ->fillForm(['pets_allowed' => '1'])
+            ->assertFormFieldVisible('max_pets');
+    }
+
+    public function test_an_accommodation_that_follows_a_default_allowing_pets_asks_the_maximum(): void
+    {
+        Property::master()->update(['pets_allowed' => true]);
+
+        Livewire::actingAs($this->owner())
+            ->test(EditProperty::class, ['record' => $this->accommodation()->getKey()])
+            ->assertFormFieldVisible('max_pets')
+            ->fillForm(['pets_allowed' => '0'])
+            ->assertFormFieldHidden('max_pets');
+    }
+
     public function test_book_with_pets_is_rejected_as_they_not_may(): void
     {
         Setting::set('site', 'single_accommodation_direct', '0');

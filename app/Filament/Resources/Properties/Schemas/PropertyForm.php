@@ -1192,7 +1192,10 @@ class PropertyForm
                                     ]),
 
                                 Section::make(__('Booking rules'))
-                                    ->description(__('Rules without a period always apply; rules with a period only for arrivals within that period.'))
+                                    // Own rules replace those of the default (AvailabilityEngine), they do not add to them.
+                                    ->description(fn (?Property $record): string => $record?->is_master
+                                        ? __('Rules without a period always apply; rules with a period only for arrivals within that period. They apply to every accommodation without booking rules of its own.')
+                                        : __('Rules without a period always apply; rules with a period only for arrivals within that period. As soon as this accommodation has a rule of its own, the rules of the default settings no longer apply to it.'))
                                     ->components([
                                         Repeater::make('bookingRules')
                                             ->relationship()
@@ -1207,10 +1210,14 @@ class PropertyForm
                                                     ['name' => fn (string $path) => TextInput::make($path)->hiddenLabel()->placeholder(__('E.g. High season'))],
                                                     ['name'],
                                                 )->contained(false)->columnSpanFull(),
+                                                // A period has both dates or none: with one date the rule
+                                                // would apply always, also before that date.
                                                 DatePicker::make('start_date')
-                                                    ->label(__('Valid from')),
+                                                    ->label(__('Valid from'))
+                                                    ->requiredWith('end_date'),
                                                 DatePicker::make('end_date')
                                                     ->label(__('Valid until'))
+                                                    ->requiredWith('start_date')
                                                     ->afterOrEqual('start_date'),
                                                 TextInput::make('min_nights')
                                                     ->label(__('Min. nights'))
@@ -1303,10 +1310,13 @@ class PropertyForm
                                                     ->default(2)
                                                     // What the house sleeps: its own number, so not on the defaults screen.
                                                     ->visible(fn (?Property $record) => ! $record?->is_master),
-                                                self::inheritToggle('pets_allowed', __('Pets allowed')),
+                                                self::inheritToggle('pets_allowed', __('Pets allowed'))
+                                                    ->live(),
                                                 self::defaultNumber('max_pets', __('Maximum number of pets'))
                                                     ->maxValue(20)
-                                                    ->visible(fn (Get $get, ?Property $record): bool => $get('pets_allowed') !== '0'),
+                                                    // Only when pets are allowed: chosen here, or in the default when this
+                                                    // follows it. The state can be 0 or '0', so compared as a number.
+                                                    ->visible(fn (Get $get, ?Property $record): bool => (bool) (int) self::formOrDefault($get, $record, 'pets_allowed')),
                                                 self::defaultNumber('max_babies', __('Maximum number of infants'))
                                                     ->maxValue(20),
                                             ]),

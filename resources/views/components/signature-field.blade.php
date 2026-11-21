@@ -11,14 +11,15 @@
 
 <div data-signature
      data-name-field="{{ $nameField }}"
-     data-notification="{{ __('Sign the rental terms below.') }}"
+     data-notification="{{ __('Sign the conditions below.') }}"
      data-too-small="{{ __('Your signature is too small. Please sign again using more of the box.') }}"
      {{-- The same minimum size as the server checks (App\Support\Signature). --}}
      data-min-width="{{ \App\Support\Signature::MIN_WIDTH_SHARE }}"
      data-min-height="{{ \App\Support\Signature::MIN_HEIGHT_SHARE }}"
      class="rounded-xl border border-stone-200 bg-stone-50 p-4">
     <div class="flex items-center justify-between gap-3">
-        <span class="text-sm font-medium text-stone-700">{{ __('Sign the rental terms') }} *</span>
+        {{-- The conditions: house rules, cancellation policy and, when they apply, the rental terms. --}}
+        <span class="text-sm font-medium text-stone-700">{{ __('Sign the conditions') }} *</span>
         <button type="button" data-clear class="text-sm text-stone-600 underline hover:text-rose-600">{{ __('Clear') }}</button>
     </div>
 

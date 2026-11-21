@@ -48,12 +48,13 @@
                 : { left: p.x, right: p.x, top: p.y, bottom: p.y };
         }
 
-        // The same minimum size as the server (App\Support\Signature), as a
-        // share of the box, the line itself included.
+        // The same minimum size as the server (App\Support\Signature): width
+        // and height both as a share of the box height, which is the same on
+        // every screen, the line itself included.
         function bigEnough() {
             const rect = box.getBoundingClientRect();
             return bounds !== null
-                && bounds.right - bounds.left + ctx.lineWidth >= rect.width * minWidth
+                && bounds.right - bounds.left + ctx.lineWidth >= rect.height * minWidth
                 && bounds.bottom - bounds.top + ctx.lineWidth >= rect.height * minHeight;
         }
 

@@ -185,6 +185,34 @@ class SignatureTest extends TestCase
         $this->assertSame(1, Booking::count());
     }
 
+    public function test_a_narrow_but_tall_signature_is_accepted_on_any_screen(): void
+    {
+        $this->accommodation();
+
+        // A compact signature like a "P" with a stroke through it: 75 CSS
+        // pixels wide and 110 high. On a wide box that is a small share of
+        // the width, but no dot or dash.
+        $signature = [[230, 40, 225, 150], [230, 40, 290, 40], [290, 40, 290, 90], [290, 90, 230, 90], [215, 80, 265, 120]];
+
+        foreach ([[600, 1], [600, 2], [350, 3]] as [$width, $dpr]) {
+            $this->book(self::LANG, $this->drawing($width, $dpr, $signature))->assertSessionDoesntHaveErrors('signature');
+        }
+
+        $this->assertSame(1, Booking::count()); // the later ones find the dates taken
+    }
+
+    public function test_without_rental_terms_the_guest_is_asked_to_sign_the_conditions(): void
+    {
+        $this->accommodation();
+        Property::master()->update(['signature_moment' => Property::SIGNATURE_ALWAYS]);
+
+        $page = $this->get('/strandhuis/book?arrival=2026-12-01&departure='.self::SHORT.'&guests=2')->assertOk();
+
+        // What is signed here are the house rules and the cancellation policy.
+        $page->assertSee(__('Sign the conditions'))->assertDontSee(__('Sign the rental terms'));
+        $this->book(self::SHORT, null)->assertSessionHasErrors(['signature' => __('Sign the conditions below.')]);
+    }
+
     public function test_a_refused_signature_is_not_put_back_in_the_form(): void
     {
         $this->accommodation();

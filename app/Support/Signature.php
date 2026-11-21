@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * A digital signature under the rental terms: drawn with mouse or
+ * A digital signature under the conditions: drawn with mouse or
  * finger in the booking form, with the guest's name next to it.
  *
  * Legally an ordinary electronic signature (eIDAS). The evidentiary value
@@ -31,9 +31,12 @@ final class Signature
     private const MIN_INK = 40;
 
     /**
-     * Minimum size of the drawing as a share of the box, so not a dot or a
-     * dash: as a share, the same on every screen (a phone has far more
-     * pixels per millimetre). The drawing box checks the same (signature.js).
+     * Minimum width and height of the drawing, so not a dot or a dash, both
+     * as a share of the box HEIGHT. The box is equally high on every screen
+     * (160 CSS pixels) but its width follows the screen, so a share of the
+     * width would ask a bigger signature on a wide screen. As a share, it is
+     * independent of how many pixels per millimetre a screen has. The
+     * drawing box checks the same (signature.js).
      */
     public const MIN_WIDTH_SHARE = 0.25;
 
@@ -58,7 +61,7 @@ final class Signature
         $prefix = 'data:image/png;base64,';
 
         if ($data === '') {
-            throw self::error(__('Sign the rental terms below.'));
+            throw self::error(__('Sign the conditions below.'));
         }
 
         if (strlen($data) > self::MAX_CHARACTERS || ! str_starts_with($data, $prefix)) {
@@ -91,11 +94,11 @@ final class Signature
 
         // Nothing drawn at all, or something too small to be a signature (a dot, a dash).
         if ($ink === 0) {
-            throw self::error(__('Sign the rental terms below.'));
+            throw self::error(__('Sign the conditions below.'));
         }
 
         if ($ink < self::MIN_INK
-            || $width < self::MIN_WIDTH_SHARE * imagesx($image)
+            || $width < self::MIN_WIDTH_SHARE * imagesy($image)
             || $height < self::MIN_HEIGHT_SHARE * imagesy($image)) {
             throw self::error(__('Your signature is too small. Please sign again using more of the box.'));
         }

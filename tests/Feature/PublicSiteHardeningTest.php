@@ -79,6 +79,43 @@ class PublicSiteHardeningTest extends TestCase
         $this->get("{$page}&coupon=summer")->assertOk()->assertViewHas('coupon', $applied);
     }
 
+    /**
+     * The booking itself looks a code up as well, and the checkout then shows
+     * whether it gave a discount: the same five tries, and no booking for a
+     * wrong code.
+     */
+    public function test_wrong_coupon_codes_sent_with_the_booking_count_too(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->app->instance(\App\Payments\PaymentProvider::class, new \App\Payments\FakeProvider);
+        $property = $this->accommodation();
+        Coupon::create(['code' => 'SUMMER', 'type' => 'percent', 'value' => 10]);
+
+        // A different stay each time, as someone guessing would do.
+        $book = fn (int $week, string $coupon) => $this->post("/{$property->slug}/book", [
+            'arrival' => today()->addDays(7 * $week)->toDateString(),
+            'departure' => today()->addDays(7 * $week + 2)->toDateString(),
+            'guests' => 2, 'name' => 'Jan Jansen', 'email' => 'jan@example.com', 'terms' => '1', 'coupon' => $coupon,
+        ]);
+
+        for ($i = 1; $i <= 5; $i++) {
+            $book($i, "TRY{$i}")->assertSessionHasErrors(['coupon' => __('This coupon code does not exist.')]);
+        }
+
+        $this->assertSame(0, \App\Models\Booking::count());
+
+        // The sixth is not looked up any more, on the page and when booking.
+        $book(6, 'summer')->assertSessionHasErrors(['coupon' => __('Too many wrong coupon codes. Try again in :minutes minutes.', ['minutes' => 10])]);
+        $this->assertSame(0, \App\Models\Booking::count());
+
+        $this->travel(11)->minutes();
+        $book(6, 'summer')->assertSessionHasNoErrors();
+        $this->assertSame('SUMMER', \App\Models\Booking::sole()->coupon_code);
+
+        // A good code does not use up a try.
+        $this->assertSame(0, RateLimiter::attempts('wrong-coupons:127.0.0.1'));
+    }
+
     public function test_photo_tracking_is_limited(): void
     {
         for ($i = 0; $i < 60; $i++) {

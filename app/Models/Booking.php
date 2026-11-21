@@ -7,6 +7,7 @@ use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Enums\PaymentType;
+use App\Rules\StayLength;
 use App\Support\Signature;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,23 +51,52 @@ class Booking extends Model
      */
     public const HOLD_MINUTES = 60;
 
+    /** The longest stay a guest or the API can book, and how far ahead. */
+    public const MAX_STAY_NIGHTS = 365;
+
+    public const MAX_YEARS_AHEAD = 3;
+
     /**
      * Validation of an arrival date entered by a guest or the API: today
      * or later. The calendar does not let you pick an earlier date, but with
      * the developer tools someone can send one anyway. One rule for all
      * places where a booking is made or a price is requested.
      *
+     * Only a plain calendar date (2027-03-01): a date with a time or a time
+     * zone behind it is a moment, and nights are not counted in moments
+     * (see App\Support\CalendarDay).
+     *
      * @return array<int, string>
      */
     public static function arrivalRule(): array
     {
-        return ['required', 'date', 'after_or_equal:today'];
+        return ['required', 'date_format:Y-m-d', 'after_or_equal:today'];
+    }
+
+    /**
+     * The departure date that goes with it: a plain calendar date after the
+     * arrival, at most MAX_STAY_NIGHTS nights and MAX_YEARS_AHEAD years ahead.
+     * The price request leaves the longest stay out: it answers that itself,
+     * as "not available" with the reason, which the booking widget shows.
+     *
+     * @return array<int, mixed>
+     */
+    public static function departureRule(bool $longestStay = true): array
+    {
+        return [
+            'required', 'date_format:Y-m-d', 'after:arrival',
+            'before_or_equal:'.today()->addYears(self::MAX_YEARS_AHEAD)->toDateString(),
+            ...($longestStay ? [new StayLength] : []),
+        ];
     }
 
     /** @return array<string, string> */
     public static function arrivalNotification(): array
     {
-        return ['arrival.after_or_equal' => __('The arrival date is in the past.')];
+        return [
+            'arrival.after_or_equal' => __('The arrival date is in the past.'),
+            'departure.before_or_equal' => __('Booking that far ahead is not yet possible (maximum :months months).', ['months' => 12 * self::MAX_YEARS_AHEAD]),
+        ];
     }
 
     /**
@@ -165,6 +195,22 @@ class Booking extends Model
             'refunded' => $refunded,
             'outstanding' => max(0, $this->total_cents - ($paid - $refunded)),
         ];
+    }
+
+    /**
+     * Has the guest paid part of the stay on the site while the rest is still
+     * open? Also when a payment was given back or reversed by the bank. Then
+     * the check-in instructions and the door code wait: a down payment
+     * confirms the booking, it does not open the door.
+     *
+     * A booking the owner confirmed by hand, with nothing paid on the site
+     * (cash, bank transfer), is the owner's own call and does not count.
+     */
+    public function owesBalance(): bool
+    {
+        $overview = $this->paymentOverview();
+
+        return $overview['paid'] > 0 && $overview['outstanding'] > 0;
     }
 
     /** The deposit the guest has paid and not got back yet (deposit payment or along with the stay). */

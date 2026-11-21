@@ -51,12 +51,14 @@ class SendScheduledMails extends Command
             ->withoutPaidDeposit());
 
         // 2. Check-in instructions: X days before arrival. Held back while a
-        //    required ID check is missing; it goes out on the first run after it.
+        //    required ID check is missing, and while the guest has paid only
+        //    part of the stay (a down payment does not open the door); it
+        //    goes out on the first run after that.
         $sent += $this->send($notifications, MailType::Checkin, 'checkin_days_before_arrival', fn (int $days) => Booking::query()
             ->with('property')
             ->whereIn('status', $active)
             ->whereDate('arrival_date', '<=', today()->addDays($days))
-            ->whereDate('arrival_date', '>=', today()), holdBack: fn (Booking $booking) => $booking->identityMissing());
+            ->whereDate('arrival_date', '>=', today()), holdBack: fn (Booking $booking) => $booking->identityMissing() || $booking->owesBalance());
 
         // 3. Check-out information: exactly X days before departure.
         $sent += $this->send($notifications, MailType::Checkout, 'checkout_days_before_departure', fn (int $days) => Booking::query()

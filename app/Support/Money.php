@@ -16,6 +16,9 @@ class Money
 {
     private const DEFAULT_MEMORY = 'money.default_currency';
 
+    /** While true every amount is shown in its own currency (see inChargedCurrency). */
+    private static bool $charged = false;
+
     public static function format(?int $cents, ?string $currency = null): string
     {
         $cents ??= 0;
@@ -57,8 +60,9 @@ class Money
 
     /**
      * An amount in cents from one currency to another, at the current rate.
-     * Without a rate the amount stays as it is (and a warning goes in the log):
-     * a price must never silently end up at zero.
+     * Without a rate the amount stays as it is (and a warning goes in the log).
+     * That is fine for a figure on a screen, not for a price to charge:
+     * PricingEngine::quote refuses to make a price without a rate.
      */
     public static function convert(?int $cents, string $of, string $to): ?int
     {
@@ -117,11 +121,12 @@ class Money
      *
      * Deliberately restricted to the public site: mails, PDFs, commands and
      * the admin panel ALWAYS show the currency that is charged; this is purely
-     * display for the guest.
+     * display for the guest. A document or mail made during a visit to a site
+     * page says so itself, with inChargedCurrency().
      */
     public static function displayCurrency(): ?string
     {
-        if (! app()->bound('request')) {
+        if (self::$charged || ! app()->bound('request')) {
             return null;
         }
 
@@ -143,6 +148,29 @@ class Money
             ?: Setting::get('site', 'currency_default', 'EUR')));
 
         return $currency !== '' && in_array($currency, self::availableCurrencies(), true) ? $currency : null;
+    }
+
+    /**
+     * Run $callback with every amount in the currency that is charged, whatever
+     * the visitor picked to see prices in. For what is kept as a record: an
+     * invoice, receipt or confirmation, also when a guest downloads it from a
+     * site page, and a mail that is sent while a page is shown.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public static function inChargedCurrency(callable $callback): mixed
+    {
+        $before = self::$charged;
+        self::$charged = true;
+
+        try {
+            return $callback();
+        } finally {
+            self::$charged = $before;
+        }
     }
 
     /**

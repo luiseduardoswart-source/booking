@@ -20,9 +20,22 @@ class FakeProvider implements PaymentProvider
 
     public array $refunds = [];
 
+    /**
+     * For tests: what went back to the guest outside the site (a refund at the
+     * provider itself or a chargeback), per provider payment id, in cents.
+     *
+     * @var array<string, int>
+     */
+    public array $returnedOutside = [];
+
     public function name(): string
     {
         return 'fake';
+    }
+
+    public function isConfigured(): bool
+    {
+        return true;
     }
 
     /** Never real money. */
@@ -65,6 +78,14 @@ class FakeProvider implements PaymentProvider
         $this->refunds[] = ['payment' => $payment->provider_payment_id, 'amount_cents' => $amountCents];
 
         return 'refund_'.count($this->refunds);
+    }
+
+    /** Like a real provider: the refunds made through the site plus what went back outside it. */
+    public function returnedCents(Payment $payment): int
+    {
+        $id = (string) $payment->provider_payment_id;
+
+        return collect($this->refunds)->where('payment', $id)->sum('amount_cents') + ($this->returnedOutside[$id] ?? 0);
     }
 
     public function cancel(Payment $payment): void

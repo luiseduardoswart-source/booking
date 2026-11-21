@@ -84,6 +84,33 @@ class CurrencyTest extends TestCase
             ->assertSee('€ 100,00');
     }
 
+    /**
+     * A guest who picked dollars downloads an invoice from My bookings: the
+     * document names what was charged, in euros, not today's converted figure.
+     */
+    public function test_a_document_shows_the_currency_that_was_charged(): void
+    {
+        $this->enableCurrency();
+        $booking = app(\App\Engines\BookingEngine::class)->create(
+            $this->property(), \Carbon\CarbonImmutable::tomorrow(), \Carbon\CarbonImmutable::tomorrow()->addDays(2), 2,
+            ['name' => 'Jan Jansen', 'email' => 'jan@example.com'],
+        );
+
+        // The visitor's choice applies on the page...
+        $this->withSession(['currency' => 'USD'])->get('/valutahuis')->assertOk()->assertSee('110');
+        $this->assertSame('USD', \App\Support\Money::displayCurrency());
+
+        // ...and not in the document made during the same visit.
+        $inDocument = null;
+        \Illuminate\Support\Facades\View::composer('pdf.confirmation', function () use (&$inDocument) {
+            $inDocument = \App\Support\Money::format(10000, 'EUR');
+        });
+        app(\App\Engines\DocumentEngine::class)->confirmation($booking);
+
+        $this->assertSame('€ 100,00', $inDocument);
+        $this->assertSame('USD', \App\Support\Money::displayCurrency()); // the page itself is untouched
+    }
+
     public function test_cop_is_supported_and_converted(): void
     {
         $this->enableCurrency();

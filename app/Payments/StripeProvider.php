@@ -16,6 +16,11 @@ class StripeProvider implements PaymentProvider
         return 'stripe';
     }
 
+    public function isConfigured(): bool
+    {
+        return filled(Setting::get('payments', 'stripe_secret_key'));
+    }
+
     /** Stripe test keys are sk_test_ (or restricted rk_test_), live keys sk_live_. */
     public function isTestMode(): bool
     {
@@ -54,6 +59,18 @@ class StripeProvider implements PaymentProvider
             in_array($currency, self::WHOLE_UNITS_WITH_TWO_DECIMALS, true) => (int) round($cents / 100) * 100,
             in_array($currency, self::THREE_DECIMALS, true) => $cents * 10,
             default => $cents,
+        };
+    }
+
+    /** Back from Stripe's smallest unit to the hundredths we store: the reverse of amount(). */
+    public static function cents(int $amount, string $currency): int
+    {
+        $currency = strtoupper($currency);
+
+        return match (true) {
+            in_array($currency, self::WITHOUT_DECIMALS, true) => $amount * 100,
+            in_array($currency, self::THREE_DECIMALS, true) => (int) round($amount / 10),
+            default => $amount,
         };
     }
 
@@ -106,6 +123,45 @@ class StripeProvider implements PaymentProvider
         ]);
 
         return $refund->id;
+    }
+
+    /** Dispute statuses in which Stripe has taken the money from the owner's balance. */
+    private const DISPUTE_TOOK_THE_MONEY = ['needs_response', 'under_review', 'lost'];
+
+    /**
+     * The charge of the checkout says what was refunded; a dispute (the
+     * guest's bank reversing the payment) is listed separately. A dispute
+     * the owner won, or an inquiry without money taken, does not count.
+     */
+    public function returnedCents(Payment $payment): int
+    {
+        $session = $this->client()->checkout->sessions->retrieve($payment->provider_payment_id, ['expand' => ['payment_intent.latest_charge']]);
+        $charge = $session->payment_intent?->latest_charge;
+
+        if (! is_object($charge)) {
+            return 0;
+        }
+
+        $returned = (int) $charge->amount_refunded;
+
+        if ($charge->disputed) {
+            foreach ($this->client()->disputes->all(['charge' => $charge->id, 'limit' => 10])->data as $dispute) {
+                if (in_array($dispute->status, self::DISPUTE_TOOK_THE_MONEY, true)) {
+                    $returned += (int) $dispute->amount;
+                }
+            }
+        }
+
+        return self::cents($returned, $payment->booking->currency);
+    }
+
+    /**
+     * Our Checkout Session that belongs to a Stripe payment (pi_...), or null.
+     * Events about a refund or a dispute name the payment, not the session.
+     */
+    public function sessionIdFor(string $paymentIntentId): ?string
+    {
+        return $this->client()->checkout->sessions->all(['payment_intent' => $paymentIntentId, 'limit' => 1])->data[0]->id ?? null;
     }
 
     public function amountIsCorrect(Payment $payment): bool

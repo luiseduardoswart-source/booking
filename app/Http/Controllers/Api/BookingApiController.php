@@ -51,7 +51,7 @@ class BookingApiController extends Controller
         $validated = $request->validate([
             'property_id' => ['required', 'integer', 'exists:properties,id'],
             'arrival' => Booking::arrivalRule(),
-            'departure' => ['required', 'date', 'after:arrival'],
+            'departure' => Booking::departureRule(),
             'guests' => ['required', 'integer', 'min:1'],
             'guest.name' => ['required', 'string', 'max:255', 'regex:/^[^\p{Cc}]*$/u'],
             'guest.email' => ['required', 'email', 'max:255'],

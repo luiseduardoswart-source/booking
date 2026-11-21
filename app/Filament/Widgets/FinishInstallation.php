@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Pages\Settings;
+use App\Payments\PaymentProvider;
 use App\Support\DatabaseUpdater;
 use App\Support\ScheduledTasks;
 use App\Support\MailSettings;
@@ -70,6 +71,29 @@ class FinishInstallation extends Widget
                 'text' => __('Under Settings → Email, fill in the mailbox the website sends emails from, and send a test email.'),
                 'link' => Settings::getUrl(),
                 'button' => __('Go to settings'),
+            ];
+        }
+
+        // The test provider or a test key: every guest books without paying
+        // real money, and the booking is confirmed like a paid one.
+        $payments = app(PaymentProvider::class);
+
+        if ($payments->isConfigured() && $payments->isTestMode()) {
+            $steps[] = [
+                'title' => __('Payments are in test mode'),
+                'text' => __('The payment provider is the test provider or uses a test key: guests can book without paying real money. Before real guests book, choose Mollie or Stripe under Settings → Keys and fill in the live key.'),
+                'link' => Settings::getUrl(),
+                'button' => __('Go to settings'),
+            ];
+        }
+
+        // Closed with `php artisan down` to test before going live. Everything
+        // keeps working (routes/console.php); only guests cannot get in.
+        if (app()->isDownForMaintenance()) {
+            $steps[] = [
+                'title' => __('Open the website for guests'),
+                'text' => __('The website is closed: guests see "Service Unavailable". Bookings, emails and the automatic tasks keep working, so you can test everything. When it is ready, open the website with this command on the server:'),
+                'code' => 'php '.base_path('artisan').' up',
             ];
         }
 

@@ -680,11 +680,12 @@ class Property extends Model implements HasMedia
     /**
      * The code the guest opens the door with, or null if there is none to give:
      * no self check-in, no code chosen, a booking that is not confirmed (yet),
-     * or a phone number with fewer than four digits.
+     * a stay of which only part is paid (Booking::owesBalance), or a phone
+     * number with fewer than four digits.
      */
     public function accessCodeFor(Booking $booking): ?string
     {
-        if ($this->checkInKind() !== self::CHECK_IN_SELF || ! $booking->status?->isConfirmed()) {
+        if ($this->checkInKind() !== self::CHECK_IN_SELF || ! $booking->status?->isConfirmed() || $booking->owesBalance()) {
             return null;
         }
 

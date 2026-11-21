@@ -8,6 +8,7 @@ use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\URL;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Signed payment link from the emails: creates a payment on the fly
@@ -39,6 +40,12 @@ class BookingPayController extends Controller
             }
 
             abort(404);
+        } catch (Throwable $e) {
+            // The provider cannot make the checkout right now: explain it and
+            // let the guest try again, instead of an error page.
+            report($e);
+
+            return redirect()->to(PaymentEngine::unavailableUrl($booking));
         }
 
         return redirect()->away($payment->checkout_url);

@@ -2,9 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Widgets\FinishInstallation;
+use App\Support\ScheduledTasks;
 use Illuminate\Console\Scheduling\CallbackEvent;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Foundation\MaintenanceMode;
+use Illuminate\Foundation\CacheBasedMaintenanceMode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -70,5 +74,47 @@ class ScheduledTasksTest extends TestCase
 
         $this->assertTrue(Cache::get('job-executed'));
         $this->assertSame(0, DB::table('jobs')->count());
+    }
+
+    /**
+     * Closed with `php artisan down`. Kept in the cache instead of the usual
+     * file, so the test never closes the local website.
+     */
+    private function closeTheSite(): void
+    {
+        $this->app->instance(MaintenanceMode::class, new CacheBasedMaintenanceMode(app('cache'), 'array', 'site-closed'));
+        $this->app->maintenanceMode()->activate([]);
+        $this->assertTrue($this->app->isDownForMaintenance());
+    }
+
+    public function test_with_the_site_closed_every_task_still_runs(): void
+    {
+        $this->closeTheSite();
+
+        foreach ($this->tasks() as $name => $task) {
+            $this->assertTrue($task->runsInMaintenanceMode(), "{$name} stops while the site is closed");
+        }
+
+        // What the cron does every minute: the waiting emails go out and the
+        // dashboard hears the heartbeat. At 10:01 only those two are due.
+        $this->travelTo(now()->setTime(10, 1));
+        config(['queue.default' => 'database']);
+        dispatch(fn () => Cache::put('job-executed', true));
+
+        $this->artisan('schedule:run')->assertSuccessful();
+
+        $this->assertTrue(Cache::get('job-executed'));
+        $this->assertSame(0, DB::table('jobs')->count());
+        $this->assertTrue(ScheduledTasks::run());
+    }
+
+    public function test_with_the_site_closed_the_dashboard_says_how_to_open_it(): void
+    {
+        $open = fn () => collect(FinishInstallation::steps())->firstWhere('title', __('Open the website for guests'));
+        $this->assertNull($open());
+
+        $this->closeTheSite();
+
+        $this->assertSame('php '.base_path('artisan').' up', $open()['code']);
     }
 }

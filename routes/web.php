@@ -140,6 +140,10 @@ Route::get('/payment/test/{payment}/{outcome}', [\App\Http\Controllers\TestCheck
 Route::get('/booking/{booking}/pay/{type}', BookingPayController::class)
     ->name('booking.pay')
     ->middleware('signed');
+// The provider could not make the checkout: explanation and a button to try again.
+Route::get('/booking/{booking}/payment-unavailable', [SiteBookingController::class, 'paymentUnavailable'])
+    ->name('booking.payment-unavailable')
+    ->middleware('signed');
 Route::get('/booking/{booking}/confirmation', [SiteBookingController::class, 'confirmation'])
     ->name('bookings.confirmation')
     ->middleware('signed');

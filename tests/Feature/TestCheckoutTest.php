@@ -113,4 +113,36 @@ class TestCheckoutTest extends TestCase
 
         $this->get(URL::signedRoute('payment.test.process', [$payment, 'free']))->assertNotFound();
     }
+
+    /**
+     * With the test provider or a test key every guest books without paying
+     * real money. The dashboard says so until the real key is in.
+     */
+    public function test_the_dashboard_warns_while_payments_are_in_test_mode(): void
+    {
+        $warning = function (): ?array {
+            $this->app->forgetInstance(PaymentProvider::class);
+            Setting::forgets();
+
+            return collect(\App\Filament\Widgets\FinishInstallation::steps())->firstWhere('title', __('Payments are in test mode'));
+        };
+
+        // The test provider (bound in setUp, like on a site where it is chosen).
+        $this->assertNotNull(collect(\App\Filament\Widgets\FinishInstallation::steps())->firstWhere('title', __('Payments are in test mode')));
+
+        Setting::set('payments', 'provider', 'mollie');
+        Setting::set('payments', 'mollie_api_key', 'test_abcdefghijklmnopqrstuvwxyz1234');
+        $this->assertSame(\App\Filament\Pages\Settings::getUrl(), $warning()['link']);
+
+        Setting::set('payments', 'mollie_api_key', 'live_abcdefghijklmnopqrstuvwxyz1234');
+        $this->assertNull($warning());
+
+        Setting::set('payments', 'provider', 'stripe');
+        Setting::set('payments', 'stripe_secret_key', 'sk_test_abcdefghijklmnopqrstuvwxyz');
+        $this->assertNotNull($warning());
+
+        // Nothing set up yet is not test mode: that is the step in the README.
+        Setting::set('payments', 'stripe_secret_key', null);
+        $this->assertNull($warning());
+    }
 }

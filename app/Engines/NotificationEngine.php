@@ -7,6 +7,7 @@ use App\Mail\BookingMail;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\SentMail;
+use App\Support\Money;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -23,7 +24,9 @@ class NotificationEngine
     public function send(Booking $booking, MailType $type, ?Payment $payment = null): bool
     {
         try {
-            Mail::to($booking->guest_email)->queue(new BookingMail($booking, $type, $payment));
+            // Sent straight away (no queue), a mail is written during the page
+            // visit that caused it: still in the currency that is charged.
+            Money::inChargedCurrency(fn () => Mail::to($booking->guest_email)->queue(new BookingMail($booking, $type, $payment)));
 
             SentMail::create([
                 'booking_id' => $booking->id,

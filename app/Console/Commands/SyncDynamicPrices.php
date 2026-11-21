@@ -32,7 +32,10 @@ class SyncDynamicPrices extends Command
                 }
 
                 $configured++;
-                $prices = $provider->pricesFor($property, $from, $to);
+                // Whatever service it comes from: zero (or less) is not a price.
+                // Taken over, that night could be booked for nothing; the
+                // price that was there stays.
+                $prices = array_filter($provider->pricesFor($property, $from, $to), fn ($cents) => (int) $cents > 0);
 
                 // Prices set by hand in the calendar stay when the accommodation says so.
                 if ($property->manualPricesWin()) {

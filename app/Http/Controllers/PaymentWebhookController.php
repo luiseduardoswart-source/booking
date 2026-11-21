@@ -95,6 +95,25 @@ class PaymentWebhookController extends Controller
             })
             ->first();
 
+        // A refund or a dispute (the guest's bank reversing the payment) names
+        // the Stripe payment (pi_...), not our checkout: look the checkout up.
+        // Only for a webhook that proved it comes from Stripe (secret set), so
+        // nobody can make us question Stripe at will.
+        $paymentIntent = $request->input('data.object.payment_intent');
+        $provider = app(\App\Payments\PaymentProvider::class);
+
+        if ($payment === null && $secret && is_string($paymentIntent) && $provider instanceof \App\Payments\StripeProvider) {
+            try {
+                $sessionId = $provider->sessionIdFor($paymentIntent);
+                $payment = $sessionId === null ? null : Payment::query()
+                    ->where('provider', 'stripe')
+                    ->where('provider_payment_id', $sessionId)
+                    ->first();
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
         if ($payment !== null) {
             $engine->syncFromProvider($payment);
         }

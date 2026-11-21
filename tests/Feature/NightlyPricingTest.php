@@ -97,6 +97,27 @@ class NightlyPricingTest extends TestCase
         ]);
     }
 
+    /** A night for nothing is not a price a pricing service means: a free night could be booked. */
+    public function test_a_dynamic_price_of_zero_is_not_taken_over(): void
+    {
+        $day1 = today()->addDays(10)->toDateString();
+        $day2 = today()->addDays(11)->toDateString();
+
+        $fake = new FakeDynamicPricingProvider;
+        $fake->prices = [$day1 => 12000, $day2 => 13500];
+        $this->usage($fake);
+        $property = $this->makeProperty(['external_listing_id' => 'PL-123']);
+        $this->artisan('prices:sync')->assertSuccessful();
+
+        // The next day the service answers zero for one night and less for the other.
+        $fake->prices = [$day1 => 0, $day2 => -500];
+        $this->artisan('prices:sync')->assertSuccessful();
+
+        // Yesterday's prices stay.
+        $this->assertDatabaseHas('nightly_rates', ['property_id' => $property->id, 'date' => $day1, 'price_cents' => 12000]);
+        $this->assertDatabaseHas('nightly_rates', ['property_id' => $property->id, 'date' => $day2, 'price_cents' => 13500]);
+    }
+
     public function test_sync_saves_in_without_configuration(): void
     {
         $fake = new FakeDynamicPricingProvider;

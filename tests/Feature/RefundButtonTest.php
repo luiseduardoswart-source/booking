@@ -87,6 +87,16 @@ class RefundButtonTest extends TestCase
                 return true;
             }
 
+            public function isConfigured(): bool
+            {
+                return true;
+            }
+
+            public function returnedCents(Payment $payment): int
+            {
+                return 0;
+            }
+
             public function create(Payment $payment, string $redirectUrl): ProviderPaymentResult
             {
                 throw new RuntimeException('not needed');

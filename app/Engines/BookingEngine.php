@@ -41,7 +41,7 @@ class BookingEngine
         ?string $notes = null,
         ?array $guestBreakdown = null, // ['adults' => 2, 'children' => 1, 'infants' => 0, 'pets' => 0]
         ?string $acceptedTerms = null, // snapshot of the accepted terms
-        ?string $couponCode = null,    // coupon code; invalid = silently ignored
+        ?string $couponCode = null,    // coupon code; one that cannot be used throws InvalidCouponException
         ?\App\Support\Signature $signature = null, // under the rental terms, if they apply
         ?array $formAnswers = null, // answers to the own fields of the booking form (FormAnswers)
     ): Booking {
@@ -58,15 +58,14 @@ class BookingEngine
                 throw new UnavailableForBookingException($result->reasons);
             }
 
-            // Coupon code: only apply if it is (still) valid — inside the
-            // transaction and with the coupon row locked, so max_uses cannot
-            // be exceeded, also not by two bookings of different
-            // accommodations at the same moment.
-            $coupon = \App\Models\Coupon::search($couponCode, lock: true);
-
-            if ($coupon !== null && $coupon->invalidBecause($property, $arrival) !== null) {
-                $coupon = null;
-            }
+            // Coupon code: checked inside the transaction and with the coupon
+            // row locked, so max_uses cannot be exceeded, also not by two
+            // bookings of different accommodations at the same moment. A code
+            // that cannot be used (any more) stops the booking: the guest was
+            // shown a price with it, and a wrong code must not go unnoticed.
+            $coupon = filled($couponCode)
+                ? \App\Models\Coupon::usable($couponCode, $property, $arrival, lock: true)
+                : null;
 
             $quote = $this->pricing->quote($property, $arrival, $departure, $guests, (int) ($guestBreakdown['pets'] ?? 0), $coupon);
 

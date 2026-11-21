@@ -306,6 +306,30 @@ follow steps 3 and 4; the installation code is in
 Your bookings and settings stay as they are. After an update with the zip
 file, the website clears its old pages and caches once by itself.
 
+### Testing before going live: close the website
+
+Want to test bookings, payments and emails on the real website before guests
+can find it? Close it to visitors. Log in with SSH and run, in the website's
+folder (`booking` or `app`), with a secret word of your own:
+
+```bash
+php artisan down --secret=your-secret-word
+```
+
+Visitors now see "Service Unavailable". Open
+`https://your-domain/your-secret-word` once yourself: your browser then sees
+the website and the admin panel as usual. While the website is closed,
+bookings, emails and the automatic tasks keep working, and a test payment is
+confirmed as soon as you return from the payment page. The dashboard reminds
+you that the website is closed.
+
+When everything is ready, remove the test bookings (see below) and open the
+website:
+
+```bash
+php artisan up
+```
+
 ### Before going live: remove the test bookings
 
 Tested by making bookings on the live website? Remove them before real guests
@@ -352,6 +376,27 @@ php artisan admin:disable-two-factor you@example.com
 ```
 
 At the next login you set it up again.
+
+### Payments: what the website guards
+
+- **Test mode.** While the payment provider is the test provider or has a
+  test key, guests book without paying real money. The dashboard shows
+  **Payments are in test mode** until the live key is filled in under
+  **Settings → Keys**.
+- **A down payment does not open the door.** The check-in instructions and
+  the door code are only sent once the stay is paid in full. A booking you
+  confirmed yourself, with nothing paid on the website (cash or bank
+  transfer), gets them as usual.
+- **Money that went back.** If a guest has a payment reversed by the bank,
+  or you refund at Mollie or Stripe itself, the website books it as returned
+  and emails you. With Stripe this needs the webhook secret under
+  **Settings → Keys** and these events on the webhook: `charge.refunded`,
+  `charge.dispute.created`, `charge.dispute.funds_withdrawn`,
+  `charge.dispute.funds_reinstated` and `charge.dispute.closed`. Mollie
+  reports it by itself.
+- **The payment page cannot be opened** (the provider is down, or refuses the
+  amount or currency): the guest gets a page to try again. The booking is
+  not confirmed and gives its dates back after 60 minutes.
 
 ### Emails not arriving?
 
@@ -532,6 +577,8 @@ How the zip installation works:
   `APP_ENV=production`.
 - After the wizard, a dashboard widget lists what is left (cron job and
   mailbox) until both work. The scheduler writes a heartbeat every minute.
+  While the site is closed with `php artisan down`, the widget also shows the
+  command that opens it.
 - After an update, the same widget shows a button when there are pending
   migrations (`App\Support\DatabaseUpdater`). It runs `migrate --force` in the
   same PHP process, for administrators only.
@@ -596,7 +643,32 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
   bookings, the installation and invitations cannot be shown inside another
   site. Accommodation pages stay embeddable for the embed code.
 - **The test payment provider** only opens through the signed link the
-  booking flow gives; never leave it switched on for a live site.
+  booking flow gives; never leave it switched on for a live site. The
+  dashboard warns while it, or a test key, is in use.
+- **A stay is counted in calendar days.** Guests and the API send plain
+  dates (`2027-03-01`, `Booking::arrivalRule()` and `departureRule()`): a
+  date with a time zone behind it is a moment, and two moments can be fewer
+  hours apart than the days they name. The engines start from the calendar
+  day whatever they are handed (`App\Support\CalendarDay`), so the nights
+  priced are the nights stored. A guest books at most 365 nights, three
+  years ahead.
+- **No price without an exchange rate.** An accommodation in another
+  currency than the defaults converts inherited amounts, seasons, discounts
+  and fixed coupons. The last fetched rates are kept in the database and
+  used when the sources are down; with no rate at all
+  `PricingEngine::quote()` refuses instead of reading euros as pesos. A rate
+  of zero or less is ignored, and so is a dynamic price of zero.
+- **Coupon codes**: five wrong codes per visitor per ten minutes, on the
+  booking page and in the booking itself. A code that cannot be used stops
+  the booking (`InvalidCouponException`); it is never dropped silently.
+- **Paid means paid at the provider**: status, amount and currency are
+  fetched from Mollie or Stripe, never taken from the request. Money that
+  went back outside the website (a refund there, a chargeback) is booked as
+  a refund row without a provider id
+  (`PaymentEngine::followReturnsOutsideTheSite`).
+- **Documents** (invoice, receipt, confirmation) always show the currency
+  that was charged, also when the visitor picked another display currency
+  (`Money::inChargedCurrency`).
 
 ### Scheduled tasks and commands
 
@@ -614,9 +686,17 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `admin:disable-two-factor` | by hand | Disables two-factor sign-in for one account |
 | `bookings:clear-test-data` | by hand | Removes test bookings before going live and restarts the numbering |
 
+Every scheduled task also runs while the site is closed with `php artisan down`
+(`evenInMaintenanceMode()`, and `queue:work` with `--force`). Owners close the
+site to test before going live, and those test bookings need their emails, ID
+checks and payment deadlines like any other.
+
 ### API
 
 `GET /api/v1/properties`, `/properties/{id}`, `/properties/{id}/quote` and
 `/properties/{id}/unavailable-dates` are public. `/api/v1/bookings` requires a
 Sanctum token and follows the rights of that user in the admin: the permission
 for bookings, and a host only sees and books their own accommodations.
+
+Dates are plain calendar dates, `YYYY-MM-DD`. Anything else (a time, a time
+zone) is refused with a 422.

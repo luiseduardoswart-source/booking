@@ -15,6 +15,7 @@ enum AdminNotification: string
     case Cancellation = 'cancellation';
     case Payment = 'payment';
     case IdentityMissing = 'identity_missing';
+    case PaymentReturned = 'payment_returned';
 
     public function title(): string
     {
@@ -23,6 +24,7 @@ enum AdminNotification: string
             self::Cancellation => __('Booking cancelled'),
             self::Payment => __('Payment received'),
             self::IdentityMissing => __('Identity check not done'),
+            self::PaymentReturned => __('Payment returned to the guest'),
         };
     }
 
@@ -38,7 +40,7 @@ enum AdminNotification: string
     /** The screen a host must be allowed to view to receive this notification. */
     public function screen(): string
     {
-        return $this === self::Payment ? 'payments' : 'bookings';
+        return in_array($this, [self::Payment, self::PaymentReturned], true) ? 'payments' : 'bookings';
     }
 
     /** The permission with which a host receives this notification. */

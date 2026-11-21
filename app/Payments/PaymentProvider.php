@@ -13,6 +13,12 @@ interface PaymentProvider
     public function name(): string;
 
     /**
+     * Is online payment set up (a key filled in)? Without it a booking simply
+     * stands unpaid; with it, a checkout that cannot be made is a failure.
+     */
+    public function isConfigured(): bool;
+
+    /**
      * Does this provider work with a test key (no real money)? Stored on
      * every payment, so test bookings can be cleared safely before going live.
      */
@@ -35,6 +41,14 @@ interface PaymentProvider
      * Returns the external refund id.
      */
     public function refund(Payment $payment, int $amountCents): string;
+
+    /**
+     * Everything that went back to the guest for this payment according to
+     * the provider, in cents: refunds (also those made through this site)
+     * plus what the bank took back (chargebacks). A provider keeps calling
+     * such a payment "paid".
+     */
+    public function returnedCents(Payment $payment): int;
 
     /**
      * Expire an open payment so the link can no longer be paid. Throws an

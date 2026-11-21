@@ -16,6 +16,11 @@ class MollieProvider implements PaymentProvider
         return 'mollie';
     }
 
+    public function isConfigured(): bool
+    {
+        return filled(Setting::get('payments', 'mollie_api_key'));
+    }
+
     /** Mollie test keys start with test_, live keys with live_. */
     public function isTestMode(): bool
     {
@@ -111,6 +116,14 @@ class MollieProvider implements PaymentProvider
         ]);
 
         return $refund->id;
+    }
+
+    /** Mollie reports both as totals on the payment, in whole units of the currency. */
+    public function returnedCents(Payment $payment): int
+    {
+        $molliePayment = $this->client()->payments->get($payment->provider_payment_id);
+
+        return (int) round(($molliePayment->getAmountRefunded() + $molliePayment->getAmountChargedBack()) * 100);
     }
 
     public function amountIsCorrect(Payment $payment): bool

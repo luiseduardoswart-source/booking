@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Setting;
+use App\Support\Money;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Traits\Localizable;
@@ -61,7 +62,8 @@ class DocumentEngine
     {
         $language = in_array($booking->locale, self::WITHOUT_FONT, true) ? 'en' : $booking->locale;
 
-        return $this->withLocale($language, fn () => Pdf::loadView($view, $details)->output());
+        // A document names what was charged, not the currency a visitor picked to browse in.
+        return Money::inChargedCurrency(fn () => $this->withLocale($language, fn () => Pdf::loadView($view, $details)->output()));
     }
 
     public function findOrCreateInvoice(Booking $booking): Invoice

@@ -9,6 +9,12 @@
 {{ __('Cancelled automatically: the guest did not verify their identity in time.') }}
 
 @endif
+@if ($notification === \App\Enums\AdminNotification::PaymentReturned && $payment)
+{{ __(':amount of a payment for this booking went back to the guest outside the website: a refund at the payment provider itself, or the guest had the payment reversed by the bank.', ['amount' => \App\Support\Money::format($payment->amount_cents, $booking->currency)]) }}
+
+{{ __('The website has booked it as returned. While the stay is not paid in full, the check-in instructions and the door code are not sent. Check the payment at your payment provider.') }}
+
+@endif
 @if ($notification === \App\Enums\AdminNotification::Payment && $payment)
 **{{ $payment->kind() }}**: {{ \App\Support\Money::format($payment->amount_cents, $booking->currency) }}
 

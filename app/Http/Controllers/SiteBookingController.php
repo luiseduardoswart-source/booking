@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Engines\AvailabilityEngine;
 use App\Engines\BookingEngine;
+use App\Engines\Exceptions\InvalidCouponException;
 use App\Engines\Exceptions\UnavailableForBookingException;
 use App\Engines\PaymentEngine;
 use App\Engines\PricingEngine;
@@ -41,7 +42,7 @@ class SiteBookingController extends Controller
 
         $validated = $request->validate([
             'arrival' => Booking::arrivalRule(),
-            'departure' => ['required', 'date', 'after:arrival'],
+            'departure' => Booking::departureRule(),
             'guests' => ['required', 'integer', 'min:1'],
             'adults' => ['nullable', 'integer', 'min:1'],
             'children' => ['nullable', 'integer', 'min:0'],
@@ -105,24 +106,52 @@ class SiteBookingController extends Controller
             return [null, null];
         }
 
-        $tries = 'wrong-coupons:'.$request->ip();
-
-        if (RateLimiter::tooManyAttempts($tries, self::WRONG_COUPONS)) {
-            return [null, __('Too many wrong coupon codes. Try again in :minutes minutes.', [
-                'minutes' => max(1, (int) ceil(RateLimiter::availableIn($tries) / 60)),
-            ])];
+        if (($refusal = $this->takeCouponTry($request)) !== null) {
+            return [null, $refusal];
         }
 
-        $coupon = Coupon::search($code);
-        $error = $coupon === null ? __('This coupon code does not exist.') : $coupon->invalidBecause($property, $arrival);
-
-        if ($error !== null) {
-            RateLimiter::hit($tries, self::WRONG_COUPON_SECONDS);
-
-            return [null, $error];
+        try {
+            $coupon = Coupon::usable($code, $property, $arrival);
+        } catch (InvalidCouponException $e) {
+            return [null, $e->getMessage()]; // the try stays counted
         }
+
+        $this->giveCouponTryBack($request);
 
         return [$coupon, null];
+    }
+
+    /**
+     * Looking a code up first takes one of the visitor's tries; a good code
+     * gives it back. Counting only after a wrong answer would let a burst of
+     * requests sent at once all be looked up. Returns the message when the
+     * tries are used up.
+     */
+    private function takeCouponTry(Request $request): ?string
+    {
+        $tries = self::couponTries($request);
+
+        if (! RateLimiter::tooManyAttempts($tries, self::WRONG_COUPONS)) {
+            if (RateLimiter::increment($tries, self::WRONG_COUPON_SECONDS) <= self::WRONG_COUPONS) {
+                return null;
+            }
+
+            $this->giveCouponTryBack($request); // another request took the last one
+        }
+
+        return __('Too many wrong coupon codes. Try again in :minutes minutes.', [
+            'minutes' => max(1, (int) ceil(RateLimiter::availableIn($tries) / 60)),
+        ]);
+    }
+
+    private function giveCouponTryBack(Request $request): void
+    {
+        RateLimiter::decrement(self::couponTries($request), self::WRONG_COUPON_SECONDS);
+    }
+
+    private static function couponTries(Request $request): string
+    {
+        return 'wrong-coupons:'.$request->ip();
     }
 
     /**
@@ -139,7 +168,7 @@ class SiteBookingController extends Controller
 
         $validated = $request->validate([
             'arrival' => Booking::arrivalRule(),
-            'departure' => ['required', 'date', 'after:arrival'],
+            'departure' => Booking::departureRule(),
             'guests' => ['required', 'integer', 'min:1'],
             'adults' => ['nullable', 'integer', 'min:1'],
             'children' => ['nullable', 'integer', 'min:0'],
@@ -183,6 +212,14 @@ class SiteBookingController extends Controller
             ? Signature::offRequest($request, $validated['name'])
             : null;
 
+        // The booking looks the coupon code up as well (and the checkout shows
+        // whether it worked): the same tries as on the page.
+        $withCoupon = filled($validated['coupon'] ?? null);
+
+        if ($withCoupon && ($refusal = $this->takeCouponTry($request)) !== null) {
+            return back()->withInput()->withErrors(['coupon' => $refusal]);
+        }
+
         try {
             $booking = $bookings->create(
                 property: $property,
@@ -209,11 +246,20 @@ class SiteBookingController extends Controller
                     'pets' => (int) ($validated['pets'] ?? 0),
                 ] : null,
             );
+        } catch (InvalidCouponException $e) {
+            // No booking at the full price behind the guest's back; the try stays counted.
+            return back()->withInput()->withErrors(['coupon' => $e->getMessage()]);
         } catch (UnavailableForBookingException $e) {
+            $withCoupon && $this->giveCouponTryBack($request); // never got to the code
+
             return back()->withInput()->withErrors(['availability' => implode(' ', $e->reasons)]);
         } catch (InvalidArgumentException $e) {
+            $withCoupon && $this->giveCouponTryBack($request);
+
             return back()->withInput()->withErrors(['availability' => $e->getMessage()]);
         }
+
+        $withCoupon && $this->giveCouponTryBack($request);
 
         \App\Models\ListingEvent::record('booking', $property);
 
@@ -229,6 +275,18 @@ class SiteBookingController extends Controller
         }
 
         return redirect()->away($payments->checkoutOrConfirmationUrl($booking));
+    }
+
+    /**
+     * The checkout could not be made (signed URL): the booking is held but
+     * not confirmed, and the guest can try again.
+     */
+    public function paymentUnavailable(Booking $booking): View
+    {
+        return view('payments.unavailable', [
+            'booking' => $booking,
+            'retryUrl' => $booking->paymentLink(\App\Enums\PaymentType::DownPayment),
+        ]);
     }
 
     /**

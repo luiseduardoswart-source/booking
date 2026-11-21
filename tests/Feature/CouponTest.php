@@ -134,23 +134,29 @@ class CouponTest extends TestCase
         $this->assertSame(1, $coupon->fresh()->used_count);
     }
 
-    public function test_used_up_code_is_silently_ignored_at_book(): void
+    public function test_a_used_up_code_stops_the_booking(): void
     {
         $property = $this->property();
         Coupon::create(['code' => 'OP', 'type' => Coupon::TYPE_PERCENT, 'value' => 50, 'max_uses' => 1, 'used_count' => 1]);
 
         $tomorrow = CarbonImmutable::tomorrow();
 
-        $booking = app(BookingEngine::class)->create(
-            property: $property,
-            arrival: $tomorrow,
-            departure: $tomorrow->addDays(2),
-            guests: 2,
-            guest: ['name' => 'Jan', 'email' => 'jan@example.com'],
-            couponCode: 'OP',
-        );
+        // The guest was shown a price with the code: no booking at the full
+        // price behind their back.
+        try {
+            app(BookingEngine::class)->create(
+                property: $property,
+                arrival: $tomorrow,
+                departure: $tomorrow->addDays(2),
+                guests: 2,
+                guest: ['name' => 'Jan', 'email' => 'jan@example.com'],
+                couponCode: 'OP',
+            );
+            $this->fail('The booking was made without the coupon.');
+        } catch (\App\Engines\Exceptions\InvalidCouponException $e) {
+            $this->assertSame(__('This coupon code has already been used the maximum number of times.'), $e->getMessage());
+        }
 
-        $this->assertNull($booking->coupon_code);
-        $this->assertSame(20000, $booking->total_cents);
+        $this->assertSame(0, \App\Models\Booking::count());
     }
 }

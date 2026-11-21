@@ -148,6 +148,44 @@ class ReleaseUnpaidBookingsTest extends TestCase
         $this->assertSame(BookingStatus::New, $booking->refresh()->status);
     }
 
+    /**
+     * Online payment is set up, but the provider cannot make the checkout (it
+     * is down, or refuses the amount or the currency). That is not a booking
+     * that stands: no confirmation, and the dates come free again.
+     */
+    public function test_when_the_checkout_cannot_be_made_the_booking_is_not_confirmed(): void
+    {
+        $this->app->instance(PaymentProvider::class, new class extends FakeProvider
+        {
+            public function create(\App\Models\Payment $payment, string $redirectUrl): \App\Payments\ProviderPaymentResult
+            {
+                throw new \RuntimeException('The amount is higher than the provider accepts.');
+            }
+        });
+
+        $this->post('/beach-house/book', [
+            'arrival' => today()->addDays(40)->toDateString(), 'departure' => today()->addDays(43)->toDateString(),
+            'guests' => 2, 'name' => 'Jan Jansen', 'email' => 'jan@example.com', 'terms' => '1',
+        ])->assertRedirectContains('/payment-unavailable');
+
+        $booking = Booking::sole();
+        $this->assertNotNull($booking->hold_until);
+        Mail::assertNothingQueued();
+
+        // The page explains it and lets the guest try again.
+        $this->get(\Illuminate\Support\Facades\URL::signedRoute('booking.payment-unavailable', $booking))
+            ->assertOk()
+            ->assertSee(__('The payment could not be started'))
+            ->assertSee($booking->paymentLink(\App\Enums\PaymentType::DownPayment), false);
+
+        // Trying again while it still fails brings the guest back here, not to an error page.
+        $this->get($booking->paymentLink(\App\Enums\PaymentType::DownPayment))->assertRedirectContains('/payment-unavailable');
+
+        $this->travel(Booking::HOLD_MINUTES + 1)->minutes();
+        $this->artisan('bookings:release-unpaid')->assertSuccessful();
+        $this->assertSame(BookingStatus::Cancelled, $booking->refresh()->status);
+    }
+
     public function test_the_coupon_of_a_released_booking_can_be_used_again(): void
     {
         $coupon = Coupon::create(['code' => 'SUMMER', 'type' => 'percent', 'value' => 10, 'max_uses' => 1, 'active' => true]);

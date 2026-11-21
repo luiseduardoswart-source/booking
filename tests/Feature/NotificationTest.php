@@ -93,9 +93,16 @@ class NotificationTest extends TestCase
 
     public function test_with_nothing_to_pay_online_the_confirmation_goes_out_right_away(): void
     {
-        // A provider that cannot make a payment: the guest lands on the confirmation page.
+        // Online payment is not set up (no key): the guest lands on the
+        // confirmation page. With a key, a checkout that cannot be made is a
+        // failure instead (ReleaseUnpaidBookingsTest).
         $this->app->instance(PaymentProvider::class, new class extends FakeProvider
         {
+            public function isConfigured(): bool
+            {
+                return false;
+            }
+
             public function create(\App\Models\Payment $payment, string $redirectUrl): \App\Payments\ProviderPaymentResult
             {
                 throw new \RuntimeException('No payments possible');

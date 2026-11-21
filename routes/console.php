@@ -12,13 +12,19 @@ use Illuminate\Support\Facades\Schedule;
  * Every task runs in the same PHP process (Artisan::call). Schedule::command()
  * starts a separate process via proc_open, which is disabled on shared hosting:
  * every scheduled task would fail silently there.
+ *
+ * Every task also runs while the site is closed (`php artisan down`): that is
+ * how an owner tests before going live, and the bookings made then need their
+ * emails, ID checks and payment deadlines like any other. Laravel skips
+ * scheduled tasks in maintenance mode unless told otherwise.
  */
 $task = fn (string $command, array $options = []): CallbackEvent => Schedule::call(fn () => Artisan::call($command, $options))
     ->name($command)
-    ->withoutOverlapping();
+    ->withoutOverlapping()
+    ->evenInMaintenanceMode();
 
 // Heartbeat: lets the dashboard show that the cron job is running (see ScheduledTasks).
-Schedule::call(fn () => ScheduledTasks::tick())->name('heartbeat')->everyMinute();
+Schedule::call(fn () => ScheduledTasks::tick())->name('heartbeat')->everyMinute()->evenInMaintenanceMode();
 
 // Scheduled guest mails: remaining payment, check-in, check-out and review request.
 $task('mails:send-scheduled')->dailyAt('09:00');
@@ -40,4 +46,5 @@ $task('prices:sync')->dailyAt('05:00');
 
 // Empty the queue (guest mails are put in it) every minute. Stops
 // as soon as it is empty, and after 50 seconds at the latest, before the next minute.
-$task('queue:work', ['--stop-when-empty' => true, '--max-time' => 50, '--tries' => 3])->everyMinute();
+// --force: the worker itself also pauses while the site is closed.
+$task('queue:work', ['--stop-when-empty' => true, '--max-time' => 50, '--tries' => 3, '--force' => true])->everyMinute();

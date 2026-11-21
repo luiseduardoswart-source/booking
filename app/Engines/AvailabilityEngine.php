@@ -5,6 +5,7 @@ namespace App\Engines;
 use App\Engines\Availability\AvailabilityResult;
 use App\Models\BookingRule;
 use App\Models\Property;
+use App\Support\CalendarDay;
 use Carbon\CarbonImmutable;
 
 /**
@@ -23,8 +24,9 @@ class AvailabilityEngine
         CarbonImmutable $arrival,
         CarbonImmutable $departure,
     ): AvailabilityResult {
-        $arrival = $arrival->startOfDay();
-        $departure = $departure->startOfDay();
+        // Calendar days, not moments (see CalendarDay).
+        $arrival = CalendarDay::of($arrival);
+        $departure = CalendarDay::of($departure);
 
         if ($departure->lessThanOrEqualTo($arrival)) {
             return AvailabilityResult::no(__('The check-out date must be after the check-in date.'));

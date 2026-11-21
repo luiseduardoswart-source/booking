@@ -293,7 +293,8 @@ class IdentityAfterPaymentTest extends TestCase
 
     public function test_the_check_in_email_waits_for_the_check(): void
     {
-        $booking = $this->paidBooking($this->accommodation(['checkin_days_before_arrival' => 3]));
+        // Paid in full: with only a down payment the mail waits for the balance too.
+        $booking = $this->paidBooking($this->accommodation(['checkin_days_before_arrival' => 3, 'down_payment_percentage' => 100]));
 
         $this->travelTo('2026-02-27 09:00:00');
         $this->artisan('mails:send-scheduled')->assertSuccessful();
@@ -306,7 +307,7 @@ class IdentityAfterPaymentTest extends TestCase
 
     public function test_the_check_in_email_goes_as_before_without_the_check(): void
     {
-        $booking = $this->paidBooking($this->accommodation(['id_required' => false, 'checkin_days_before_arrival' => 3]));
+        $booking = $this->paidBooking($this->accommodation(['id_required' => false, 'checkin_days_before_arrival' => 3, 'down_payment_percentage' => 100]));
 
         $this->travelTo('2026-02-27 09:00:00');
         $this->artisan('mails:send-scheduled')->assertSuccessful();

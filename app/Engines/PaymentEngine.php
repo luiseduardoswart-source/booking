@@ -2,6 +2,7 @@
 
 namespace App\Engines;
 
+use App\Enums\AdminNotification;
 use App\Enums\BookingStatus;
 use App\Enums\MailType;
 use App\Enums\PaymentStatus;
@@ -11,8 +12,10 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Payments\PaymentProvider;
 use App\Payments\ProviderPaymentStatus;
+use App\Support\AdminNotifications;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -166,9 +169,15 @@ class PaymentEngine
     }
 
     /**
-     * Create the down payment link and return the checkout URL. If that fails
-     * (e.g. provider not configured yet), the payment link follows by
-     * mail and the guest goes to the confirmation page for now.
+     * Create the down payment link and return the checkout URL.
+     *
+     * - Nothing to pay now (no down payment asked), or online payment is not
+     *   set up yet: the booking stands as it is, the payment link follows by
+     *   mail and the guest goes to the confirmation page.
+     * - Online payment is set up but the checkout cannot be made (provider
+     *   down, amount or currency refused): that is no booking that stands.
+     *   No confirmation, the hold stays so the dates come free again, and
+     *   the guest gets a page to try again.
      */
     public function checkoutOrConfirmationUrl(Booking $booking): string
     {
@@ -187,8 +196,14 @@ class PaymentEngine
             return $checkoutUrl;
         } catch (Throwable $e) {
             // Nothing (more) to pay is not an error.
-            if (! $e instanceof InvalidArgumentException) {
+            $nothingToPay = $e instanceof InvalidArgumentException;
+
+            if (! $nothingToPay) {
                 report($e);
+
+                if ($this->provider->isConfigured()) {
+                    return self::unavailableUrl($booking);
+                }
             }
 
             // No online payment now: the booking stands, so it no longer expires.
@@ -204,6 +219,12 @@ class PaymentEngine
 
             return URL::signedRoute('bookings.confirmation', $booking);
         }
+    }
+
+    /** The page for a checkout that could not be made, with a button to try again. */
+    public static function unavailableUrl(Booking $booking): string
+    {
+        return URL::signedRoute('booking.payment-unavailable', $booking);
     }
 
     /**
@@ -224,7 +245,13 @@ class PaymentEngine
         };
 
         if ($payment->status === $newStatus) {
-            return $payment; // nothing changed (e.g. duplicate webhook)
+            // Nothing changed (e.g. duplicate webhook). A provider also calls
+            // about a payment that stays "paid" when money went back.
+            if ($newStatus === PaymentTransactionStatus::Paid) {
+                $this->followReturnsOutsideTheSite($payment);
+            }
+
+            return $payment;
         }
 
         // Extra check: only counts as paid if the provider reports the same
@@ -289,6 +316,20 @@ class PaymentEngine
      */
     public function refund(Payment $payment, ?int $amountCents = null, bool $deposit = false): Payment
     {
+        // The payment stays locked until the refund row is there. A webhook that
+        // asks the provider what went back (followReturnsOutsideTheSite) waits
+        // for it, and so never takes this refund for one made outside the site.
+        $refund = DB::transaction(fn (): Payment => $this->refundLocked(
+            Payment::query()->lockForUpdate()->findOrFail($payment->id), $amountCents, $deposit,
+        ));
+
+        $this->applyPaymentToBooking($payment->booking);
+
+        return $refund;
+    }
+
+    private function refundLocked(Payment $payment, ?int $amountCents, bool $deposit): Payment
+    {
         if ($payment->status !== PaymentTransactionStatus::Paid) {
             throw new InvalidArgumentException(__('Only paid payments can be refunded.'));
         }
@@ -308,7 +349,7 @@ class PaymentEngine
 
         $refundId = $this->provider->refund($payment, $amountCents);
 
-        $refund = Payment::create([
+        return Payment::create([
             'booking_id' => $payment->booking_id,
             'type' => PaymentType::Refund,
             'status' => PaymentTransactionStatus::Refunded,
@@ -321,10 +362,73 @@ class PaymentEngine
             'description' => "Refund of {$payment->description}",
             'paid_at' => now(),
         ]);
+    }
 
-        $this->applyPaymentToBooking($payment->booking);
+    /**
+     * Money can go back to the guest outside this site: the owner refunds at
+     * the provider itself, or the guest has the payment reversed by the bank
+     * (chargeback). The provider keeps calling the payment "paid".
+     *
+     * We ask the provider what went back in total and keep one refund row
+     * (without a provider id) for the part we did not refund ourselves. The
+     * stay is then no longer paid in full, so the check-in instructions and
+     * the door code wait (Booking::owesBalance), and the owner is told. If
+     * the bank later decides for the owner, the row goes again.
+     */
+    private function followReturnsOutsideTheSite(Payment $payment): void
+    {
+        try {
+            $returned = $this->provider->returnedCents($payment);
+        } catch (Throwable $e) {
+            report($e); // the next webhook asks again
 
-        return $refund;
+            return;
+        }
+
+        [$changed, $more] = DB::transaction(function () use ($payment, $returned): array {
+            $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+
+            $throughTheSite = (int) $payment->refunds()->whereNotNull('provider_payment_id')->sum('amount_cents');
+            $known = (int) $payment->refunds()->whereNull('provider_payment_id')->sum('amount_cents');
+            $outside = max(0, min($returned, $payment->amount_cents) - $throughTheSite);
+
+            if ($outside === $known) {
+                return [false, null];
+            }
+
+            $payment->refunds()->whereNull('provider_payment_id')->get()->each->delete();
+
+            if ($outside === 0) {
+                return [true, null];
+            }
+
+            $row = Payment::create([
+                'booking_id' => $payment->booking_id,
+                'type' => PaymentType::Refund,
+                'status' => PaymentTransactionStatus::Refunded,
+                'amount_cents' => $outside,
+                // A first payment that carried the deposit: the stay first, the rest is deposit.
+                'deposit_part_cents' => $payment->type === PaymentType::Deposit
+                    ? $outside
+                    : max(0, $outside - $payment->stayRefundableCents()),
+                'provider' => $this->provider->name(),
+                'test_mode' => $payment->test_mode,
+                'refunded_payment_id' => $payment->id,
+                'description' => "Returned outside the website: {$payment->description}",
+                'paid_at' => now(),
+            ]);
+
+            return [true, $outside > $known ? $row : null];
+        });
+
+        if ($changed) {
+            $this->applyPaymentToBooking($payment->booking);
+        }
+
+        if ($more !== null) {
+            Log::warning('A payment was returned to the guest outside the website', ['payment_id' => $payment->id, 'booking_id' => $payment->booking_id, 'cents' => $more->amount_cents]);
+            AdminNotifications::send(AdminNotification::PaymentReturned, $payment->booking, $more);
+        }
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Engines\Exceptions\InvalidCouponException;
 use App\Models\Concerns\GuardedOwnership;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -52,6 +53,24 @@ class Coupon extends Model
             ->whereRaw('upper(code) = ?', [$code])
             ->when($lock, fn ($query) => $query->lockForUpdate())
             ->first();
+    }
+
+    /**
+     * The coupon behind a code a guest entered, checked for this booking.
+     * One place for the page that shows the price and for the booking itself.
+     *
+     * @throws InvalidCouponException when the code does not exist or cannot be used
+     */
+    public static function usable(string $code, Property $property, CarbonImmutable $arrival, bool $lock = false): self
+    {
+        $coupon = static::search($code, $lock);
+        $reason = $coupon === null ? __('This coupon code does not exist.') : $coupon->invalidBecause($property, $arrival);
+
+        if ($reason !== null) {
+            throw new InvalidCouponException($reason);
+        }
+
+        return $coupon;
     }
 
     /**

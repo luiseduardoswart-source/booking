@@ -8,6 +8,7 @@ use App\Models\Discount;
 use App\Models\NightlyRate;
 use App\Models\Property;
 use App\Models\RateSeason;
+use App\Support\CalendarDay;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
@@ -30,8 +31,9 @@ class PricingEngine
         int $pets = 0,
         ?\App\Models\Coupon $coupon = null,
     ): Quote {
-        $arrival = $arrival->startOfDay();
-        $departure = $departure->startOfDay();
+        // Calendar days, not moments: the nights priced are the nights stored (see CalendarDay).
+        $arrival = CalendarDay::of($arrival);
+        $departure = CalendarDay::of($departure);
 
         if ($departure->lessThanOrEqualTo($arrival)) {
             throw new InvalidArgumentException('The check-out date must be after the check-in date.');
@@ -51,6 +53,13 @@ class PricingEngine
 
         // All amounts in the property's currency.
         $currency = $property->priceCurrency();
+
+        // Amounts, seasons, discounts and a coupon of the default are converted
+        // at the exchange rate. Without a rate Money::convert leaves the number
+        // as it is (euros read as pesos): better no price than a wrong one.
+        if (Money::exchangeRate(Money::defaultCurrency(), $currency) === null) {
+            throw new InvalidArgumentException(__('The price cannot be calculated right now. Please try again in a few minutes.'));
+        }
 
         // Fall back to the defaults: own seasons/discounts win;
         // if the property has none, those of the master record apply.
@@ -284,8 +293,8 @@ class PricingEngine
      */
     public function nightlyPriceMap(Property $property, CarbonImmutable $from, CarbonImmutable $to): array
     {
-        $from = $from->startOfDay();
-        $to = $to->startOfDay();
+        $from = CalendarDay::of($from);
+        $to = CalendarDay::of($to);
 
         $seasons = $this->seasons($property);
 

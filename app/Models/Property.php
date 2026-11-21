@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -36,6 +37,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'rental_terms_min_nights',
     'min_stay_nights', 'booking_window_months',
     'id_required', 'id_moment', 'id_deadline_days', 'id_reminder_days', 'id_overdue_action', 'id_cancel_refund', 'prices_in_calendar', 'discounts_add_up', 'pets_allowed', 'max_pets', 'max_babies',
+    'smoking', 'events_allowed', 'commercial_photography_allowed', 'quiet_hours_from', 'quiet_hours_until', 'lock_doors_on_departure',
     'down_payment_percentage', 'vat_percentage', 'pricing_service',
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
     'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund', 'deposit_moment',
@@ -137,6 +139,13 @@ class Property extends Model implements HasMedia
     public const ACCESS_FIXED = 'fixed';
 
     public const ACCESS_PHONE = 'phone';
+
+    /** House rule on smoking (vaping and e-cigarettes included): not allowed, allowed, or only outside. */
+    public const SMOKING_NO = 'no';
+
+    public const SMOKING_YES = 'yes';
+
+    public const SMOKING_OUTSIDE = 'outside';
 
     /** Codes and check-in details never leave the model by accident (JSON, API, logs). */
     protected $hidden = ['access_code', 'check_in_fields', 'check_in_values'];
@@ -893,6 +902,105 @@ class Property extends Model implements HasMedia
     }
 
     /**
+     * The fixed house rules as lines with an icon: check-in and check-out,
+     * guests, pets, smoking, parties, photography, quiet hours and the doors.
+     * Each as set here, otherwise as in the default; a rule nobody set has no
+     * line. The owner's own text (house_rules) comes after these. Without
+     * the times where they are already shown on their own (mails, PDF).
+     *
+     * @return list<array{icon: string, text: string, note: ?string}>
+     */
+    public function houseRuleLines(bool $times = true): array
+    {
+        // What effective() does, with the default fetched once instead of per rule.
+        $default = $this->is_master ? $this : static::master();
+        $value = fn (string $field): mixed => $this->{$field} ?? $default->{$field};
+        $time = fn (string $field): ?string => ($set = $value($field)) ? Carbon::parse($set)->format('H:i') : null;
+        $choice = fn (string $field): ?bool => ($set = $value($field)) === null ? null : (bool) $set;
+        $line = fn (string $icon, string $text, ?string $note = null): array => ['icon' => $icon, 'text' => $text, 'note' => $note];
+        $lines = [];
+
+        if ($times && $from = $time('check_in_from')) {
+            $lines[] = $line('log-in', ($until = $time('check_in_until'))
+                ? __('Check-in from :from until :until', ['from' => $from, 'until' => $until])
+                : __('Check-in from :time', ['time' => $from]));
+        }
+
+        if ($times && $out = $time('check_out_until')) {
+            // Just "Check-out", not "before" (see CheckInKindTest).
+            $lines[] = $line('log-out', __('Check-out: :time', ['time' => $out]));
+        }
+
+        if (! $this->is_master && $this->max_guests) {
+            $lines[] = $line('users', __('At most :count guests', ['count' => $this->max_guests]));
+        }
+
+        // Pets always have a rule: not set means not allowed (as petsAllowed() and maxPets()).
+        $lines[] = $value('pets_allowed')
+            ? $line('paw', __('Pets allowed (at most :count)', ['count' => (int) $value('max_pets')]))
+            : $line('paw-off', __('No pets'));
+
+        $lines[] = match ($value('smoking')) {
+            self::SMOKING_NO => $line('cigarette-off', __('No smoking'), __('Including vaping and e-cigarettes')),
+            self::SMOKING_YES => $line('cigarette', __('Smoking allowed')),
+            self::SMOKING_OUTSIDE => $line('cigarette', __('Smoking only outside'), __('Including vaping and e-cigarettes')),
+            default => null,
+        };
+
+        $lines[] = match ($choice('events_allowed')) {
+            false => $line('musical-note-off', __('No parties or events')),
+            true => $line('musical-note', __('Parties and events allowed')),
+            null => null,
+        };
+
+        $lines[] = match ($choice('commercial_photography_allowed')) {
+            false => $line('camera-off', __('No commercial photography'), __('Including commercial filming')),
+            true => $line('camera', __('Commercial photography allowed')),
+            null => null,
+        };
+
+        if (($quietFrom = $time('quiet_hours_from')) && ($quietUntil = $time('quiet_hours_until'))) {
+            $lines[] = $line('moon', __('Quiet hours from :from until :until', ['from' => $quietFrom, 'until' => $quietUntil]));
+        }
+
+        if ($choice('lock_doors_on_departure')) {
+            $lines[] = $line('key', __('Lock the doors when you leave'));
+        }
+
+        return array_values(array_filter($lines));
+    }
+
+    /**
+     * The owner's own rules (house_rules), one per line: without empty lines
+     * and without a bullet the owner typed ("-", "•", "*").
+     *
+     * @return list<string>
+     */
+    public function ownHouseRules(): array
+    {
+        return collect(preg_split('/\R/u', (string) $this->effectiveLocalized('house_rules')))
+            ->map(fn (string $line): string => trim((string) preg_replace('/^\s*[-•*]\s*/u', '', $line)))
+            ->filter(fn (string $line): bool => $line !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * The house rules as plain text: one rule per line, the fixed rules and
+     * then the owner's own. Null when there is nothing. For the conditions the
+     * guest accepts, the confirmation, the mails and the chat.
+     */
+    public function houseRulesText(bool $times = true): ?string
+    {
+        $lines = [
+            ...array_map(fn (array $rule) => $rule['text'].($rule['note'] ? ' ('.$rule['note'].')' : ''), $this->houseRuleLines($times)),
+            ...$this->ownHouseRules(),
+        ];
+
+        return $lines === [] ? null : '- '.implode("\n- ", $lines);
+    }
+
+    /**
      * The full text the guest accepts when booking:
      * rental terms (if they apply to this number of nights) + house rules +
      * cancellation terms. This text is frozen as a snapshot on the booking
@@ -906,8 +1014,8 @@ class Property extends Model implements HasMedia
             $share[] = __('Rental conditions')."\n".trim($this->effectiveLocalized('rental_terms'));
         }
 
-        if ($houseRules = $this->effectiveLocalized('house_rules')) {
-            $share[] = __('House rules')."\n".trim($houseRules);
+        if ($houseRules = $this->houseRulesText()) {
+            $share[] = __('House rules')."\n".$houseRules;
         }
 
         if (($rules = $this->cancellationPolicyLines()) !== []) {

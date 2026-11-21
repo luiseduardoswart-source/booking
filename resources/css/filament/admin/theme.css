@@ -5,6 +5,17 @@
 @source '../../../../resources/views/livewire';
 
 /* ---------------------------------------------------------------------------
+   A section without a frame (->contained(false)) is a grid without a column
+   width in Filament, so its column became as wide as its longest line: a
+   description that does not fit on one line ran off the screen. One column
+   as wide as the section, as in a framed one.
+   --------------------------------------------------------------------------- */
+.fi-section.fi-section-not-contained:not(.fi-aside),
+.fi-section.fi-section-not-contained:not(.fi-aside) > .fi-section-content-ctn {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* ---------------------------------------------------------------------------
    Draggable edge on the right of the sidebar (public/js/sidebar-width.js).
    Only on wide screens; below that the sidebar slides in and out.
    --------------------------------------------------------------------------- */

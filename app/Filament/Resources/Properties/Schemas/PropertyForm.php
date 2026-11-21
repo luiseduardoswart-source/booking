@@ -115,6 +115,23 @@ class PropertyForm
             ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (bool) (int) $state);
     }
 
+    /**
+     * A fixed house rule (smoking, parties...): empty follows the default
+     * on an accommodation, and on the defaults screen means not stated, so
+     * the rule is not shown. Yes/no rules are stored as true/false.
+     */
+    private static function ruleChoice(string $name, string $label, array $options, bool $yesNo = false): Select
+    {
+        return Select::make($name)
+            ->label($label)
+            ->options($options)
+            ->placeholder(fn (?Property $record) => $record?->is_master ? __('Not stated') : __('Follow the default'))
+            ->native(false)
+            ->when($yesNo, fn (Select $select) => $select
+                ->formatStateUsing(fn ($state) => $state === null ? null : ((int) $state ? '1' : '0'))
+                ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (bool) (int) $state));
+    }
+
     /** A choice that follows the default when empty; required on the defaults screen itself. */
     private static function inheritChoice(string $name, string $label, array $options): Select
     {
@@ -1174,31 +1191,6 @@ class PropertyForm
                                             ->visible(fn (callable $get) => $get('booking_window_preference') === 'adjusted'),
                                     ]),
 
-                                // What the house sleeps: its own number, so not on the defaults screen.
-                                Section::make(__('Guests'))
-                                    ->visible(fn (?Property $record) => ! $record?->is_master)
-                                    ->columns(3)
-                                    ->components([
-                                        TextInput::make('max_guests')
-                                            ->label(__('Max. guests'))
-                                            ->required()
-                                            ->numeric()
-                                            ->minValue(1)
-                                            ->default(2),
-                                    ]),
-
-                                Section::make(__('Pets and infants'))
-                                    ->description(__('May guests bring pets, and how many pets and infants may come along? Infants don\'t count towards the maximum number of guests. Set any pet fee under Prices.'))
-                                    ->columns(3)
-                                    ->components([
-                                        self::inheritToggle('pets_allowed', __('Pets allowed')),
-                                        self::defaultNumber('max_pets', __('Maximum number of pets'))
-                                            ->maxValue(20)
-                                            ->visible(fn (Get $get, ?Property $record): bool => $get('pets_allowed') !== '0'),
-                                        self::defaultNumber('max_babies', __('Maximum number of infants'))
-                                            ->maxValue(20),
-                                    ]),
-
                                 Section::make(__('Booking rules'))
                                     ->description(__('Rules without a period always apply; rules with a period only for arrivals within that period.'))
                                     ->components([
@@ -1243,29 +1235,22 @@ class PropertyForm
                                             ]),
                                     ]),
 
-                                Section::make(__('Rental conditions'))
-                                    ->key('rental_terms_section')
-                                    ->description(__('The guest must accept this text when booking (together with the house rules and cancellation policy). The accepted text is stored with the booking as proof.'))
-                                    ->headerActions([TranslationFields::uploadAction('rental_terms')])
+                                // Check-in and check-out: the times, the kind of check-in and the codes for the mails.
+                                Section::make(__('Check-in & check-out'))
+                                    ->columns(3)
                                     ->components([
-                                        TextInput::make('rental_terms_min_nights')
-                                            ->label(__('Apply from'))
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->suffix(__('nights'))
-                                            ->placeholder(fn (?Property $record) => $record?->is_master
-                                                ? '0'
-                                                : (string) ((int) (Property::master()->rental_terms_min_nights ?? 0)))
-                                            ->hint(fn (?Property $record) => $record?->is_master
-                                                ? __('0 or empty = for every booking')
-                                                : __('Empty = follow the default'))
-                                            ->helperText(__('For a shorter stay, only the house rules and cancellation policy apply, and the guest does not need to sign.')),
-                                        TranslationFields::languageSection(
-                                            __('Text'),
-                                            __('Choose a language. Empty = the English text.'),
-                                            ['rental_terms' => fn (string $path) => Textarea::make($path)->hiddenLabel()->rows(6)],
-                                            ['rental_terms'],
-                                        )->contained(false),
+                                        TimePicker::make('check_in_from')
+                                            ->label(__('Check-in from'))
+                                            ->seconds(false),
+                                        TimePicker::make('check_in_until')
+                                            ->label(__('Check-in until'))
+                                            ->seconds(false),
+                                        TimePicker::make('check_out_until')
+                                            ->label(__('Check-out (time)'))
+                                            ->seconds(false),
+                                        ...self::checkInFields(),
+                                        // Codes and details for the check-in mails belong with the check-in.
+                                        self::checkInDetails()->contained(false)->columnSpanFull(),
                                     ]),
 
                                 Section::make(__('ID verification'))
@@ -1298,6 +1283,61 @@ class PropertyForm
                                         ])
                                             ->visible(fn (Get $get, ?Property $record): bool => self::idCheckAfterPayment($get, $record)
                                                 && self::formOrDefault($get, $record, 'id_overdue_action') === Property::ID_OVERDUE_CANCEL),
+                                    ]),
+
+                                // What guests may and may not do: on the accommodation page and in the
+                                // conditions the guest accepts when booking.
+                                Section::make(__('House rules'))
+                                    ->description(__('Shown on the accommodation page and in the conditions the guest accepts when booking.'))
+                                    ->components([
+                                        Section::make(__('Guests and pets'))
+                                            ->description(__('May guests bring pets, and how many pets and infants may come along? Infants don\'t count towards the maximum number of guests. Set any pet fee under Prices.'))
+                                            ->contained(false)
+                                            ->columns(3)
+                                            ->components([
+                                                TextInput::make('max_guests')
+                                                    ->label(__('Max. guests'))
+                                                    ->required()
+                                                    ->numeric()
+                                                    ->minValue(1)
+                                                    ->default(2)
+                                                    // What the house sleeps: its own number, so not on the defaults screen.
+                                                    ->visible(fn (?Property $record) => ! $record?->is_master),
+                                                self::inheritToggle('pets_allowed', __('Pets allowed')),
+                                                self::defaultNumber('max_pets', __('Maximum number of pets'))
+                                                    ->maxValue(20)
+                                                    ->visible(fn (Get $get, ?Property $record): bool => $get('pets_allowed') !== '0'),
+                                                self::defaultNumber('max_babies', __('Maximum number of infants'))
+                                                    ->maxValue(20),
+                                            ]),
+                                        Section::make(__('During the stay'))
+                                            ->contained(false)
+                                            ->columns(3)
+                                            ->components([
+                                                self::ruleChoice('smoking', __('Smoking'), [
+                                                    Property::SMOKING_NO => __('Not allowed'),
+                                                    Property::SMOKING_OUTSIDE => __('Only outside'),
+                                                    Property::SMOKING_YES => __('Allowed'),
+                                                ])->helperText(__('Including vaping and e-cigarettes')),
+                                                self::ruleChoice('events_allowed', __('Parties and events'), ['0' => __('Not allowed'), '1' => __('Allowed')], yesNo: true),
+                                                self::ruleChoice('commercial_photography_allowed', __('Commercial photography and filming'), ['0' => __('Not allowed'), '1' => __('Allowed')], yesNo: true),
+                                                TimePicker::make('quiet_hours_from')
+                                                    ->label(__('Quiet hours from'))
+                                                    ->seconds(false)
+                                                    ->requiredWith('quiet_hours_until')
+                                                    ->hint(fn (?Property $record) => $record?->is_master ? null : __('Empty = follow the default')),
+                                                TimePicker::make('quiet_hours_until')
+                                                    ->label(__('Quiet hours until'))
+                                                    ->seconds(false)
+                                                    ->requiredWith('quiet_hours_from'),
+                                                self::ruleChoice('lock_doors_on_departure', __('Lock the doors when leaving'), ['1' => __('Yes'), '0' => __('No')], yesNo: true),
+                                            ]),
+                                        TranslationFields::languageSection(
+                                            __('Additional rules'),
+                                            __('Your own rules, below the fixed ones. Choose a language. Empty = the English text.'),
+                                            ['house_rules' => fn (string $path) => Textarea::make($path)->hiddenLabel()->rows(4)],
+                                            ['house_rules'],
+                                        )->contained(false),
                                     ]),
 
                                 Section::make(__('Cancellation policy'))
@@ -1374,27 +1414,29 @@ class PropertyForm
                                             )),
                                     ]),
 
-                                Section::make(__('House rules & times'))
-                                    ->columns(3)
+                                Section::make(__('Rental conditions'))
+                                    ->key('rental_terms_section')
+                                    ->description(__('The guest must accept this text when booking (together with the house rules and cancellation policy). The accepted text is stored with the booking as proof.'))
+                                    ->headerActions([TranslationFields::uploadAction('rental_terms')])
                                     ->components([
-                                        TimePicker::make('check_in_from')
-                                            ->label(__('Check-in from'))
-                                            ->seconds(false),
-                                        TimePicker::make('check_in_until')
-                                            ->label(__('Check-in until'))
-                                            ->seconds(false),
-                                        TimePicker::make('check_out_until')
-                                            ->label(__('Check-out (time)'))
-                                            ->seconds(false),
-                                        ...self::checkInFields(),
-                                        // Codes and details for the check-in mails belong with the check-in, above the house rules.
-                                        self::checkInDetails()->contained(false)->columnSpanFull(),
+                                        TextInput::make('rental_terms_min_nights')
+                                            ->label(__('Apply from'))
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->suffix(__('nights'))
+                                            ->placeholder(fn (?Property $record) => $record?->is_master
+                                                ? '0'
+                                                : (string) ((int) (Property::master()->rental_terms_min_nights ?? 0)))
+                                            ->hint(fn (?Property $record) => $record?->is_master
+                                                ? __('0 or empty = for every booking')
+                                                : __('Empty = follow the default'))
+                                            ->helperText(__('For a shorter stay, only the house rules and cancellation policy apply, and the guest does not need to sign.')),
                                         TranslationFields::languageSection(
-                                            __('House rules'),
+                                            __('Text'),
                                             __('Choose a language. Empty = the English text.'),
-                                            ['house_rules' => fn (string $path) => Textarea::make($path)->hiddenLabel()->rows(4)],
-                                            ['house_rules'],
-                                        )->contained(false)->columnSpanFull(),
+                                            ['rental_terms' => fn (string $path) => Textarea::make($path)->hiddenLabel()->rows(6)],
+                                            ['rental_terms'],
+                                        )->contained(false),
                                     ]),
                             ]);
     }

@@ -27,10 +27,10 @@
 
 @endif
 
-@if ($property->effectiveLocalized('house_rules'))
+@if ($houseRules = $property->houseRulesText(times: false))
 ## {{ __('House rules') }}
 
-{{ $property->effectiveLocalized('house_rules') }}
+{{ $houseRules }}
 @endif
 
 {{ __('We wish you a wonderful stay!') }}

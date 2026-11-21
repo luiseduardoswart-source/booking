@@ -64,9 +64,9 @@
         </tbody>
     </table>
 
-    @if ($booking->property->effectiveLocalized('house_rules'))
+    @if ($houseRules = $booking->property->houseRulesText(times: false))
         <h2>{{ __('House rules') }}</h2>
-        <p style="white-space: pre-line;">{{ $booking->property->effectiveLocalized('house_rules') }}</p>
+        <p style="white-space: pre-line;">{{ $houseRules }}</p>
     @endif
 
     @if ($booking->terms_snapshot)

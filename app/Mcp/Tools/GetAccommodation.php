@@ -72,6 +72,11 @@ class GetAccommodation extends BookingTool
                 'check_out_until' => $property->effective('check_out_until'),
                 'pets_allowed' => (bool) $property->effective('pets_allowed'),
             ],
+            // The house rules as guests see them (the own text is in texts.house_rules).
+            'house_rules' => array_map(
+                fn (array $rule) => $rule['text'].($rule['note'] ? " ({$rule['note']})" : ''),
+                $property->houseRuleLines(times: false),
+            ),
             'amenities' => $property->amenities()->pluck('name')->all(),
             'photos' => $property->gallery()->count(),
         ]);

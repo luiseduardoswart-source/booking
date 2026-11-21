@@ -162,11 +162,29 @@
                     </div>
                 @endif
 
-                {{-- House rules --}}
-                @if ($property->effectiveLocalized('house_rules'))
+                {{-- House rules: the fixed rules with their icon, then the owner's own, in one list --}}
+                @php
+                    $houseRules = [
+                        ...$property->houseRuleLines(),
+                        ...array_map(fn (string $own) => ['icon' => 'information-circle', 'text' => $own, 'note' => null], $property->ownHouseRules()),
+                    ];
+                @endphp
+                @if ($houseRules !== [])
                     <div class="mt-8 border-t border-stone-200 pt-8">
                         <h2 class="text-xl font-semibold text-stone-900">{{ __('House rules') }}</h2>
-                        <p class="mt-3 whitespace-pre-line text-stone-700">{{ $property->effectiveLocalized('house_rules') }}</p>
+                        <ul class="mt-4 grid gap-4 text-stone-700 sm:grid-cols-2">
+                            @foreach ($houseRules as $rule)
+                                <li class="flex items-start gap-3">
+                                    <x-site-icon :name="$rule['icon']" class="h-6 w-6 shrink-0 text-stone-700" />
+                                    <span>
+                                        {{ $rule['text'] }}
+                                        @if ($rule['note'])
+                                            <span class="block text-sm text-stone-500">{{ $rule['note'] }}</span>
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endif
 

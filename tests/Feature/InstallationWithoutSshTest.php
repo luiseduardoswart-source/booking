@@ -195,6 +195,28 @@ class InstallationWithoutSshTest extends TestCase
         $this->assertFalse(MailSettings::sends());
     }
 
+    /**
+     * The mailbox in the .env, as on a server installed with SSH: the sender
+     * name is still the company name, not APP_NAME ("Laravel").
+     */
+    public function test_with_the_mailbox_in_the_env_the_sender_is_the_company(): void
+    {
+        config(['mail.default' => 'smtp', 'mail.from.name' => 'Laravel', 'mail.from.address' => 'hello@example.com']);
+        Setting::set('company', 'name', 'Devanii Apartments');
+
+        $this->fresh();
+
+        $this->assertSame('Devanii Apartments', config('mail.from.name'));
+        $this->assertSame('hello@example.com', config('mail.from.address')); // the .env address stays
+        $this->assertSame('smtp', config('mail.default'));
+
+        // Without a company name the .env name stays.
+        config(['mail.from.name' => 'Laravel']);
+        Setting::set('company', 'name', null);
+        $this->fresh();
+        $this->assertSame('Laravel', config('mail.from.name'));
+    }
+
     public function test_the_mailbox_off_the_admin_is_used(): void
     {
         $this->mailbox();

@@ -43,6 +43,12 @@ final class MailSettings
 
     public static function apply(?MailManager $manager = null): void
     {
+        // The sender name is the company name, also when the mailbox itself
+        // is in the .env: otherwise mails come from APP_NAME ("Laravel").
+        if (filled($company = Setting::get('company', 'name'))) {
+            config(['mail.from.name' => $company]);
+        }
+
         if (! self::configured()) {
             return;
         }

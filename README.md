@@ -588,7 +588,8 @@ How the zip installation works:
   shows old pages.
 - Mail settings from the admin panel (`App\Support\MailSettings`) override
   the `MAIL_` lines in `.env`. They are applied when the mailer is created, so
-  they never end up in the `config:cache` file.
+  they never end up in the `config:cache` file. The sender name is always the
+  company name (Settings → Company), also when the mailbox is in `.env`.
 
 Shared hosting usually blocks `proc_open`, `exec` and `symlink`. That is why:
 

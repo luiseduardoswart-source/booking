@@ -250,6 +250,8 @@ English ones.
 3. **Settings → Company:** your company details.
 4. **Settings → Keys:** choose your payment provider (Mollie or Stripe) and
    paste its key. Keys for translation, AI and dynamic pricing go here too.
+   With Stripe, also set up the webhook: see "Stripe: set up the webhook"
+   below. Mollie needs nothing more.
 5. **Accommodations:** set your defaults, then add your first accommodation, or
    import it from a link.
 
@@ -389,14 +391,55 @@ At the next login you set it up again.
   transfer), gets them as usual.
 - **Money that went back.** If a guest has a payment reversed by the bank,
   or you refund at Mollie or Stripe itself, the website books it as returned
-  and emails you. With Stripe this needs the webhook secret under
-  **Settings → Keys** and these events on the webhook: `charge.refunded`,
-  `charge.dispute.created`, `charge.dispute.funds_withdrawn`,
-  `charge.dispute.funds_reinstated` and `charge.dispute.closed`. Mollie
-  reports it by itself.
+  and emails you. Mollie reports it by itself; Stripe needs the webhook
+  (see "Stripe: set up the webhook" below).
 - **The payment page cannot be opened** (the provider is down, or refuses the
   amount or currency): the guest gets a page to try again. The booking is
   not confirmed and gives its dates back after 60 minutes.
+
+### Stripe: set up the webhook
+
+Stripe tells the website when something happens to a payment by sending a
+message (a webhook). It only sends the kinds of messages you tick. Without
+this, a payment is still confirmed when the guest returns from the payment
+page, but the website never hears about a payment that completes later, a
+refund made at Stripe, or a payment the guest's bank reverses. Mollie needs
+none of this.
+
+In the Stripe dashboard (the names are those of Stripe's English screens):
+
+1. Open **Workbench → Webhooks** and click **Create an event destination**.
+2. Choose **Your account**.
+3. Payload format: choose **Snapshot**, not Thin. The website reads the
+   payment from the message itself, and a Thin message does not contain it.
+   Leave the suggested API version.
+4. Tick these events (open the group with the arrow, or type the name in
+   the search field):
+   - **Checkout**: `checkout.session.completed`,
+     `checkout.session.async_payment_succeeded`,
+     `checkout.session.async_payment_failed`, `checkout.session.expired`
+   - **Charge**: `charge.refunded`, `charge.dispute.created`,
+     `charge.dispute.funds_withdrawn`, `charge.dispute.funds_reinstated`,
+     `charge.dispute.closed`
+   - **Identity**, only if you use the ID check:
+     `identity.verification_session.verified`,
+     `identity.verification_session.requires_input`,
+     `identity.verification_session.canceled`
+5. Click **Continue** and choose **Webhook endpoint**.
+6. **Destination name**: any name you like. **Endpoint URL**: your
+   website's address followed by `/webhooks/stripe`, exactly as your site
+   opens in the browser, for example
+   `https://www.example.com/webhooks/stripe`. With or without `www` matters:
+   if the site redirects, Stripe counts every message as failed.
+7. On the page of the new webhook, click **Reveal** at **Signing secret**
+   and copy the code that starts with `whsec_`.
+8. In the admin panel, paste it at **Settings → Keys → Stripe webhook
+   secret** and save. Without it the website ignores messages about
+   refunds and disputes, so nobody can fake one.
+
+Check it under **Event deliveries** of the webhook in Stripe: every message
+should show **200**. While the website is closed with `php artisan down`,
+Stripe gets a 503 and tries again for up to three days.
 
 ### Emails not arriving?
 

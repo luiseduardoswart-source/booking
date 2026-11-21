@@ -576,19 +576,16 @@ Vite together. `php artisan schedule:work` runs the scheduled tasks locally.
 
 ### Tests
 
-Two suites: SQLite (fast) and MariaDB (same as production). Run them **one after
-the other, never at the same time**, because they share the folder for fake
-storage.
+The tests run on MariaDB, the same database as production, so the Docker
+database has to be running (`docker compose up -d`):
 
 ```bash
 php artisan test
 ```
-```bash
-composer test:mysql
-```
 
-The MariaDB suite always uses `airbnb_test` and empties it on every run. Never
-point it at the database of your local site.
+The suite always uses `airbnb_test` and empties it on every run. Never point
+it at the database of your local site. Do not run two test runs at the same
+time: they share that database and the folder for fake storage.
 
 ### Deploying changes
 

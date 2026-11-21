@@ -159,7 +159,7 @@ class InstallationWithoutSshTest extends TestCase
     {
         $exportIgnore = fn (string $path): bool => str_ends_with(trim((string) shell_exec('git -C '.escapeshellarg(base_path()).' check-attr export-ignore -- '.escapeshellarg($path))), ': set');
 
-        foreach (['tests', 'docker', 'compose.yaml', 'phpunit.xml', 'phpunit.mysql.xml'] as $path) {
+        foreach (['tests', 'docker', 'compose.yaml', 'phpunit.xml'] as $path) {
             $this->assertTrue($exportIgnore($path), "$path does not belong in the zip package");
         }
 

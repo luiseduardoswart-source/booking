@@ -148,7 +148,7 @@
             @endif
 
             <div class="flex items-center gap-2">
-            {{-- Currency picker (display only; payment stays in euros) --}}
+            {{-- Currency picker (display only; payment stays in the accommodation's currency) --}}
             @php
                 $currencyPickerOn = \App\Models\Setting::get('site', 'currency_picker', '0') === '1';
                 $availableCurrencies = $currencyPickerOn ? \App\Support\Money::availableCurrencies() : [];
@@ -159,8 +159,7 @@
             @if ($currencyPickerOn && count($availableCurrencies) > 1)
                 <details class="relative">
                     <summary class="flex cursor-pointer select-none items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1.5 text-sm font-medium transition hover:shadow [&::-webkit-details-marker]:hidden">
-                        @php $symbolFor = fn (string $code) => (($s = \App\Support\Currencies::symbol($code)) !== null && $s !== $code) ? $s : null; @endphp
-                        {{ $activeCurrency }} {{ $symbolFor($activeCurrency) }}
+                        {{ $activeCurrency }} {{ \App\Support\Currencies::shortSymbol($activeCurrency) }}
                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
                     </summary>
                     {{-- Height follows the screen: never past the bottom edge, always scrollable --}}
@@ -172,7 +171,7 @@
                             @endif
                             <a href="{{ route('currency.switch', $currencyCode) }}"
                                class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition hover:bg-stone-100 {{ $activeCurrency === $currencyCode ? 'font-bold text-rose-600' : 'text-stone-700' }}">
-                                <span>{{ $currencyCode }} {{ $symbolFor($currencyCode) }}</span>
+                                <span>{{ $currencyCode }} {{ \App\Support\Currencies::shortSymbol($currencyCode) }}</span>
                                 @if ($activeCurrency === $currencyCode)<span>✓</span>@endif
                             </a>
                         @endforeach

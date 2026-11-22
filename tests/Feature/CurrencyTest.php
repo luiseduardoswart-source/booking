@@ -156,6 +156,27 @@ class CurrencyTest extends TestCase
             ->assertDontSee(route('currency.switch', 'USD'));
     }
 
+    public function test_the_picker_shows_a_short_symbol_next_to_every_currency_that_has_one(): void
+    {
+        Http::fake([
+            'open.er-api.com/*' => Http::response(['result' => 'success', 'rates' => [
+                'CHF' => 0.95, 'COP' => 4500.0, 'JPY' => 160.0, 'USD' => 1.10,
+            ]]),
+            'cdn.jsdelivr.net/*' => Http::response(null, 500),
+        ]);
+        Setting::set('site', 'currency_picker', '1');
+
+        // Spanish has no short symbols of its own: "US$" and a bare "JPY" before.
+        $this->withoutVite()->get('/es/contact')->assertOk()
+            ->assertSee('<span>USD $</span>', false)
+            ->assertSee('<span>JPY ¥</span>', false)
+            ->assertSee('<span>COP $</span>', false)
+            ->assertSee('<span>EUR €</span>', false)
+            ->assertDontSee('US$')
+            // No symbol in the international data: only the code.
+            ->assertSee('<span>CHF </span>', false);
+    }
+
     public function test_the_most_used_currencies_are_at_the_top_then_a_line_then_alphabetical(): void
     {
         Http::fake([

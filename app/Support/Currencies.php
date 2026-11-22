@@ -118,6 +118,35 @@ class Currencies
     }
 
     /**
+     * The short symbol for next to the code ("USD $", "JPY ¥"), or null if the
+     * currency has none (CHF, AED). Unlike symbol() it does not tell currencies
+     * apart ("US$", "MX$"), so it never stands without the code. Languages
+     * without one of their own use the international one.
+     */
+    public static function shortSymbol(string $code): ?string
+    {
+        if (! extension_loaded('intl')) {
+            return null;
+        }
+
+        $code = strtoupper($code);
+
+        foreach ([app()->getLocale(), 'root'] as $locale) {
+            try {
+                $symbol = \ResourceBundle::create($locale, 'ICUDATA-curr')?->get('Currencies%narrow')?->get($code);
+            } catch (\Throwable) {
+                $symbol = null;
+            }
+
+            if (is_string($symbol) && $symbol !== '' && $symbol !== $code) {
+                return $symbol;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return array{symbol: ?string, name: ?string}
      */
     private static function icuDetails(string $code): array

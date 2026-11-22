@@ -90,6 +90,44 @@ class ClearTestBookingsTest extends TestCase
         $this->assertTrue((new StripeProvider)->isTestMode());
         Setting::set('payments', 'stripe_secret_key', 'sk_live_abc');
         $this->assertFalse((new StripeProvider)->isTestMode());
+
+        // Without a key no real money can move either.
+        Setting::set('payments', 'mollie_api_key', '');
+        $this->assertTrue((new MollieProvider)->isTestMode());
+        Setting::set('payments', 'stripe_secret_key', '');
+        $this->assertTrue((new StripeProvider)->isTestMode());
+    }
+
+    /** Mollie without a key (or in a currency it does not charge in): no half payment stays behind. */
+    public function test_a_payment_the_provider_refuses_leaves_nothing_behind(): void
+    {
+        $booking = $this->paidBooking();
+        $before = Payment::count();
+        $this->app->instance(PaymentProvider::class, new MollieProvider);
+        Setting::set('payments', 'mollie_api_key', '');
+
+        try {
+            app(PaymentEngine::class)->createPayment($booking, PaymentType::Balance);
+            $this->fail('Mollie without a key must refuse.');
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertSame($before, Payment::count());
+    }
+
+    /** Left behind before that was fixed: never reached the provider, so never real money. */
+    public function test_a_payment_that_never_reached_the_provider_does_not_stop_the_clearing(): void
+    {
+        $this->paidBooking()->payments()->create([
+            'type' => PaymentType::Balance, 'status' => \App\Enums\PaymentTransactionStatus::Open,
+            'amount_cents' => 181800000, 'provider' => 'mollie', 'test_mode' => false,
+        ]);
+
+        $this->artisan('bookings:clear-test-data')
+            ->expectsConfirmation('Delete all of this permanently?', 'yes')
+            ->assertSuccessful();
+
+        $this->assertSame(0, Payment::count());
     }
 
     public function test_it_shows_what_goes_and_removes_nothing_without_a_yes(): void

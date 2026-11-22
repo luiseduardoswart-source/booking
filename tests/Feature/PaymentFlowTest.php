@@ -115,4 +115,24 @@ class PaymentFlowTest extends TestCase
     {
         $this->post('/webhooks/mollie', ['id' => 'tr_exists_not'])->assertOk();
     }
+
+    /**
+     * Closed with `php artisan down` to test before going live: the payment
+     * providers must still reach the site, or refunds and disputes of those
+     * test bookings never arrive.
+     */
+    public function test_webhooks_arrive_while_the_site_is_closed(): void
+    {
+        [, $payment] = $this->makeBookingWithPayment();
+        $payment->update(['provider' => 'mollie']);
+        $this->provider->setStatus($payment->provider_payment_id, ProviderPaymentStatus::Paid);
+
+        $this->app->instance(\Illuminate\Contracts\Foundation\MaintenanceMode::class, new \Illuminate\Foundation\CacheBasedMaintenanceMode(app('cache'), 'array', 'site-closed'));
+        $this->app->maintenanceMode()->activate([]);
+
+        $this->get('/')->assertStatus(503);
+        $this->post('/webhooks/mollie', ['id' => $payment->provider_payment_id])->assertOk();
+        $this->assertSame(PaymentTransactionStatus::Paid, $payment->refresh()->status);
+        $this->postJson('/webhooks/stripe', ['type' => 'charge.refunded'])->assertStatus(200);
+    }
 }

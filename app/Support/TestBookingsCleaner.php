@@ -31,10 +31,16 @@ class TestBookingsCleaner
         return collect(self::TABLES)->mapWithKeys(fn (string $table) => [$table => DB::table($table)->count()])->all();
     }
 
-    /** Payments made with a live key: real money, so these are never cleared. */
+    /**
+     * Payments made with a live key: real money, so these are never cleared.
+     * One the provider never received (no id of its own) moved no money.
+     */
     public function livePayments(): Collection
     {
-        return Payment::query()->with('booking:id,booking_number')->where('test_mode', false)->get();
+        return Payment::query()->with('booking:id,booking_number')
+            ->where('test_mode', false)
+            ->whereNotNull('provider_payment_id')
+            ->get();
     }
 
     /** Payments from before the test key was remembered; only the owner knows. */

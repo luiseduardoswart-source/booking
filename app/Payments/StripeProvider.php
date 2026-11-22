@@ -21,10 +21,14 @@ class StripeProvider implements PaymentProvider
         return filled(Setting::get('payments', 'stripe_secret_key'));
     }
 
-    /** Stripe test keys are sk_test_ (or restricted rk_test_), live keys sk_live_. */
+    /**
+     * Stripe test keys are sk_test_ (or restricted rk_test_), live keys
+     * sk_live_ (rk_live_). Only a live key moves real money; without a key
+     * nothing moves at all.
+     */
     public function isTestMode(): bool
     {
-        return (bool) preg_match('/^(sk|rk)_test_/', (string) Setting::get('payments', 'stripe_secret_key'));
+        return ! preg_match('/^(sk|rk)_live_/', (string) Setting::get('payments', 'stripe_secret_key'));
     }
 
     /** Currencies without decimals: the amount is in whole units (500 = ¥500). */

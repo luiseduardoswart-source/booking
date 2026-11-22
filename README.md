@@ -321,9 +321,10 @@ php artisan down --secret=your-secret-word
 Visitors now see "Service Unavailable". Open
 `https://your-domain/your-secret-word` once yourself: your browser then sees
 the website and the admin panel as usual. While the website is closed,
-bookings, emails and the automatic tasks keep working, and a test payment is
-confirmed as soon as you return from the payment page. The dashboard reminds
-you that the website is closed.
+bookings, emails and the automatic tasks keep working, and the messages of
+Mollie and Stripe (webhooks) still arrive, so payments, refunds and disputes
+of your test bookings come through. The dashboard reminds you that the website
+is closed.
 
 When everything is ready, remove the test bookings (see below) and open the
 website:
@@ -351,7 +352,8 @@ It first shows what it will remove and asks for confirmation:
 - kept: properties, prices, settings, pages, users and blocked dates.
 
 It refuses when a real payment (made with a live Mollie or Stripe key) is among
-them. Payments made before the website remembered this are listed, and it asks
+them. A payment that never reached Mollie or Stripe, for example because no key
+was filled in yet, moved no money and does not count. Payments made before the website remembered this are listed, and it asks
 whether they were all test payments. A real booking that has not been paid yet
 cannot be told apart from a test booking, so run it just before going live, not
 after.
@@ -438,8 +440,8 @@ In the Stripe dashboard (the names are those of Stripe's English screens):
    refunds and disputes, so nobody can fake one.
 
 Check it under **Event deliveries** of the webhook in Stripe: every message
-should show **200**. While the website is closed with `php artisan down`,
-Stripe gets a 503 and tries again for up to three days.
+should show **200**, also while the website is closed with
+`php artisan down`.
 
 ### Being found in Google
 

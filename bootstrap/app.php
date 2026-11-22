@@ -32,6 +32,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'track/*',
         ]);
 
+        // Closed with `php artisan down` to test before going live: the
+        // payment providers still reach the site, so payments, refunds and
+        // disputes of those test bookings arrive. They prove nothing
+        // themselves; the site asks the provider (see PaymentWebhookController).
+        $middleware->preventRequestsDuringMaintenance(except: [
+            'webhooks/*',
+        ]);
+
         // The cookie consent is set client-side (unencrypted) and read
         // server-side, so do not encrypt that cookie.
         $middleware->encryptCookies(except: ['cookie_consent']);

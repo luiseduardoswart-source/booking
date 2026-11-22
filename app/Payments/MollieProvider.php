@@ -21,10 +21,13 @@ class MollieProvider implements PaymentProvider
         return filled(Setting::get('payments', 'mollie_api_key'));
     }
 
-    /** Mollie test keys start with test_, live keys with live_. */
+    /**
+     * Mollie test keys start with test_, live keys with live_. Only a live key
+     * moves real money; without a key nothing moves at all.
+     */
     public function isTestMode(): bool
     {
-        return str_starts_with((string) Setting::get('payments', 'mollie_api_key'), 'test_');
+        return ! str_starts_with((string) Setting::get('payments', 'mollie_api_key'), 'live_');
     }
 
     /**

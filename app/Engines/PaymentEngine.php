@@ -83,30 +83,34 @@ class PaymentEngine
             return $existing;
         }
 
-        $payment = Payment::create([
-            'booking_id' => $booking->id,
-            'type' => $type,
-            'status' => PaymentTransactionStatus::Open,
-            'amount_cents' => $amountCents,
-            'deposit_part_cents' => $depositPartCents,
-            'provider' => $this->provider->name(),
-            'test_mode' => $this->provider->isTestMode(),
-            'description' => $depositPartCents > 0
-                ? "{$booking->paymentKind($type)} + ".PaymentType::Deposit->label()." {$booking->booking_number}"
-                : "{$booking->paymentKind($type)} {$booking->booking_number}",
-        ]);
+        // In one transaction: when the provider refuses (no key, a currency it
+        // does not charge in), no half payment without a link stays behind.
+        return DB::transaction(function () use ($booking, $type, $amountCents, $depositPartCents): Payment {
+            $payment = Payment::create([
+                'booking_id' => $booking->id,
+                'type' => $type,
+                'status' => PaymentTransactionStatus::Open,
+                'amount_cents' => $amountCents,
+                'deposit_part_cents' => $depositPartCents,
+                'provider' => $this->provider->name(),
+                'test_mode' => $this->provider->isTestMode(),
+                'description' => $depositPartCents > 0
+                    ? "{$booking->paymentKind($type)} + ".PaymentType::Deposit->label()." {$booking->booking_number}"
+                    : "{$booking->paymentKind($type)} {$booking->booking_number}",
+            ]);
 
-        $result = $this->provider->create(
-            $payment,
-            redirectUrl: $payment->returnUrl(),
-        );
+            $result = $this->provider->create(
+                $payment,
+                redirectUrl: $payment->returnUrl(),
+            );
 
-        $payment->update([
-            'provider_payment_id' => $result->providerPaymentId,
-            'checkout_url' => $result->checkoutUrl,
-        ]);
+            $payment->update([
+                'provider_payment_id' => $result->providerPaymentId,
+                'checkout_url' => $result->checkoutUrl,
+            ]);
 
-        return $payment;
+            return $payment;
+        });
     }
 
     /**

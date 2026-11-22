@@ -94,6 +94,7 @@ class SiteTest extends TestCase
 
     public function test_main_domain_directly_shows_the_accommodation_if_there_is_only_one(): void
     {
+        Setting::set('site', 'single_accommodation_direct', '1'); // the default on a real site
         $this->makeProperty();
 
         // No redirect: the accommodation itself is at "/".

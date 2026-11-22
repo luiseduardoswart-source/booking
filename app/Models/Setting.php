@@ -95,6 +95,8 @@ class Setting extends Model
     {
         Cache::forget(self::ALL);
         RequestMemory::forgets(self::ALL);
+        // "Show one accommodation on the main domain" may have changed.
+        \App\Support\LocalizedUrl::forgetHomeProperty();
     }
 
     /**

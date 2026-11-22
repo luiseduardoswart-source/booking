@@ -18,9 +18,8 @@ class SiteController extends Controller
         // One accommodation? Then the main domain shows the property itself
         // (no redirect — the URL simply stays "/"). Can be turned off via
         // admin → Settings → Website.
-        if (\App\Models\Setting::get('site', 'single_accommodation_direct', '1') !== '0'
-            && Property::query()->where('active', true)->count() === 1) {
-            return $this->show(Property::query()->where('active', true)->first());
+        if (($homeProperty = \App\Support\LocalizedUrl::homeProperty()) !== null) {
+            return $this->show($homeProperty);
         }
 
         $validated = $request->validate([

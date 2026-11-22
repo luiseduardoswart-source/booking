@@ -40,6 +40,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -585,8 +586,17 @@ class Settings extends Page implements HasActions, HasForms
                                         ]),
                                     ]),
                                 Section::make(__('Search engines (SEO)'))
-                                    ->description(__('How the home page appears in Google, per language. Empty title = the company name; empty description = the tagline. Accommodations and pages have their own fields.'))
+                                    ->description(__('Only for the home page, the overview of all accommodations: how it appears in Google, per language. Empty title = the company name; empty description = the tagline. Accommodations and pages have their own title and description, on their Presentation & SEO tab.'))
                                     ->components([
+                                        // One accommodation on the main domain: Google gets its texts, not these.
+                                        Placeholder::make('seo_home_unused')
+                                            ->hiddenLabel()
+                                            ->content(fn () => ($home = \App\Support\LocalizedUrl::homeProperty()) === null ? null : new \Illuminate\Support\HtmlString(
+                                                '<strong>'.e(__('Your main domain shows your accommodation now.')).'</strong> '
+                                                .e(__('Google therefore uses the Meta title and Meta description of that accommodation (tab Presentation & SEO). These fields only count once you have a second accommodation or switch off the setting below.'))
+                                                .' <a href="'.e(\App\Filament\Resources\Properties\PropertyResource::getUrl('edit', ['record' => $home])).'" class="underline">'.e(__('Open :name', ['name' => $home->name])).'</a>'
+                                            ))
+                                            ->visible(fn () => \App\Support\LocalizedUrl::homeProperty() !== null),
                                         TranslationFields::languageTabs('seo_home', fn (string $locale) => [
                                             TextInput::make("seo_home_title_{$locale}")
                                                 ->label(__('Title of the home page'))
@@ -598,12 +608,11 @@ class Settings extends Page implements HasActions, HasForms
                                                 ->maxLength(200)
                                                 ->hint(__('About 150 characters')),
                                         ]),
-                                        FileUpload::make('seo_share_image')
+                                        // From the media library, so a photo that is already there is not stored twice.
+                                        ViewField::make('seo_share_image')
                                             ->label(__('Photo for shared links'))
                                             ->helperText(__('Shown when someone shares a link to the home page or contact on WhatsApp, Facebook or X. An accommodation shows its own main photo. Best 1200 × 630 pixels.'))
-                                            ->disk('public')
-                                            ->directory('branding')
-                                            ->image(),
+                                            ->view('filament.forms.media-image'),
                                     ]),
                                 self::directSetting(Toggle::make('site_single_accommodation_direct')
                                     ->label(__('With one accommodation: show it directly on the main domain'))

@@ -159,5 +159,12 @@ class AppServiceProvider extends ServiceProvider
             fn (): string => \App\Filament\Pages\MediaManager::canAccess() ? view('filament.partials.media-assets')->render() : '',
             scopes: [\App\Filament\Resources\Properties\Pages\EditProperty::class],
         );
+
+        // The media picker for the photo for shared links (Settings → Website).
+        \Filament\Support\Facades\FilamentView::registerRenderHook(
+            \Filament\View\PanelsRenderHook::BODY_END,
+            fn (): string => view('filament.partials.media-assets')->render(),
+            scopes: [\App\Filament\Pages\Settings::class],
+        );
     }
 }

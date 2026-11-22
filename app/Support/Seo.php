@@ -68,7 +68,7 @@ final class Seo
         $candidates = [
             fn () => $property?->coverPhotoUrl('large'),
             fn () => media_url($page?->hero_images[0]['image'] ?? null),
-            fn () => ($path = Setting::get('seo', 'share_image')) ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null,
+            fn () => media_url(Setting::get('seo', 'share_image')),
             fn () => Property::query()->where('active', true)->orderBy('id')->first()?->coverPhotoUrl('large'),
             fn () => ($logo = Setting::get('branding', 'logo')) ? \Illuminate\Support\Facades\Storage::disk('public')->url($logo) : null,
         ];
@@ -197,7 +197,7 @@ final class Seo
         return [
             '@context' => 'https://schema.org',
             '@type' => 'BreadcrumbList',
-            'itemListElement' => collect($trail)->map(fn (string $url, string $name) => [
+            'itemListElement' => collect($trail)->unique()->map(fn (string $url, string $name) => [
                 '@type' => 'ListItem',
                 'position' => ++$position,
                 'name' => $name,

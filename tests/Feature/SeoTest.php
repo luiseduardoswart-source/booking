@@ -62,6 +62,58 @@ class SeoTest extends TestCase
         return collect($blocks)->first(fn (array $block) => ($block['@type'] ?? null) === $type);
     }
 
+    /**
+     * One accommodation, shown on the main domain (the default setting): the
+     * main domain is its address. Its own address moves there for good, so
+     * Google sees the page once instead of twice.
+     */
+    /** The home page texts in the settings say when Google does not use them. */
+    public function test_the_settings_say_when_the_main_domain_shows_the_accommodation(): void
+    {
+        $owner = User::factory()->create(['role' => UserRole::Administrator]);
+        $notice = __('Your main domain shows your accommodation now.');
+        $this->accommodation();
+
+        Setting::set('site', 'single_accommodation_direct', '1');
+        Livewire::actingAs($owner)->test(Settings::class)->assertSee($notice)->assertSee(__('Open :name', ['name' => 'Strandhuis']));
+
+        // Switched off, or a second accommodation: the fields count again.
+        Setting::set('site', 'single_accommodation_direct', '0');
+        Livewire::actingAs($owner)->test(Settings::class)->assertDontSee($notice);
+
+        Setting::set('site', 'single_accommodation_direct', '1');
+        $this->accommodation(['slug' => 'second', 'name' => 'Second', 'slug_translations' => null, 'name_translations' => null]);
+        Livewire::actingAs($owner)->test(Settings::class)->assertDontSee($notice);
+    }
+
+    public function test_with_one_accommodation_on_the_main_domain_that_is_its_only_address(): void
+    {
+        Setting::set('site', 'single_accommodation_direct', '1'); // the default on a real site
+        $this->accommodation();
+
+        $this->get('/strandhuis?guests=2')->assertStatus(301)->assertRedirect(url('/').'?guests=2');
+        $this->get('/es/casa-frente-al-mar')->assertStatus(301)->assertRedirect(url('es'));
+
+        $this->flushSession();
+        $html = $this->get('/')->assertOk()
+            ->assertSee('<link rel="canonical" href="'.url('/').'">', false)
+            ->assertSee('<meta property="og:url" content="'.url('/').'">', false)
+            ->assertSee('hreflang="es" href="'.url('es').'"', false)
+            ->getContent();
+        $this->assertSame(url('/'), $this->ofType($this->structuredData($html), 'VacationRental')['url']);
+
+        $sitemap = $this->get('/sitemap.xml')->getContent();
+        $this->assertStringNotContainsString('strandhuis', $sitemap);
+        $this->assertSame(1, substr_count($sitemap, '<loc>'.url('/').'</loc>'));
+
+        // Switched off, or a second accommodation: each has its own address again.
+        Setting::set('site', 'single_accommodation_direct', '0');
+        $this->get('/strandhuis')->assertOk();
+        Setting::set('site', 'single_accommodation_direct', '1');
+        $this->accommodation(['slug' => 'second', 'name' => 'Second', 'slug_translations' => null, 'name_translations' => null]);
+        $this->get('/strandhuis')->assertOk();
+    }
+
     public function test_the_sitemap_lists_every_public_page_in_every_language(): void
     {
         $this->accommodation();
@@ -199,6 +251,26 @@ class SeoTest extends TestCase
 
         $this->assertSame('Apartments in Cartagena', Setting::get('seo', 'home_title_en'));
         $this->assertSame('Book directly', Setting::get('seo', 'home_description_en'));
+    }
+
+    /** The share photo comes from the media library: no second copy of a photo that is already there. */
+    public function test_the_share_photo_is_chosen_from_the_media_library(): void
+    {
+        $owner = User::factory()->create(['role' => UserRole::Administrator]);
+
+        Livewire::actingAs($owner)->test(Settings::class)
+            ->assertSeeHtml('data-media-image')
+            ->assertSee(__('Choose from the media library'))
+            ->fillForm(['seo_share_image' => 'media/beach.jpg'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('media/beach.jpg', Setting::get('seo', 'share_image'));
+
+        // The media library's scripts and windows come along on the settings page.
+        $this->actingAs($owner)->get(Settings::getUrl())->assertOk()->assertSee('id="media-modal"', false);
+
+        $this->get('/contact')->assertSee('<meta property="og:image" content="'.asset('storage/media/beach.jpg').'">', false);
     }
 
     public function test_photos_lower_on_the_page_load_when_they_come_into_view(): void

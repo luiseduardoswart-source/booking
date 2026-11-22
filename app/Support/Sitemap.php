@@ -24,9 +24,12 @@ final class Sitemap
         $xml->writeAttribute('xmlns:xhtml', 'http://www.w3.org/1999/xhtml');
 
         $properties = Property::query()->where('active', true)->orderBy('id')->get();
+        // The accommodation on the main domain is the home page: not twice.
+        $homeProperty = LocalizedUrl::homeProperty();
+        $properties = $properties->reject(fn (Property $property) => $homeProperty?->is($property) === true);
         $pages = Page::query()->published()->orderBy('id')->get();
 
-        self::page($xml, fn (string $locale) => LocalizedUrl::home($locale), $properties->max('updated_at'));
+        self::page($xml, fn (string $locale) => LocalizedUrl::home($locale), $homeProperty?->updated_at ?? $properties->max('updated_at'));
         self::page($xml, fn (string $locale) => LocalizedUrl::contact($locale), null);
 
         foreach ([...$properties, ...$pages] as $record) {

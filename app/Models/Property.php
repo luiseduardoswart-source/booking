@@ -256,7 +256,11 @@ class Property extends Model implements HasMedia
             if ($accommodation->is_master) {
                 Money::forgetsDefaultCurrency();
             }
+
+            // Which accommodation the main domain shows may have changed.
+            \App\Support\LocalizedUrl::forgetHomeProperty();
         });
+        static::deleted(fn () => \App\Support\LocalizedUrl::forgetHomeProperty());
     }
 
     /**

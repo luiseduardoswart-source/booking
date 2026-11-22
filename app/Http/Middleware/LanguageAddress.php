@@ -13,8 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * - permanently (301) when the address itself named another language, or an
  *   old or wrong address of it (/casa-frente-al-mar, /es/beach-house, /en/...);
- * - temporarily (302) when it is the visitor's own choice or browser language,
- *   so search engines, which bring neither, keep the default address.
+ * - permanently as well from the address of the one accommodation the main
+ *   domain shows: the main domain is its address (LocalizedUrl::homeProperty);
+ * - temporarily (302) when it is the visitor's own choice of language, so
+ *   search engines, which bring none, keep the default address.
  */
 class LanguageAddress
 {
@@ -30,7 +32,10 @@ class LanguageAddress
             return $next($request);
         }
 
-        return redirect($target, $request->attributes->get(SetLocale::FROM_ADDRESS) ? 301 : 302);
+        // Permanent too when the accommodation's own address has become the main domain.
+        $permanent = $request->attributes->get(SetLocale::FROM_ADDRESS) || LocalizedUrl::isHomePropertyAddress($request);
+
+        return redirect($target, $permanent ? 301 : 302);
     }
 
     private static function path(string $address): string

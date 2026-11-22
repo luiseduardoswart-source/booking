@@ -40,12 +40,54 @@ final class LocalizedUrl
         return self::to(self::prefix($locale).'/contact');
     }
 
-    /** An accommodation or page, with its address in that language. */
+    /**
+     * An accommodation or page, with its address in that language. The one
+     * accommodation shown on the main domain has the main domain as its address.
+     */
     public static function of(Property|Page $record, ?string $locale = null, array $query = []): string
     {
         $locale ??= app()->getLocale();
 
+        if ($record instanceof Property && self::homeProperty()?->is($record)) {
+            return self::home($locale, $query);
+        }
+
         return self::to(self::prefix($locale).'/'.$record->slugFor($locale), $query);
+    }
+
+    private const HOME_PROPERTY = 'localized_url.home_property';
+
+    /**
+     * The accommodation the main domain shows: with exactly one active
+     * accommodation and the setting "show it directly on the main domain" on
+     * (Settings → Website). Null otherwise. Remembered per request; a saved
+     * accommodation or setting forgets it (forgetHomeProperty).
+     */
+    public static function homeProperty(): ?Property
+    {
+        // In a list: the request memory cannot hold null itself.
+        return RequestMemory::remember(self::HOME_PROPERTY, function (): array {
+            if (\App\Models\Setting::get('site', 'single_accommodation_direct', '1') === '0') {
+                return [null];
+            }
+
+            $active = Property::query()->where('active', true)->limit(2)->get();
+
+            return [$active->count() === 1 ? $active->first() : null];
+        })[0];
+    }
+
+    public static function forgetHomeProperty(): void
+    {
+        RequestMemory::forgets(self::HOME_PROPERTY);
+    }
+
+    /** Does this request show the accommodation of the main domain at its own address? */
+    public static function isHomePropertyAddress(Request $request): bool
+    {
+        $record = self::routeName($request) === 'properties.show' ? self::recordOfRequest($request) : null;
+
+        return $record instanceof Property && self::homeProperty()?->is($record) === true;
     }
 
     /** The language codes the route accepts as a prefix (checked further in SetLocale). */

@@ -19,6 +19,14 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // Most tests make one accommodation and open its own page. On the site,
+        // one accommodation is shown on the main domain by default and its own
+        // address moves there (LocalizedUrl::homeProperty). The tests about
+        // that switch it on themselves.
+        if (in_array(\Illuminate\Foundation\Testing\RefreshDatabase::class, class_uses_recursive(static::class), true)) {
+            \App\Models\Setting::set('site', 'single_accommodation_direct', '0');
+        }
+
         // Passwords are checked against Have I Been Pwned (see
         // AppServiceProvider). Tests never touch that real service.
         //

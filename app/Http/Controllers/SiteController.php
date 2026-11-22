@@ -6,7 +6,6 @@ use App\Engines\AvailabilityEngine;
 use App\Engines\PricingEngine;
 use App\Models\Property;
 use App\Support\Money;
-use App\Support\Slugs;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -106,11 +105,11 @@ class SiteController extends Controller
                 'name' => $property->localized('name'),
                 // Approximately located accommodations do not give away their spot here either.
                 ...$property->publicCoordinates(Property::MAP_OVERVIEW),
-                'url' => route('properties.show', array_merge(['property' => $property->slugFor()], array_filter([
+                'url' => \App\Support\LocalizedUrl::of($property, null, array_filter([
                     'arrival' => $arrival?->toDateString(),
                     'departure' => $departure?->toDateString(),
                     'guests' => $guests ?: null,
-                ]))),
+                ])),
                 'price' => Money::compact($property->basePrice(), $property->priceCurrency()),
                 'price_full' => Money::format($property->basePrice(), $property->priceCurrency()),
                 'city' => collect([$property->city, $property->country ? \App\Support\Countries::name($property->country) : null])
@@ -172,11 +171,6 @@ class SiteController extends Controller
     public function show(Property $property): View|RedirectResponse
     {
         abort_unless($property->active, 404);
-
-        // On the address of another language: redirect to that of the current language.
-        if (request()->routeIs('properties.show') && request()->segment(1) !== $property->slugFor()) {
-            return redirect(Slugs::addressInLanguage(request()->fullUrl(), app()->getLocale()));
-        }
 
         \App\Models\ListingEvent::record('page_view', $property);
 

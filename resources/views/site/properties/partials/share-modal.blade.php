@@ -1,6 +1,6 @@
 {{-- Deelmodal (Airbnb-stijl; gedeeld door alle lay-outs; verwacht $property) --}}
 @php
-    $shareUrl = route('properties.show', $property->slugFor());
+    $shareUrl = \App\Support\LocalizedUrl::of($property);
     $shareTitle = $property->localized('name');
 @endphp
 <dialog id="share_dialog" class="m-auto w-full max-w-xl rounded-3xl p-0 backdrop:bg-black/60">

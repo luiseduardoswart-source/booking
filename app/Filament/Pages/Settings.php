@@ -174,6 +174,15 @@ class Settings extends Page implements HasActions, HasForms
             $fields["company_slogan_{$locale}"] = ['company', "slogan_{$locale}"];
         }
 
+        // Title and description of the home page in search results, per language.
+        foreach (['home_title', 'home_description'] as $key) {
+            foreach (Languages::available() as $locale) {
+                $fields["seo_{$key}_{$locale}"] = ['seo', "{$key}_{$locale}"];
+            }
+        }
+
+        $fields['seo_share_image'] = ['seo', 'share_image'];
+
         // Welcome message of the AI chat, per language.
         foreach (Languages::available() as $locale) {
             $fields["chat_welcome_{$locale}"] = ['chat', "welcome_{$locale}"];
@@ -196,7 +205,7 @@ class Settings extends Page implements HasActions, HasForms
      */
     private static function multilingualFields(): array
     {
-        return ['company_slogan', 'cookie_title', 'cookie_text', 'chat_welcome'];
+        return ['company_slogan', 'seo_home_title', 'seo_home_description', 'cookie_title', 'cookie_text', 'chat_welcome'];
     }
 
     public function mount(): void
@@ -574,6 +583,27 @@ class Settings extends Page implements HasActions, HasForms
                                         TranslationFields::languageTabs('slogan', fn (string $locale) => [
                                             TextInput::make("company_slogan_{$locale}")->hiddenLabel(),
                                         ]),
+                                    ]),
+                                Section::make(__('Search engines (SEO)'))
+                                    ->description(__('How the home page appears in Google, per language. Empty title = the company name; empty description = the tagline. Accommodations and pages have their own fields.'))
+                                    ->components([
+                                        TranslationFields::languageTabs('seo_home', fn (string $locale) => [
+                                            TextInput::make("seo_home_title_{$locale}")
+                                                ->label(__('Title of the home page'))
+                                                ->maxLength(70)
+                                                ->hint(__('At most about 60 characters')),
+                                            Textarea::make("seo_home_description_{$locale}")
+                                                ->label(__('Description of the home page'))
+                                                ->rows(2)
+                                                ->maxLength(200)
+                                                ->hint(__('About 150 characters')),
+                                        ]),
+                                        FileUpload::make('seo_share_image')
+                                            ->label(__('Photo for shared links'))
+                                            ->helperText(__('Shown when someone shares a link to the home page or contact on WhatsApp, Facebook or X. An accommodation shows its own main photo. Best 1200 × 630 pixels.'))
+                                            ->disk('public')
+                                            ->directory('branding')
+                                            ->image(),
                                     ]),
                                 self::directSetting(Toggle::make('site_single_accommodation_direct')
                                     ->label(__('With one accommodation: show it directly on the main domain'))

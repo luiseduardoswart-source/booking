@@ -53,8 +53,8 @@ class SettingsPageTest extends TestCase
             ]);
         }
 
-        $this->withSession(['locale' => 'nl'])->get('/')->assertSee('Slaap aan zee');
-        $this->withSession(['locale' => 'en'])->get('/')->assertSee('Sleep by the sea');
+        $this->get('/')->assertSee('Slaap aan zee');
+        $this->get('/en')->assertSee('Sleep by the sea');
     }
 
     public function test_own_mail_text_comes_in_the_confirmation_mail(): void

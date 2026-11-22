@@ -24,7 +24,8 @@ class Slugs
     /** Is this address already in use, in any language? */
     public static function occupied(string $slug, ?Model $except = null): bool
     {
-        if (in_array($slug, self::RESERVED, true)) {
+        // A language code is the prefix of that language's addresses (/es/...).
+        if (in_array($slug, self::RESERVED, true) || in_array($slug, [...Languages::available(), ...array_keys(Languages::NAMES)], true)) {
             return true;
         }
 
@@ -55,39 +56,15 @@ class Slugs
         };
     }
 
-    /** The accommodation or page behind the current address, if there is one. */
-    private static function ofAddress(string $slug): Property|Page|null
-    {
-        return Property::findBySlug($slug) ?? Page::findBySlug($slug);
-    }
-
     /** The language this request's address belongs to, if it is a translated address. */
     public static function languageOfRequest(Request $request): ?string
     {
+        $slug = $request->route()?->originalParameter('property');
         $value = $request->route('property');
         $record = is_string($value) ? Page::findBySlug($value) : $value;
 
-        return $record instanceof Property || $record instanceof Page
-            ? $record->languageOfSlug((string) $request->segment(1))
+        return is_string($slug) && ($record instanceof Property || $record instanceof Page)
+            ? $record->languageOfSlug($slug)
             : null;
-    }
-
-    /**
-     * The same address in another language. Anything that is not an accommodation or page
-     * (home, contact) has no address of its own per language and stays the same.
-     */
-    public static function addressInLanguage(string $address, string $locale): string
-    {
-        $share = explode('/', trim((string) parse_url($address, PHP_URL_PATH), '/'), 2);
-        $record = $share[0] !== '' ? self::ofAddress($share[0]) : null;
-
-        if ($record === null) {
-            return $address;
-        }
-
-        $share[0] = $record->slugFor($locale);
-        $query = parse_url($address, PHP_URL_QUERY);
-
-        return url(implode('/', $share)).($query ? "?{$query}" : '');
     }
 }

@@ -62,7 +62,7 @@ class PhotoViewerTest extends TestCase
         $photos[2]->setCustomProperty('label', 'King bed with ocean view')->save();
         $photos[3]->setCustomProperty('label', 'Pool')->setCustomProperty('label_translations', ['en' => 'Rooftop pool'])->save();
 
-        $html = $this->get("/{$property->slug}")->assertOk()->getContent();
+        $html = $this->get("/en/{$property->slug}")->assertOk()->getContent();
 
         $this->assertSame(6, substr_count($html, 'data-photo-slide data-index='));
         $this->assertSame(6, substr_count($html, 'data-photo-thumb data-index='));

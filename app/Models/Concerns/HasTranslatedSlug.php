@@ -3,7 +3,6 @@
 namespace App\Models\Concerns;
 
 use App\Support\Slugs;
-use App\Support\Languages;
 use Illuminate\Support\Str;
 
 /**
@@ -52,30 +51,6 @@ trait HasTranslatedSlug
     public function resolveRouteBinding($value, $field = null)
     {
         return $field === 'slug' ? static::findBySlug($value) : parent::resolveRouteBinding($value, $field);
-    }
-
-    /**
-     * The addresses per language for search engines. Only languages with their own
-     * address: without one there is no separate page to point to.
-     *
-     * @return array<string, string>
-     */
-    public function languageAddresses(): array
-    {
-        $addresses = collect(Languages::active())
-            ->filter(fn (string $locale) => filled($this->slug_translations[$locale] ?? null))
-            ->mapWithKeys(fn (string $locale) => [$locale => url($this->slug_translations[$locale])])
-            ->all();
-
-        if ($addresses === []) {
-            return [];
-        }
-
-        return [
-            ...$addresses,
-            ...(in_array(Languages::SOURCE, Languages::active(), true) ? [Languages::SOURCE => url($this->slug)] : []),
-            'x-default' => url($this->slug),
-        ];
     }
 
     /**

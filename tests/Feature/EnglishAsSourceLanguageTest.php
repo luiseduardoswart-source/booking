@@ -105,8 +105,8 @@ class EnglishAsSourceLanguageTest extends TestCase
 
         $this->migration()->up();
 
-        $this->withSession(['locale' => 'nl'])->get('/strandhuis')->assertOk()->assertSee('lang="nl"', false);
-        $this->withSession(['locale' => 'en'])->get('/beach-house')->assertOk();
+        $this->followingRedirects()->withSession(['locale' => 'nl'])->get('/strandhuis')->assertOk()->assertSee('lang="nl"', false);
+        $this->followingRedirects()->withSession(['locale' => 'en'])->get('/beach-house')->assertOk();
     }
 
     public function test_highlights_page_host_and_photo_label_go_along(): void

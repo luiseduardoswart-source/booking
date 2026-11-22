@@ -67,7 +67,7 @@ class WebsiteTextsTest extends TestCase
             ->call('save', $this->hash(), 'es', 'Mira si hay sitio')
             ->assertOk();
 
-        $this->withSession(['locale' => 'es'])->get('/strandhuis')
+        $this->get('/es/strandhuis')
             ->assertOk()
             ->assertSee('Mira si hay sitio')
             ->assertDontSee('por noche');
@@ -80,7 +80,7 @@ class WebsiteTextsTest extends TestCase
 
         WebsiteTexts::save(self::WORD, 'es', 'Mira si hay sitio');
 
-        $this->withSession(['locale' => 'en'])->get('/strandhuis')->assertSee($english)->assertDontSee('Mira si hay sitio');
+        $this->get('/en/strandhuis')->assertSee($english)->assertDontSee('Mira si hay sitio');
     }
 
     public function test_the_admin_stays_the_text_off_the_file_use(): void
@@ -102,7 +102,7 @@ class WebsiteTextsTest extends TestCase
 
         $this->actingAs($this->owner())->get('/admin')->assertOk();
 
-        $this->withSession(['locale' => 'es'])->get('/strandhuis')->assertSee('Mira si hay sitio');
+        $this->get('/es/strandhuis')->assertSee('Mira si hay sitio');
     }
 
     public function test_empty_set_the_default_text_back(): void
@@ -195,6 +195,6 @@ class WebsiteTextsTest extends TestCase
         Setting::set('website_texts', 'es', 'geen json');
 
         $this->assertSame([], WebsiteTexts::custom('es'));
-        $this->withSession(['locale' => 'es'])->get('/')->assertOk();
+        $this->get('/es')->assertOk();
     }
 }

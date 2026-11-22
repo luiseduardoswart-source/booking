@@ -36,11 +36,11 @@ class ContentLinkTest extends TestCase
         ContentLink::link('h1', $page->id, 'title');
 
         // Dutch (default)
-        $this->withSession(['locale' => 'nl'])->get("/{$property->slug}")
+        $this->followingRedirects()->withSession(['locale' => 'nl'])->get("/{$property->slug}")
             ->assertOk()->assertSee('Welkom bij ons');
 
         // English: the translation of the page is filled in
-        $this->withSession(['locale' => 'en'])->get("/{$property->slug}")
+        $this->followingRedirects()->withSession(['locale' => 'en'])->get("/{$property->slug}")
             ->assertOk()->assertSee('Welcome to us');
     }
 

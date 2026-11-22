@@ -132,7 +132,7 @@ class AiChatTest extends TestCase
                 && $request['system'][0]['cache_control'] === ['type' => 'ephemeral']
                 && $request['messages'] === [['role' => 'user', 'content' => 'Is er wifi?']]
                 && str_contains($system, 'Beach house')
-                && str_contains($system, route('properties.show', 'beach-house'))
+                && str_contains($system, \App\Support\LocalizedUrl::of(\App\Models\Property::firstWhere('slug', 'beach-house'), 'en'))
                 && str_contains($system, 'Wifi')
                 && str_contains($system, 'Niet roken.')
                 && str_contains($system, 'Familiebedrijf sinds 1990.')
@@ -140,7 +140,7 @@ class AiChatTest extends TestCase
                 && str_contains($system, 'Parkeren kan gratis voor de deur.')
                 && ! str_contains($system, 'Verouderde prijslijst.')
                 && str_contains($system, 'Noem altijd de zee.')
-                && str_contains($system, route('contact'));
+                && str_contains($system, \App\Support\LocalizedUrl::contact('en'));
         });
 
         $consumption = AiUsage::sole();
@@ -346,8 +346,8 @@ class AiChatTest extends TestCase
         Setting::set('chat', 'welcome_nl', 'Welkom!');
         Setting::set('chat', 'welcome_de', 'Willkommen!');
 
-        $this->withSession(['locale' => 'de'])->get('/beach-house')->assertSee('Willkommen!');
-        $this->withSession(['locale' => 'fr'])->get('/beach-house')->assertSee('Welkom!');
+        $this->followingRedirects()->withSession(['locale' => 'de'])->get('/beach-house')->assertSee('Willkommen!');
+        $this->followingRedirects()->withSession(['locale' => 'fr'])->get('/beach-house')->assertSee('Welkom!');
     }
 
     public function test_the_knowledge_base_is_next_to_the_chat_and_fetches_text_from_a_document(): void

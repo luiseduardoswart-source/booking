@@ -48,8 +48,7 @@ class HostTranslationTest extends TestCase
         ]);
         $property->hosts()->attach($host);
 
-        $this->withSession(['locale' => 'en'])
-            ->get("/{$property->slug}")
+        $this->get("/en/{$property->slug}")
             ->assertOk()
             ->assertSee('I rent out my seaside cottage.')
             ->assertDontSee('Ik verhuur al tien jaar');

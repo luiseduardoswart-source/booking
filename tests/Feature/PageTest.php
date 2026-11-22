@@ -54,16 +54,14 @@ class PageTest extends TestCase
             'content_translations' => ['en' => '<p>English text</p>'],
         ]);
 
-        $this->withSession(['locale' => 'en'])
-            ->get('/about-us')
+        $this->get('/en/about-us')
             ->assertOk()
             ->assertSee('About us')
             ->assertSee('English text')
             ->assertDontSee('Nederlandse tekst');
 
         // A language without a translation falls back to Dutch.
-        $this->withSession(['locale' => 'fr'])
-            ->get('/over-ons')
+        $this->get('/fr/over-ons')
             ->assertOk()
             ->assertSee('Nederlandse tekst');
     }

@@ -250,7 +250,8 @@ class LanguagesTest extends TestCase
         $this->assertSame(['en'], Language::where('is_default', true)->pluck('code')->all());
         $this->assertSame(['en'], AdminLanguage::where('is_default', true)->pluck('code')->all());
 
-        // A Dutch visitor still gets Dutch while Dutch is on.
-        $this->withHeader('Accept-Language', 'nl-NL,nl;q=0.9')->get('/')->assertSee('<html lang="nl"', false);
+        // Dutch stays on, at its own address; the home page itself is now English.
+        $this->withHeader('Accept-Language', 'nl-NL,nl;q=0.9')->get('/')->assertSee('<html lang="en"', false);
+        $this->get('/nl')->assertSee('<html lang="nl"', false);
     }
 }

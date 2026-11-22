@@ -1,4 +1,4 @@
-<x-site-layout :metaDescription="\App\Models\Setting::localized('company', 'slogan')">
+<x-site-layout :title="\App\Support\Seo::homeTitle()" :metaDescription="\App\Support\Seo::homeDescription()">
     <section class="border-b border-stone-100 bg-gradient-to-b from-rose-50 to-white">
         <div class="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6">
             <h1 class="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">
@@ -9,7 +9,7 @@
             </p>
 
             {{-- Search bar with the same calendar and guest picker as the detail page --}}
-            <form method="get" action="{{ route('home') }}" class="relative mx-auto mt-10 max-w-4xl">
+            <form method="get" action="{{ \App\Support\LocalizedUrl::home() }}" class="relative mx-auto mt-10 max-w-4xl">
                 <input type="hidden" name="arrival" value="{{ $filters['arrival'] }}">
                 <input type="hidden" name="departure" value="{{ $filters['departure'] }}">
 
@@ -59,7 +59,7 @@
                 @if ($filters['arrival'] || $filters['guests'] || array_filter([$filters['where'], $filters['type'], $filters['price_max'], $filters['amenity'], $filters['bedrooms'], $filters['bathrooms']]) !== [])
                     <p class="text-sm text-stone-600">
                         {{ trans_choice('{0} No accommodations found for this search.|{1} 1 accommodation available.|[2,*] :count accommodations available.', $properties->count()) }}
-                        <a href="{{ route('home') }}" class="ml-2 underline hover:text-rose-600">{{ __('Clear filters') }}</a>
+                        <a href="{{ \App\Support\LocalizedUrl::home() }}" class="ml-2 underline hover:text-rose-600">{{ __('Clear filters') }}</a>
                     </p>
                 @else
                     <h2 class="text-2xl font-bold text-stone-900">{{ __('Our accommodations') }}</h2>

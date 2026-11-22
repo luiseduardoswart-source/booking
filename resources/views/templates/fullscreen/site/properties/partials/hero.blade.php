@@ -2,7 +2,7 @@
 <section data-hero="fullscreen">
     @if ($photos->isNotEmpty())
         <div class="relative h-[55vh] min-h-[380px] w-full overflow-hidden">
-            <x-property-media :media="$photos->first()" conversion="large" :alt="$property->localized('name')" class="h-full w-full object-cover" />
+            <x-property-media :media="$photos->first()" conversion="large" :alt="$property->localized('name')" fetchpriority="high" class="h-full w-full object-cover" />
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/30"></div>
 
             <div class="absolute inset-x-0 bottom-0">

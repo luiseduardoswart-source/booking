@@ -155,14 +155,14 @@ class SiteTest extends TestCase
 
         $this->get('/language/en')->assertRedirect();
 
-        $this->withSession(['locale' => 'en'])
-            ->get("/{$property->slug}")
+        // Every language at its own address (the default here is Dutch).
+        $this->get("/en/{$property->slug}")
             ->assertOk()
             ->assertSee('Reserve')
             ->assertSee('Holiday home');
 
-        $this->withSession(['locale' => 'nl'])
-            ->get("/{$property->slug}")
+        $this->get('/language/nl')->assertRedirect();
+        $this->get("/{$property->slug}")
             ->assertOk()
             ->assertSee('Vakantiehuis');
     }

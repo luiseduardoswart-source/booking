@@ -49,7 +49,7 @@ class SearchSuggestionsController extends Controller
                 'type' => 'accommodation',
                 'text' => $property->localized('name'),
                 'detail' => $property->city,
-                'url' => route('properties.show', $property->slugFor()),
+                'url' => \App\Support\LocalizedUrl::of($property),
             ]);
 
         return response()->json([

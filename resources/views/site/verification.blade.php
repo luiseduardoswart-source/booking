@@ -21,7 +21,7 @@
                 <h1 class="text-2xl font-bold text-stone-900">{{ __('Verification in progress') }}</h1>
                 <p class="mt-3 text-stone-600">{{ __('Your verification is being processed. This usually takes only a few minutes; no further action is needed.') }}</p>
             @endif
-            <a href="{{ route('home') }}" class="mt-6 inline-block text-rose-600 hover:underline">
+            <a href="{{ \App\Support\LocalizedUrl::home() }}" class="mt-6 inline-block text-rose-600 hover:underline">
                 {{ __('Back to the homepage') }}
             </a>
         </div>

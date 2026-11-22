@@ -1,5 +1,5 @@
 {{-- Layout "Fullscreen magazine": full-page hero + accommodations as large rows. --}}
-<x-site-layout :metaDescription="\App\Models\Setting::localized('company', 'slogan')">
+<x-site-layout :title="\App\Support\Seo::homeTitle()" :metaDescription="\App\Support\Seo::homeDescription()">
     @php $heroPhoto = $properties->first(fn ($p) => $p->coverPhotoUrl('large') !== '')?->coverPhotoUrl('large'); @endphp
 
     <section class="relative flex min-h-[calc(100vh-4.5rem)] items-center justify-center overflow-hidden" data-layout="fullscreen">
@@ -19,7 +19,7 @@
             </p>
 
             {{-- The same search bar (calendar + guest picker) as the default layout --}}
-            <form method="get" action="{{ route('home') }}" class="relative mx-auto mt-10 max-w-4xl">
+            <form method="get" action="{{ \App\Support\LocalizedUrl::home() }}" class="relative mx-auto mt-10 max-w-4xl">
                 <input type="hidden" name="arrival" value="{{ $filters['arrival'] }}">
                 <input type="hidden" name="departure" value="{{ $filters['departure'] }}">
 
@@ -74,7 +74,7 @@
                 @if ($filters['arrival'] || $filters['guests'])
                     <p class="text-sm text-stone-600">
                         {{ trans_choice('{0} No accommodations found for this search.|{1} 1 accommodation available.|[2,*] :count accommodations available.', $properties->count()) }}
-                        <a href="{{ route('home') }}" class="ml-2 underline hover:text-rose-600">{{ __('Clear filters') }}</a>
+                        <a href="{{ \App\Support\LocalizedUrl::home() }}" class="ml-2 underline hover:text-rose-600">{{ __('Clear filters') }}</a>
                     </p>
                 @endif
             </div>
@@ -96,7 +96,7 @@
 
         <div data-panel="list" class="space-y-16">
             @foreach ($properties as $property)
-                @php $link = route('properties.show', array_merge(['property' => $property->slugFor()], array_filter($filters))); @endphp
+                @php $link = \App\Support\LocalizedUrl::of($property, null, array_filter($filters)); @endphp
                 <article class="group flex flex-col gap-6 md:items-center {{ $loop->even ? 'md:flex-row-reverse' : 'md:flex-row' }}">
                     <a href="{{ $link }}" class="block overflow-hidden rounded-3xl md:w-3/5">
                         @if ($photo = $property->coverPhotoUrl('large'))

@@ -1,32 +1,17 @@
 <x-site-layout
     :property="$property"
-    :translated="$property"
     :title="$property->localized('meta_title') ?? $property->localized('name')"
     :metaDescription="$property->localized('meta_description') ?? $property->localized('short_description')">
 
     <x-slot:head>
-        <script type="application/ld+json">
-        {
-            "@@context": "https://schema.org",
-            "@type": "LodgingBusiness",
-            "name": @json($property->localized('name')),
-            "description": @json($property->localized('short_description')),
-            {{-- Approximate location: street and postal code stay out of what search engines read too. --}}
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": @json($property->showsExactLocation() ? $property->address : null),
-                "postalCode": @json($property->showsExactLocation() ? $property->postal_code : null),
-                "addressLocality": @json($property->city),
-                "addressCountry": @json($property->country)
-            }@if ($property->approved_reviews_count > 0),
-            "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": @json(round($property->approved_reviews_avg_rating, 1)),
-                "reviewCount": @json($property->approved_reviews_count)
-            }
-            @endif
-        }
-        </script>
+        {{-- Google's vacation rental data and the trail from the home page. --}}
+        {!! \App\Support\Seo::scripts([
+            \App\Support\Seo::vacationRental($property),
+            \App\Support\Seo::breadcrumbs([
+                \App\Models\Setting::get('company', 'name', config('app.name')) => \App\Support\LocalizedUrl::home(),
+                $property->localized('name') => \App\Support\LocalizedUrl::of($property),
+            ]),
+        ]) !!}
     </x-slot:head>
 
     @php $photos = $property->gallery(); @endphp

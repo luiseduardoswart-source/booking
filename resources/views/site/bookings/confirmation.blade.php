@@ -27,7 +27,7 @@
                     {{ __('View your booking') }}
                 </a>
             </div>
-            <a href="{{ route('home') }}" class="mt-6 inline-block text-rose-600 hover:underline">
+            <a href="{{ \App\Support\LocalizedUrl::home() }}" class="mt-6 inline-block text-rose-600 hover:underline">
                 {{ __('Back to the homepage') }}
             </a>
         </div>

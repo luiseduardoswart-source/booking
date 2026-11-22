@@ -441,6 +441,49 @@ Check it under **Event deliveries** of the webhook in Stripe: every message
 should show **200**. While the website is closed with `php artisan down`,
 Stripe gets a 503 and tries again for up to three days.
 
+### Being found in Google
+
+The website does the technical part itself:
+
+- **An address per language.** The default language has no prefix
+  (`/`, `/beach-house`), every other language has its own (`/es`,
+  `/es/casa-de-playa`, `/es/contact`). Google finds and shows each language
+  separately. Give an accommodation or page a translated address under its
+  language tab to get a slug in that language too.
+- **A sitemap** at `/sitemap.xml` with every accommodation and page in every
+  language, and `robots.txt` pointing to it.
+- **Private pages stay out**: booking, paying, My bookings and the ID check.
+- **Tags for Google and for sharing**: title, description, the official
+  address per page, the language versions, and a photo and title when a link
+  is shared on WhatsApp, Facebook or X.
+- **Structured data**: every accommodation as a vacation rental (photos,
+  guests, rooms, amenities, check-in times), and on the home page the
+  business with its logo and social media.
+
+What you do yourself:
+
+1. **Texts.** Fill in **Meta title** and **Meta description** on every
+   accommodation and page, in every language. For the home page:
+   **Settings → Website → Search engines (SEO)**, with a photo for shared
+   links. A title of about 60 characters and a description of about 150 show
+   in full in the results.
+2. **Google Search Console** ([search.google.com/search-console](https://search.google.com/search-console)):
+   add your website as a *URL prefix* property with the exact address, for
+   example `https://www.example.com/`. Choose **HTML tag** to verify, copy
+   the `<meta name="google-site-verification" …>` line and paste it under
+   **Settings → Website → Custom code → Code in the <head>**. Save, then click
+   **Verify**.
+3. In Search Console, open **Sitemaps** and submit `sitemap.xml`. Google
+   then finds new accommodations by itself.
+4. Check a page with the
+   [Rich Results Test](https://search.google.com/test/rich-results) to see
+   what Google reads from it.
+
+A visitor sees the language of the address. Whoever picks another language
+in the menu goes to that language's address and stays there. The browser
+language alone sends nobody elsewhere, as Google advises: otherwise visitors
+and Google could miss the other versions.
+
 ### Emails not arriving?
 
 - Check **Settings → Email** and send a test email: an error message there

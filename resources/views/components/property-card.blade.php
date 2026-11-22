@@ -1,9 +1,10 @@
 @props(['property', 'totalCents' => null, 'nights' => null, 'query' => []])
 
-<a href="{{ route('properties.show', array_merge(['property' => $property->slugFor()], $query)) }}" class="group">
+<a href="{{ \App\Support\LocalizedUrl::of($property, null, $query) }}" class="group">
     <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-stone-100">
         @if ($photo = $property->coverPhotoUrl('thumb'))
-            <img src="{{ $photo }}" alt="{{ $property->localized('name') }}"
+            {{-- Loaded when it comes into view: the first screen appears sooner (Google measures that). --}}
+            <img src="{{ $photo }}" alt="{{ $property->localized('name') }}" loading="lazy" decoding="async"
                  class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
         @else
             <div class="flex h-full items-center justify-center text-stone-400">{{ __('No photo') }}</div>

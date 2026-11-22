@@ -44,6 +44,6 @@
     </select>
 
     @if (array_filter([$filters['type'] ?? null, $filters['price_max'] ?? null, $filters['amenity'] ?? null, $filters['bedrooms'] ?? null, $filters['bathrooms'] ?? null]) !== [])
-        <a href="{{ route('home') }}" class="text-sm font-medium underline hover:text-rose-600">{{ __('Clear filters') }}</a>
+        <a href="{{ \App\Support\LocalizedUrl::home() }}" class="text-sm font-medium underline hover:text-rose-600">{{ __('Clear filters') }}</a>
     @endif
 </div>

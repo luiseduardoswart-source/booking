@@ -58,7 +58,7 @@ class SiteBookingController extends Controller
 
         if (! $result->available) {
             return redirect()
-                ->route('properties.show', $property->slugFor())
+                ->to(\App\Support\LocalizedUrl::of($property))
                 ->withErrors(['availability' => implode(' ', $result->reasons)]);
         }
 
@@ -69,7 +69,7 @@ class SiteBookingController extends Controller
             $quote = $pricing->quote($property, $arrival, $departure, (int) $validated['guests'], (int) ($validated['pets'] ?? 0), $coupon);
         } catch (InvalidArgumentException $e) {
             return redirect()
-                ->route('properties.show', $property->slugFor())
+                ->to(\App\Support\LocalizedUrl::of($property))
                 ->withErrors(['availability' => $e->getMessage()]);
         }
 

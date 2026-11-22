@@ -1,5 +1,5 @@
 <x-site-layout
-    :translated="$page"
+    :page="$page"
     :title="$page->localized('meta_title') ?? $page->localized('title')"
     :metaDescription="$page->localized('meta_description')">
 

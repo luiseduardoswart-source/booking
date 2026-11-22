@@ -49,7 +49,7 @@ class AmenitiesOnThePageTest extends TestCase
         $this->assertGreaterThan(Amenity::ON_THE_PAGE, Amenity::count());
         $accommodation = $this->accommodationWith(14);
 
-        $html = $this->get('/strandhuis')->assertOk()->getContent();
+        $html = $this->get('/en/strandhuis')->assertOk()->getContent();
         app()->setLocale('en'); // the language of the page
 
         $this->assertStringContainsString(__('Show all :count amenities', ['count' => 14]), $html);

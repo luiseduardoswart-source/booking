@@ -147,7 +147,7 @@ final class SiteChat
 
         if ($accommodation) {
             $parts[] = 'The visitor is now viewing the page of the accommodation below. Answer questions about this accommodation;'
-                .' for other accommodations, refer to the overview at '.route('home').'.';
+                .' for other accommodations, refer to the overview at '.\App\Support\LocalizedUrl::home().'.';
         }
 
         if ($accommodations = $this->accommodations($accommodation)) {
@@ -172,7 +172,7 @@ final class SiteChat
             ($email = Setting::get('company', 'email')) ? "E-mail: {$email}" : null,
             ($phone = Setting::get('company', 'phone')) ? "Phone: {$phone}" : null,
             ($address = trim(Setting::get('company', 'address').' '.Setting::get('company', 'postal_code_city'))) ? "Address: {$address}" : null,
-            'Contact form: '.route('contact'),
+            'Contact form: '.\App\Support\LocalizedUrl::contact(),
         ]);
 
         return implode("\n", $rules);
@@ -192,7 +192,7 @@ final class SiteChat
             ->map(function (Property $accommodation) use ($time) {
                 $rules = array_filter([
                     '## '.$accommodation->localized('name').' ('.$accommodation->typeName().')',
-                    'Page and booking: '.route('properties.show', $accommodation->slugFor()),
+                    'Page and booking: '.\App\Support\LocalizedUrl::of($accommodation),
                     ($city = collect([$accommodation->city, $accommodation->country ? Countries::name($accommodation->country) : null])->filter()->implode(', ')) ? "Location: {$city}" : null,
                     'Capacity: '.collect([
                         // As on the accommodation page.
@@ -229,7 +229,7 @@ final class SiteChat
                 continue;
             }
 
-            $piece = '## '.$page->localized('title').' ('.url('/'.$page->slugFor()).")\n".mb_substr($content, 0, self::MAX_PER_PAGE)."\n";
+            $piece = '## '.$page->localized('title').' ('.\App\Support\LocalizedUrl::of($page).")\n".mb_substr($content, 0, self::MAX_PER_PAGE)."\n";
 
             if (mb_strlen($text) + mb_strlen($piece) > self::MAX_PAGES) {
                 break;

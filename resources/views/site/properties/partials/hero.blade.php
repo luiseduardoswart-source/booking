@@ -29,7 +29,7 @@
         <div class="relative mt-4">
             <div class="grid gap-2 overflow-hidden rounded-2xl sm:grid-cols-4 sm:grid-rows-2">
                 <button type="button" data-photo-open="0" class="sm:col-span-2 sm:row-span-2">
-                    <x-property-media :media="$photos->first()" conversion="large" :alt="$property->localized('name')"
+                    <x-property-media :media="$photos->first()" conversion="large" :alt="$property->localized('name')" fetchpriority="high"
                          class="aspect-[4/3] h-full w-full cursor-pointer object-cover transition hover:brightness-90" />
                 </button>
                 @foreach ($photos->skip(1)->take(4) as $index => $photo)

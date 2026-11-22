@@ -70,7 +70,7 @@ class CancellationPolicyTest extends TestCase
         $rule = CancellationPolicy::Strict->defaultLines()[0];
         $name = '>'.CancellationPolicy::Strict->getLabel().'<';
 
-        $this->get(route('properties.show', $accommodation->slugFor()))
+        $this->get(\App\Support\LocalizedUrl::of($accommodation, 'en'))
             ->assertOk()
             ->assertSee($rule)
             ->assertDontSee($name, false)

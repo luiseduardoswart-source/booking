@@ -1,7 +1,13 @@
-@props(['title' => null, 'metaDescription' => null, 'property' => null, 'translated' => null])
+@props(['title' => null, 'metaDescription' => null, 'property' => null, 'page' => null, 'image' => null])
 
 @php
     $siteName = \App\Models\Setting::get('company', 'name', config('app.name'));
+    // The address of this page in every language: only the pages search
+    // engines index have them (LocalizedUrl::INDEXABLE); the rest stays out.
+    $alternates = \App\Support\LocalizedUrl::alternates();
+    $canonical = $alternates[app()->getLocale()] ?? null;
+    $shareImage = $image ?? ($alternates !== null ? \App\Support\Seo::image($property, $page) : null);
+    $themeColor = \App\Support\SiteTemplates::isColor($accent = \App\Models\Setting::get('frontend', 'accent_color')) ? $accent : \App\Support\Seo::THEME_COLOR;
 @endphp
 
 <!DOCTYPE html>
@@ -14,15 +20,44 @@
     @if ($metaDescription)
         <meta name="description" content="{{ $metaDescription }}">
     @endif
+    {{-- Booking, paying, My bookings: never in search results (also sent as a header, see NoIndex). --}}
+    <meta name="robots" content="{{ $alternates !== null ? 'index, follow, max-image-preview:large' : 'noindex, nofollow' }}">
+    @if ($canonical)
+        <link rel="canonical" href="{{ $canonical }}">
+        @foreach ($alternates as $language => $address)
+            <link rel="alternate" hreflang="{{ $language }}" href="{{ $address }}">
+        @endforeach
+    @endif
+    {{-- What Facebook, WhatsApp, LinkedIn and X show with a shared link. --}}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ $siteName }}">
     <meta property="og:title" content="{{ $title ?? $siteName }}">
     @if ($metaDescription)
         <meta property="og:description" content="{{ $metaDescription }}">
     @endif
-    @if ($translated)
-        <link rel="canonical" href="{{ url($translated->slugFor()) }}">
-        @foreach ($translated->languageAddresses() as $language => $address)
-            <link rel="alternate" hreflang="{{ $language }}" href="{{ $address }}">
-        @endforeach
+    @if ($canonical)
+        <meta property="og:url" content="{{ $canonical }}">
+    @endif
+    <meta property="og:locale" content="{{ \App\Support\Seo::ogLocale(app()->getLocale()) }}">
+    @foreach (array_diff(array_keys($alternates ?? []), [app()->getLocale(), 'x-default']) as $language)
+        <meta property="og:locale:alternate" content="{{ \App\Support\Seo::ogLocale($language) }}">
+    @endforeach
+    @if ($shareImage)
+        <meta property="og:image" content="{{ $shareImage }}">
+        <meta property="og:image:alt" content="{{ $title ?? $siteName }}">
+    @endif
+    <meta name="twitter:card" content="{{ $shareImage ? 'summary_large_image' : 'summary' }}">
+    <meta name="twitter:title" content="{{ $title ?? $siteName }}">
+    @if ($metaDescription)
+        <meta name="twitter:description" content="{{ $metaDescription }}">
+    @endif
+    @if ($shareImage)
+        <meta name="twitter:image" content="{{ $shareImage }}">
+    @endif
+    <meta name="theme-color" content="{{ $themeColor }}">
+    @if ($alternates !== null && $property === null && request()->routeIs('home', \App\Support\LocalizedUrl::PREFIXED.'home'))
+        {{-- The business and the website, for search engines. --}}
+        {!! \App\Support\Seo::scripts(\App\Support\Seo::business()) !!}
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @php
@@ -89,7 +124,7 @@
 <body class="min-h-screen overflow-x-clip bg-white text-stone-800 antialiased flex flex-col">
     <header class="site-header sticky top-0 z-40 border-b border-stone-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 sm:px-6 sm:py-4">
-            <a href="{{ route('home') }}" class="flex items-center gap-2 text-xl font-bold tracking-tight text-rose-600">
+            <a href="{{ \App\Support\LocalizedUrl::home() }}" class="flex items-center gap-2 text-xl font-bold tracking-tight text-rose-600">
                 @if ($logo = \App\Models\Setting::get('branding', 'logo'))
                     <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($logo) }}"
                          alt="{{ $siteName }}" class="h-9 w-auto">
@@ -104,7 +139,7 @@
             @if ($menuPages->isNotEmpty() || request()->boolean('style-editor'))
                 <nav class="hidden items-center gap-1 md:flex" data-sw-nav="menu">
                     @foreach ($menuPages as $menuPage)
-                        <a href="{{ url('/'.$menuPage->slugFor()) }}"
+                        <a href="{{ \App\Support\LocalizedUrl::of($menuPage) }}"
                            class="rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-stone-100 {{ request()->path() === $menuPage->slugFor() ? 'font-bold text-rose-600' : 'text-stone-700' }}">
                             {{ $menuPage->localized('title') }}
                         </a>
@@ -184,9 +219,9 @@
                 @include('site.partials.social-links', ['links' => ($property ?? \App\Models\Property::master())->socialLinks()])
                 <p class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
                     @foreach (\App\Models\Page::menuItems('footer') as $footerPage)
-                        <a href="{{ url('/'.$footerPage->slugFor()) }}" class="hover:text-rose-600">{{ $footerPage->localized('title') }}</a>
+                        <a href="{{ \App\Support\LocalizedUrl::of($footerPage) }}" class="hover:text-rose-600">{{ $footerPage->localized('title') }}</a>
                     @endforeach
-                    <a href="{{ route('contact') }}" class="hover:text-rose-600">{{ __('Contact') }}</a>
+                    <a href="{{ \App\Support\LocalizedUrl::contact() }}" class="hover:text-rose-600">{{ __('Contact') }}</a>
                 </p>
             </div>
         </div>

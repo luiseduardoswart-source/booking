@@ -43,14 +43,20 @@ Route::middleware(\App\Http\Middleware\EnsureNotInstalled::class)
     });
 
 // Website
-Route::get('/', [SiteController::class, 'home'])->name('home');
+// The pages search engines index (home, contact, accommodations and pages)
+// exist once per language: without a prefix in the default language, under
+// /es, /nl ... in the others (see LocalizedUrl). LanguageAddress sends every
+// visitor to the address of their language.
+$languageAddress = \App\Http\Middleware\LanguageAddress::class;
+
+Route::get('/', [SiteController::class, 'home'])->name('home')->middleware($languageAddress);
 
 // Language switch
 Route::get('/language/{locale}', function (string $locale) {
     abort_unless(in_array($locale, \App\Support\Languages::active(), true), 404);
     session()->put('locale', $locale);
 
-    return redirect(\App\Support\Slugs::addressInLanguage(\App\Support\SiteUrl::previous(), $locale));
+    return redirect(\App\Support\LocalizedUrl::inLanguage(\App\Support\SiteUrl::previous(), $locale));
 })->name('locale.switch');
 
 // Currency switch (display only; payment is in euros)
@@ -76,8 +82,14 @@ Route::get('/accommodation/{slug}/book', fn (string $slug) => redirect()->route(
     301,
 ));
 
+// For search engines: which pages there are, and what they may visit.
+Route::get('/sitemap.xml', fn () => response(\App\Support\Sitemap::xml(), 200, ['Content-Type' => 'application/xml; charset=UTF-8']))
+    ->middleware('throttle:30,1')->name('sitemap');
+Route::get('/robots.txt', fn () => response(\App\Support\Sitemap::robots(), 200, ['Content-Type' => 'text/plain; charset=UTF-8']))
+    ->name('robots');
+
 // Contact
-Route::get('/contact', [ContactController::class, 'show'])->name('contact');
+Route::get('/contact', [ContactController::class, 'show'])->name('contact')->middleware($languageAddress);
 Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 // Own forms from the form builder, shown on a page.
 Route::post('/forms/{form}', [\App\Http\Controllers\FormController::class, 'store'])
@@ -208,22 +220,37 @@ Route::post('/{property:slug}/book', [SiteBookingController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('bookings.store')
     ->where('property', $slugPattern);
-Route::get('/{property:slug}', [SiteController::class, 'show'])
+// An accommodation, or else a free-form page, at its address.
+$showRoute = fn () => Route::get('/{property:slug}', [SiteController::class, 'show'])
     ->name('properties.show')
+    ->middleware($languageAddress)
     ->where('property', $slugPattern)
     // No accommodation with this slug? Then it may be a free-form page.
-    ->missing(function ($request) {
-        $slug = $request->route()->parameter('property');
-        $page = \App\Models\Page::findBySlug($slug);
+    ->missing(function ($request) use ($languageAddress) {
+        $page = \App\Models\Page::findBySlug((string) $request->route()->parameter('property'));
 
         abort_if($page === null || ! $page->published, 404);
 
         // This response is produced during route binding, before SetLocale
-        // gets its turn in the chain — so set the language explicitly here.
+        // and LanguageAddress get their turn in the chain: run them here.
         return app(\App\Http\Middleware\SetLocale::class)->handle(
             $request,
-            fn () => $page->slugFor() === $slug
-                ? response()->view('site.pages.show', ['page' => $page])
-                : redirect(\App\Support\Slugs::addressInLanguage($request->fullUrl(), app()->getLocale())),
+            fn ($request) => app($languageAddress)->handle(
+                $request,
+                fn () => response()->view('site.pages.show', ['page' => $page]),
+            ),
         );
     });
+
+// The same pages in the other languages: /es, /es/contact, /es/casa-frente-al-mar.
+// Before the root-level slugs below, so /es is never taken for one.
+Route::prefix('{lang}')
+    ->where(['lang' => \App\Support\LocalizedUrl::languagePattern()])
+    ->name(\App\Support\LocalizedUrl::PREFIXED)
+    ->group(function () use ($languageAddress, $showRoute) {
+        Route::get('/', [SiteController::class, 'home'])->name('home')->middleware($languageAddress);
+        Route::get('/contact', [ContactController::class, 'show'])->name('contact')->middleware($languageAddress);
+        $showRoute();
+    });
+
+$showRoute();

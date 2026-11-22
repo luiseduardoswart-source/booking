@@ -51,6 +51,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ApplySiteLayout::class,
             \App\Http\Middleware\InjectStyleEditor::class,
             \App\Http\Middleware\ApplyContentLinks::class,
+            // Pages that are not meant for search results say so (X-Robots-Tag).
+            \App\Http\Middleware\NoIndex::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

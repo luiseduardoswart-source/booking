@@ -96,7 +96,7 @@ class AccommodationMultilingualTest extends TestCase
     {
         $this->accommodation($this->spanish());
 
-        $this->withSession(['locale' => 'es'])->get('/casa-de-playa')
+        $this->get('/es/casa-de-playa')
             ->assertOk()
             ->assertSee('Casa de playa')
             ->assertSee('Un lugar agradable', false)
@@ -111,7 +111,7 @@ class AccommodationMultilingualTest extends TestCase
         $this->accommodation($this->spanish());
         $this->accommodation(['slug' => 'second', 'name' => 'Tweede huis']);
 
-        $this->withSession(['locale' => 'es'])->get('/')
+        $this->get('/es')
             ->assertOk()
             ->assertSee('Casa de playa')
             ->assertDontSee('Strandhuis');
@@ -121,7 +121,7 @@ class AccommodationMultilingualTest extends TestCase
     {
         $this->accommodation();
 
-        $this->withSession(['locale' => 'es'])->get('/strandhuis')->assertOk()->assertSee('Strandhuis');
+        $this->get('/es/strandhuis')->assertOk()->assertSee('Strandhuis');
     }
 
     public function test_the_admin_saves_the_translations(): void
@@ -249,8 +249,8 @@ class AccommodationMultilingualTest extends TestCase
             ->call('saveLabel', $photo->id, 'Zwembad')
             ->call('saveLabel', $photo->id, 'Piscina', 'es');
 
-        $this->withSession(['locale' => 'es'])->get('/strandhuis')->assertSee('Piscina')->assertDontSee('Zwembad');
-        $this->withSession(['locale' => 'de'])->get('/strandhuis')->assertSee('Zwembad');
+        $this->get('/es/strandhuis')->assertSee('Piscina')->assertDontSee('Zwembad');
+        $this->get('/de/strandhuis')->assertSee('Zwembad');
     }
 
     public function test_an_empty_translated_label_is_removed(): void
@@ -303,7 +303,7 @@ class AccommodationMultilingualTest extends TestCase
         $this->accommodation($this->spanish());
         $this->accommodation(['slug' => 'second', 'name' => 'Tweede huis']);
 
-        $this->withSession(['locale' => 'es'])->get('/?where=Casa')
+        $this->get('/es?where=Casa')
             ->assertOk()
             ->assertSee('Casa de playa')
             ->assertDontSee('Tweede huis');

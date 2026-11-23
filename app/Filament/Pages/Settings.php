@@ -127,6 +127,7 @@ class Settings extends Page implements HasActions, HasForms
             'prices_pricelabs_api_key' => ['prices', 'pricelabs_api_key'],
             'prices_beyond_api_key' => ['prices', 'beyond_api_key'],
             'prices_wheelhouse_api_key' => ['prices', 'wheelhouse_api_key'],
+            'locks_seam_api_key' => ['locks', 'seam_api_key'],
             'import_service' => ['import', 'service'],
             'import_apify_token' => ['import', 'apify_token'],
             'import_apify_actor' => ['import', 'apify_actor'],
@@ -908,6 +909,13 @@ class Settings extends Page implements HasActions, HasForms
                                             ->label(__('Beyond API key'))),
                                         self::secretField(TextInput::make('prices_wheelhouse_api_key')
                                             ->label(__('Wheelhouse API key'))),
+                                    ]),
+
+                                Section::make(__('Smart locks (Seam)'))
+                                    ->description(__('Connect your locks in your Seam account (seam.co), then enter its API key here. At the accommodation you choose "Smart lock" as the access code and pick the lock: every paid stay gets its own code, valid from check-in to check-out.'))
+                                    ->components([
+                                        self::secretField(TextInput::make('locks_seam_api_key')
+                                            ->label(__('Seam API key'))),
                                     ]),
 
                                 Section::make(__('Listing import (Apify)'))

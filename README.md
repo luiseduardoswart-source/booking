@@ -76,6 +76,12 @@ rental business.
   guest's phone number, plus own check-in details (WiFi password, parking code)
   as merge fields in the automatic emails. Stored encrypted, and only filled in
   for confirmed bookings.
+- **Smart locks** (August, Yale, Schlage, Kwikset, Nuki, Tedee, igloohome,
+  TTLock and more, through [Seam](https://www.seam.co)): every stay paid in
+  full gets a code of its own, valid from check-in to check-out in the
+  property's time zone, sent in the check-in email. A cancelled stay loses it.
+  You connect the locks in your own Seam account (paid per lock) and enter its
+  API key under Settings → Keys.
 - **Import a listing from a link** (for example your Airbnb page) to fill in a
   new property in seconds.
 - **AI writing help** for descriptions, and **automatic translation** of your
@@ -764,6 +770,7 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `heartbeat` | every minute | Tells the dashboard that the cron job runs |
 | `queue:work` | every minute | Sends the queued emails |
 | `channels:sync` | every 30 minutes | Syncs iCal calendars |
+| `locks:sync` | hourly | Takes smart lock codes of stays that no longer get in (cancelled, payment returned) off the lock |
 | `bookings:release-unpaid` | every 5 minutes | Cancels site bookings not paid within 60 minutes, so their dates are free again |
 | `prices:sync` | daily at 05:00 | Fetches dynamic prices |
 | `identity:process` | daily at 08:45 | ID check after payment: reminds guests, then cancels or notifies you |

@@ -8,6 +8,7 @@ use App\Enums\MailType;
 use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\Property;
+use App\Services\SmartLocks\SmartLockCodes;
 use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +23,7 @@ class SendScheduledMails extends Command
 
     protected $description = 'Sends the scheduled guest mails: balance payment, check-in, check-out and review request';
 
-    public function handle(NotificationEngine $notifications): int
+    public function handle(NotificationEngine $notifications, SmartLockCodes $lockCodes): int
     {
         $sent = 0;
 
@@ -53,12 +54,14 @@ class SendScheduledMails extends Command
         // 2. Check-in instructions: X days before arrival. Held back while a
         //    required ID check is missing, and while the guest has paid only
         //    part of the stay (a down payment does not open the door); it
-        //    goes out on the first run after that.
+        //    goes out on the first run after that. With a smart lock the stay
+        //    first gets its own code (see SmartLockCodes::prepare), once.
         $sent += $this->send($notifications, MailType::Checkin, 'checkin_days_before_arrival', fn (int $days) => Booking::query()
             ->with('property')
             ->whereIn('status', $active)
             ->whereDate('arrival_date', '<=', today()->addDays($days))
-            ->whereDate('arrival_date', '>=', today()), holdBack: fn (Booking $booking) => $booking->identityMissing() || $booking->owesBalance());
+            ->whereDate('arrival_date', '>=', today()), holdBack: fn (Booking $booking) => $booking->identityMissing() || $booking->owesBalance()
+                || (! $notifications->hasSent($booking, MailType::Checkin) && ! $lockCodes->prepare($booking)));
 
         // 3. Check-out information: exactly X days before departure.
         $sent += $this->send($notifications, MailType::Checkout, 'checkout_days_before_departure', fn (int $days) => Booking::query()

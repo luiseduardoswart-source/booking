@@ -16,6 +16,8 @@ enum AdminNotification: string
     case Payment = 'payment';
     case IdentityMissing = 'identity_missing';
     case PaymentReturned = 'payment_returned';
+    case SmartLockFailed = 'smart_lock_failed';
+    case SmartLockNotRemoved = 'smart_lock_not_removed';
 
     public function title(): string
     {
@@ -25,6 +27,8 @@ enum AdminNotification: string
             self::Payment => __('Payment received'),
             self::IdentityMissing => __('Identity check not done'),
             self::PaymentReturned => __('Payment returned to the guest'),
+            self::SmartLockFailed => __('No door code from the smart lock'),
+            self::SmartLockNotRemoved => __('Door code still on the smart lock'),
         };
     }
 

@@ -18,6 +18,7 @@ use App\Models\Property;
 use App\Payments\PaymentProvider;
 use App\Services\Importing\ListingImportException;
 use App\Services\PricingServices;
+use App\Services\SmartLocks\SeamLocks;
 use App\Support\MailPlaceholders;
 use App\Support\Money;
 use App\Support\Access;
@@ -503,14 +504,17 @@ class PropertyForm
 
     /**
      * The door code for self check-in, for the "Access code" merge field in the
-     * automatic mails: a fixed code or the last four digits of the guest's
-     * phone number. Only with self check-in (own choice or the default).
+     * automatic mails: a fixed code, the last four digits of the guest's phone
+     * number, or a code of its own per stay from a smart lock (through Seam).
+     * Only with self check-in (own choice or the default).
      *
      * @return array<int, Select|TextInput>
      */
     private static function accessCodeFields(): array
     {
         $selfCheckIn = fn (Get $get, ?Property $record): bool => ($get('check_in_kind') ?? ($record?->is_master ? null : Property::master()->check_in_kind)) === Property::CHECK_IN_SELF;
+        $smartLock = fn (Get $get, ?Property $record): bool => $selfCheckIn($get, $record)
+            && ($get('access_code_kind') ?? ($record?->is_master ? null : Property::master()->access_code_kind)) === Property::ACCESS_SMART_LOCK;
 
         return [
             Select::make('access_code_kind')
@@ -519,16 +523,39 @@ class PropertyForm
                     Property::ACCESS_NONE => __('No code'),
                     Property::ACCESS_FIXED => __('Fixed code'),
                     Property::ACCESS_PHONE => __('Last 4 digits of the guest\'s phone number'),
+                    Property::ACCESS_SMART_LOCK => __('Smart lock: a code of its own per stay'),
                 ])
                 ->placeholder(__('Follow the default'))
                 ->selectablePlaceholder(fn (?Property $record) => ! $record?->is_master)
                 ->required(fn (?Property $record) => (bool) $record?->is_master)
-                ->helperText(fn (Get $get): ?string => $get('access_code_kind') === Property::ACCESS_PHONE
-                    ? __('The phone number becomes required on the booking form.')
-                    : null)
+                ->helperText(fn (Get $get): ?string => match ($get('access_code_kind')) {
+                    Property::ACCESS_PHONE => __('The phone number becomes required on the booking form.'),
+                    Property::ACCESS_SMART_LOCK => __('Every stay paid in full gets its own code when the check-in mail goes out, valid from check-in to check-out. Put it in that mail with the merge field "Access code".'),
+                    default => null,
+                })
                 ->live()
                 ->native(false)
                 ->visible($selfCheckIn),
+            Select::make('smart_lock_device_id')
+                ->label(__('Smart lock'))
+                ->options(fn (?Property $record): array => self::smartLockOptions($record))
+                ->required()
+                ->searchable()
+                ->helperText(fn (): ?string => app(SeamLocks::class)->configured()
+                    ? __('The locks in your Seam account.')
+                    : __('Enter the Seam API key under Settings → Keys first.'))
+                ->native(false)
+                ->visible(fn (Get $get, ?Property $record): bool => ! $record?->is_master && $smartLock($get, $record)),
+            Select::make('time_zone')
+                ->label(__('Time zone'))
+                ->options(fn (): array => array_combine(timezone_identifiers_list(), timezone_identifiers_list()))
+                ->placeholder(fn (?Property $record): ?string => $record?->is_master ? null : __('Follow the default'))
+                // Somewhere it must be set: here, or on the default.
+                ->required(fn (?Property $record): bool => (bool) $record?->is_master || blank(Property::master()->time_zone))
+                ->searchable()
+                ->helperText(__('Check-in and check-out are local times; the code follows them. Without a check-in time it works from the start of the day of arrival, without a check-out time until the end of the day of departure.'))
+                ->native(false)
+                ->visible($smartLock),
             TextInput::make('access_code')
                 ->label(__('Code'))
                 ->password()
@@ -538,6 +565,31 @@ class PropertyForm
                 ->hint(__('Put it in a mail with the merge field "Access code".'))
                 ->visible(fn (Get $get, ?Property $record): bool => $selfCheckIn($get, $record) && $get('access_code_kind') === Property::ACCESS_FIXED),
         ];
+    }
+
+    /**
+     * The locks the accommodation can pick: those in the Seam account that no
+     * other accommodation uses (a lock opens one door), plus its own saved
+     * lock, also when Seam does not answer right now: the accommodation can
+     * always be saved.
+     *
+     * @return array<string, string>
+     */
+    private static function smartLockOptions(?Property $record): array
+    {
+        $taken = Property::query()
+            ->whereNotNull('smart_lock_device_id')
+            ->when($record?->exists, fn ($query) => $query->whereKeyNot($record->getKey()))
+            ->pluck('smart_lock_device_id')
+            ->all();
+
+        $options = array_diff_key(app(SeamLocks::class)->devices(), array_flip($taken));
+
+        if (filled($own = $record?->smart_lock_device_id) && ! isset($options[$own])) {
+            $options[$own] = $own;
+        }
+
+        return $options;
     }
 
     /**

@@ -24,6 +24,7 @@ class Setting extends Model
     public const SECRETS = [
         'ai.claude_api_key', 'ai.openai_api_key', 'ai.gemini_api_key',
         'import.apify_token',
+        'locks.seam_api_key',
         'mail.password',
         'payments.mollie_api_key', 'payments.stripe_secret_key', 'payments.stripe_webhook_secret',
         'prices.pricelabs_api_key', 'prices.beyond_api_key', 'prices.wheelhouse_api_key',

@@ -47,7 +47,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
     'tourist_tax_cents', 'tourist_tax_basis', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',
     'check_in_from', 'check_in_until', 'check_out_until', 'check_in_kind', 'check_in_host_id',
-    'access_code_kind', 'access_code', 'check_in_fields', 'check_in_values',
+    'access_code_kind', 'access_code', 'smart_lock_device_id', 'time_zone', 'check_in_fields', 'check_in_values',
     'meta_title', 'meta_description', 'social_links', 'ical_token', 'external_listing_id',
 ])]
 class Property extends Model implements HasMedia
@@ -138,12 +138,18 @@ class Property extends Model implements HasMedia
 
     public const CHECK_IN_WELCOME = 'welcome';
 
-    /** Access code for self check-in: none, a fixed code, or the last four digits of the guest's phone number. */
+    /**
+     * Access code for self check-in: none, a fixed code, the last four digits
+     * of the guest's phone number, or a code of its own per stay from a smart
+     * lock (App\Services\SmartLocks\SmartLockCodes).
+     */
     public const ACCESS_NONE = 'none';
 
     public const ACCESS_FIXED = 'fixed';
 
     public const ACCESS_PHONE = 'phone';
+
+    public const ACCESS_SMART_LOCK = 'smart_lock';
 
     /** House rule on smoking (vaping and e-cigarettes included): not allowed, allowed, or only outside. */
     public const SMOKING_NO = 'no';
@@ -684,8 +690,9 @@ class Property extends Model implements HasMedia
     /**
      * The code the guest opens the door with, or null if there is none to give:
      * no self check-in, no code chosen, a booking that is not confirmed (yet),
-     * a stay of which only part is paid (Booking::owesBalance), or a phone
-     * number with fewer than four digits.
+     * a stay of which only part is paid (Booking::owesBalance), a phone
+     * number with fewer than four digits, or a smart lock that has not given
+     * this stay a code (yet).
      */
     public function accessCodeFor(Booking $booking): ?string
     {
@@ -696,8 +703,32 @@ class Property extends Model implements HasMedia
         return match ($this->accessCodeKind()) {
             self::ACCESS_FIXED => ($this->is_master || $this->access_code_kind !== null ? $this : static::master())->access_code ?: null,
             self::ACCESS_PHONE => strlen($digits = preg_replace('/\D/', '', (string) $booking->guest_phone)) >= 4 ? substr($digits, -4) : null,
+            self::ACCESS_SMART_LOCK => $booking->lock_code ?: null,
             default => null,
         };
+    }
+
+    /**
+     * Does each stay get its own code from a smart lock? With self check-in
+     * and "Smart lock" as the access code (own choice or the default).
+     */
+    public function usesSmartLock(): bool
+    {
+        return ! $this->is_master && $this->checkInKind() === self::CHECK_IN_SELF && $this->accessCodeKind() === self::ACCESS_SMART_LOCK;
+    }
+
+    /** That smart lock: always the accommodation's own. Null when none was picked. */
+    public function smartLockDevice(): ?string
+    {
+        return $this->usesSmartLock() ? ($this->smart_lock_device_id ?: null) : null;
+    }
+
+    /** The time zone the accommodation lies in (own choice, otherwise the default): check-in and check-out are local times. */
+    public function timeZone(): string
+    {
+        $zone = $this->effective('time_zone');
+
+        return is_string($zone) && in_array($zone, timezone_identifiers_list(), true) ? $zone : (string) config('app.timezone');
     }
 
     /**

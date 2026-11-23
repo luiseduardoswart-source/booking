@@ -57,6 +57,13 @@ class Booking extends Model
     public const MAX_YEARS_AHEAD = 3;
 
     /**
+     * The door code a smart lock gave this stay never leaves the model by
+     * accident (JSON, API, logs). Not fillable either: only
+     * App\Services\SmartLocks\SmartLockCodes sets it.
+     */
+    protected $hidden = ['lock_code'];
+
+    /**
      * Validation of an arrival date entered by a guest or the API: today
      * or later. The calendar does not let you pick an earlier date, but with
      * the developer tools someone can send one anyway. One rule for all
@@ -326,6 +333,7 @@ class Booking extends Model
             'departure_date' => 'immutable_date:Y-m-d',
             'price_snapshot' => 'array',
             'form_answers' => 'array',
+            'lock_code' => 'encrypted',
         ];
     }
 }

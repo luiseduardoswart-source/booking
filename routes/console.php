@@ -35,6 +35,10 @@ $task('identity:process')->dailyAt('08:45');
 // Bookings made on the site that were not paid in time give their dates back.
 $task('bookings:release-unpaid')->everyFiveMinutes();
 
+// Smart lock codes of stays that no longer get in come off the lock (also a
+// removal that failed at the cancellation itself).
+$task('locks:sync')->hourly();
+
 // Sync external calendars (iCal) every 30 minutes.
 $task('channels:sync')->everyThirtyMinutes();
 

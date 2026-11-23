@@ -48,6 +48,7 @@ class ScheduledTasksTest extends TestCase
             'mails:send-scheduled' => '0 9 * * *',
             'identity:process' => '45 8 * * *',
             'bookings:release-unpaid' => '*/5 * * * *',
+            'locks:sync' => '0 * * * *',
             'channels:sync' => '*/30 * * * *',
             'deposits:process' => '30 9 * * *',
             'prices:sync' => '0 5 * * *',

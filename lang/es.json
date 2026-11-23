@@ -1862,5 +1862,19 @@
     "Saved — leave empty to keep it": "Guardado — déjalo vacío para conservarlo",
     "Remove the saved value": "Eliminar el valor guardado",
     "Remove the saved value?": "¿Eliminar el valor guardado?",
-    "Removed": "Eliminado"
+    "Removed": "Eliminado",
+    "Smart locks (Seam)": "Cerraduras inteligentes (Seam)",
+    "Connect your locks in your Seam account (seam.co), then enter its API key here. At the accommodation you choose \"Smart lock\" as the access code and pick the lock: every paid stay gets its own code, valid from check-in to check-out.": "Conecta tus cerraduras en tu cuenta de Seam (seam.co) e introduce aquí su clave API. En el alojamiento eliges \"Cerradura inteligente\" como código de acceso y seleccionas la cerradura: cada estancia pagada recibe su propio código, válido desde el check-in hasta el check-out.",
+    "Seam API key": "Clave API de Seam",
+    "Smart lock: a code of its own per stay": "Cerradura inteligente: un código propio por estancia",
+    "Every stay paid in full gets its own code when the check-in mail goes out, valid from check-in to check-out. Put it in that mail with the merge field \"Access code\".": "Cada estancia pagada por completo recibe su propio código cuando sale el correo de check-in, válido desde el check-in hasta el check-out. Inclúyelo en ese correo con el campo \"Código de acceso\".",
+    "Smart lock": "Cerradura inteligente",
+    "The locks in your Seam account.": "Las cerraduras de tu cuenta de Seam.",
+    "Enter the Seam API key under Settings → Keys first.": "Introduce primero la clave API de Seam en Ajustes → Claves.",
+    "Time zone": "Zona horaria",
+    "Check-in and check-out are local times; the code follows them. Without a check-in time it works from the start of the day of arrival, without a check-out time until the end of the day of departure.": "El check-in y el check-out son horas locales; el código las sigue. Sin hora de check-in funciona desde el inicio del día de llegada, sin hora de check-out hasta el final del día de salida.",
+    "No door code from the smart lock": "Sin código de puerta de la cerradura inteligente",
+    "The smart lock did not give this stay a code: no lock chosen at the accommodation, no Seam key under Settings → Keys, or the lock did not answer. The check-in mail tells the guest they receive the code from you separately: send it yourself. As soon as the lock gives a code, the guest gets the check-in mail again with it.": "La cerradura inteligente no dio un código a esta estancia: no se eligió cerradura en el alojamiento, no hay clave de Seam en Ajustes → Claves, o la cerradura no respondió. El correo de check-in le dice al huésped que recibirá el código por separado: envíalo tú. En cuanto la cerradura dé un código, el huésped recibirá de nuevo el correo de check-in, con el código.",
+    "Door code still on the smart lock": "El código de puerta sigue en la cerradura inteligente",
+    "This stay no longer gets in, but its code could not be taken off the smart lock. The website keeps trying every hour; to be sure, remove the code yourself in your Seam account or in the app of the lock.": "Esta estancia ya no tiene acceso, pero su código no se pudo quitar de la cerradura inteligente. La web lo sigue intentando cada hora; por seguridad, elimina tú el código en tu cuenta de Seam o en la app de la cerradura."
 }

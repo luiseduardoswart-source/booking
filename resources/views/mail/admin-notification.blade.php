@@ -15,6 +15,13 @@
 {{ __('The website has booked it as returned. While the stay is not paid in full, the check-in instructions and the door code are not sent. Check the payment at your payment provider.') }}
 
 @endif
+@if ($notification === \App\Enums\AdminNotification::SmartLockFailed)
+{{ __('The smart lock did not give this stay a code: no lock chosen at the accommodation, no Seam key under Settings → Keys, or the lock did not answer. The check-in mail tells the guest they receive the code from you separately: send it yourself. As soon as the lock gives a code, the guest gets the check-in mail again with it.') }}
+
+@elseif ($notification === \App\Enums\AdminNotification::SmartLockNotRemoved)
+{{ __('This stay no longer gets in, but its code could not be taken off the smart lock. The website keeps trying every hour; to be sure, remove the code yourself in your Seam account or in the app of the lock.') }}
+
+@endif
 @if ($notification === \App\Enums\AdminNotification::Payment && $payment)
 **{{ $payment->kind() }}**: {{ \App\Support\Money::format($payment->amount_cents, $booking->currency) }}
 

@@ -125,6 +125,9 @@ class AppServiceProvider extends ServiceProvider
         // A cancelled booking can no longer be paid.
         \App\Models\Booking::observe(\App\Observers\BookingPaymentLinks::class);
 
+        // A cancelled booking loses its smart lock code.
+        \App\Models\Booking::observe(\App\Observers\BookingLockCodes::class);
+
         // One place for the password requirements: the server enforces them and the
         // installation screen reads them out for the strength meter, so the two
         // never say different things. Following NIST SP 800-63B-4:

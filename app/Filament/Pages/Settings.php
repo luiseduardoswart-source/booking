@@ -562,7 +562,7 @@ class Settings extends Page implements HasActions, HasForms
                                             ->label(__('Mailbox password'))
                                             ->autocomplete('new-password')
                                             // Empty may stay empty when a password is saved already.
-                                            ->required(fn (Get $get): bool => filled($get('mail_host')) && blank(Setting::get('mail', 'password')))),
+                                            ->required(fn (Get $get): bool => filled($get('mail_host')) && blank(Setting::get('mail', 'password'))), keepSpaces: true),
                                     ]),
                             ]),
 
@@ -1483,11 +1483,19 @@ class Settings extends Page implements HasActions, HasForms
      * A password or API key: typed in, never shown again (stored encrypted,
      * see Setting::SECRETS). Empty on save = keep the saved value; the
      * button next to the field removes it.
+     *
+     * A key never holds spaces, but pasting one easily brings a space or line
+     * break along; the service then refuses it (Stripe without even asking).
+     * Only a password may begin or end with a space.
      */
-    private static function secretField(TextInput $field): TextInput
+    private static function secretField(TextInput $field, bool $keepSpaces = false): TextInput
     {
         [$group, $key] = self::fields()[$field->getName()];
         $saved = fn (): bool => filled(Setting::get($group, $key));
+
+        if (! $keepSpaces) {
+            $field->dehydrateStateUsing(fn (mixed $state): mixed => is_string($state) ? trim($state) : $state);
+        }
 
         return $field
             ->password()

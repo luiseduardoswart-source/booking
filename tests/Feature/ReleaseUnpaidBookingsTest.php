@@ -186,6 +186,36 @@ class ReleaseUnpaidBookingsTest extends TestCase
         $this->assertSame(BookingStatus::Cancelled, $booking->refresh()->status);
     }
 
+    /**
+     * A key Stripe refuses before even asking (here a line break pasted along
+     * with it) is a checkout that could not be made, not "nothing to pay":
+     * before, every booking was confirmed without a payment.
+     */
+    public function test_a_key_the_provider_refuses_does_not_confirm_the_booking(): void
+    {
+        Setting::set('payments', 'provider', 'stripe');
+        Setting::set('payments', 'stripe_secret_key', "sk_test_abcdefghijklmnopqrstuvwxyz\n");
+        $this->app->forgetInstance(PaymentProvider::class);
+
+        $this->post('/beach-house/book', [
+            'arrival' => today()->addDays(40)->toDateString(), 'departure' => today()->addDays(43)->toDateString(),
+            'guests' => 2, 'name' => 'Jan Jansen', 'email' => 'jan@example.com', 'terms' => '1',
+        ])->assertRedirectContains('/payment-unavailable');
+
+        $booking = Booking::sole();
+        $this->assertNotNull($booking->hold_until);
+        $this->assertSame(0, $booking->payments()->count());
+        Mail::assertNothingQueued();
+
+        // The payment link from a mail does not pretend there is nothing to pay either.
+        $this->get($booking->paymentLink(\App\Enums\PaymentType::DownPayment))->assertRedirectContains('/payment-unavailable');
+
+        // Not paid in time: the dates come free again.
+        $this->travel(Booking::HOLD_MINUTES + 1)->minutes();
+        $this->artisan('bookings:release-unpaid')->assertSuccessful();
+        $this->assertSame(BookingStatus::Cancelled, $booking->refresh()->status);
+    }
+
     public function test_the_coupon_of_a_released_booking_can_be_used_again(): void
     {
         $coupon = Coupon::create(['code' => 'SUMMER', 'type' => 'percent', 'value' => 10, 'max_uses' => 1, 'active' => true]);

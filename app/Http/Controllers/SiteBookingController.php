@@ -188,8 +188,10 @@ class SiteBookingController extends Controller
         ], [
             'terms.accepted' => __('You must agree to the conditions in order to book.'),
             ...($property->phoneRequired() ? [
-                'phone.required' => __('Your phone number is needed: its last four digits are the code of the door.'),
-                'phone.regex' => __('Your phone number is needed: its last four digits are the code of the door.'),
+                // Not why: the digits are the door code, which only the
+                // check-in mail tells, once the stay is paid in full.
+                'phone.required' => __('Your phone number is needed for your check-in.'),
+                'phone.regex' => __('Your phone number is needed for your check-in.'),
             ] : ['phone.regex' => __('Enter a valid phone number.')]),
             ...$property->guestsNotifications(),
             ...Booking::arrivalNotification(),

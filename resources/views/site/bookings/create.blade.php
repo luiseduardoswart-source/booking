@@ -48,8 +48,10 @@
                         <span class="text-sm font-medium text-stone-700">{{ __('Phone') }}@if ($fieldModes['phone'] === \App\Models\Form::REQUIRED) *@endif</span>
                         <input type="tel" name="phone" value="{{ old('phone') }}" @required($fieldModes['phone'] === \App\Models\Form::REQUIRED)
                                class="mt-1 w-full rounded-lg border-stone-300 focus:border-rose-500 focus:ring-rose-500">
+                        {{-- Never say here that the phone number is the door code: the
+                             guest only learns it from the check-in mail, once paid in full. --}}
                         <span class="mt-1 block text-xs text-stone-500">{{ $property->phoneRequired()
-                            ? __('The last four digits are the code of the door.')
+                            ? __('Needed for your check-in. You receive the instructions once your stay is paid.')
                             : __('So we can reach you about your arrival, for example via WhatsApp.') }}</span>
                     </label>
                     @endif

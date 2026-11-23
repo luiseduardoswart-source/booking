@@ -2,6 +2,7 @@
 
 namespace App\Engines;
 
+use App\Engines\Exceptions\NothingToPayException;
 use App\Enums\AdminNotification;
 use App\Enums\BookingStatus;
 use App\Enums\MailType;
@@ -44,7 +45,7 @@ class PaymentEngine
     public function createPayment(Booking $booking, PaymentType $type): Payment
     {
         if ($booking->status === BookingStatus::Cancelled) {
-            throw new InvalidArgumentException(__('This booking has been cancelled.'));
+            throw new NothingToPayException(__('This booking has been cancelled.'));
         }
 
         // Deposit right after booking: it goes along with the first payment of
@@ -64,7 +65,7 @@ class PaymentEngine
         };
 
         if ($amountCents <= 0) {
-            throw new InvalidArgumentException(__('There is nothing to pay for this type.'));
+            throw new NothingToPayException(__('There is nothing to pay for this type.'));
         }
 
         $depositPartCents = $withDeposit ? $this->depositCents($booking) : 0;
@@ -199,8 +200,10 @@ class PaymentEngine
 
             return $checkoutUrl;
         } catch (Throwable $e) {
-            // Nothing (more) to pay is not an error.
-            $nothingToPay = $e instanceof InvalidArgumentException;
+            // Nothing (more) to pay is not an error. Only our own exception:
+            // the provider's library throws InvalidArgumentException too, for
+            // a key it refuses, and that booking has not been paid.
+            $nothingToPay = $e instanceof NothingToPayException;
 
             if (! $nothingToPay) {
                 report($e);

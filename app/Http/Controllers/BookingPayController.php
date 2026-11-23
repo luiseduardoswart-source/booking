@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Engines\Exceptions\NothingToPayException;
 use App\Engines\PaymentEngine;
 use App\Enums\PaymentType;
 use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\URL;
-use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -31,7 +31,7 @@ class BookingPayController extends Controller
 
         try {
             $payment = $engine->createPayment($booking, $paymentType);
-        } catch (InvalidArgumentException) {
+        } catch (NothingToPayException) {
             // Nothing (more) to pay: show the status of the last payment.
             $lastPayment = $booking->payments()->latest()->first();
 

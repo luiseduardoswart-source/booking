@@ -175,15 +175,21 @@ class AccessCodeTest extends TestCase
 
         // Translated after the request: the page sets the language of the site.
         $reason = fn () => __('So we can reach you about your arrival, for example via WhatsApp.');
-        $this->get(route('bookings.create', ['property' => $phone->slug, ...$dates]))
-            ->assertOk()->assertSee(__('The last four digits are the code of the door.'))->assertDontSee($reason());
+        $forCheckIn = fn () => __('Needed for your check-in. You receive the instructions once your stay is paid.');
+        // The form never gives the code away: the guest only learns it from the
+        // check-in mail, once the stay is paid in full.
+        $page = $this->get(route('bookings.create', ['property' => $phone->slug, ...$dates]))
+            ->assertOk()->assertSee($forCheckIn())->assertDontSee($reason());
+        $this->assertDoesNotMatchRegularExpression('/four digits|vier cijfers|code of the door|code van de deur/i', $page->getContent());
         // Not required: the field says why it is worth filling in.
         $this->get(route('bookings.create', ['property' => $fixed->slug, ...$dates]))
-            ->assertOk()->assertDontSee(__('The last four digits are the code of the door.'))->assertSee($reason());
+            ->assertOk()->assertDontSee($forCheckIn())->assertSee($reason());
 
         $guest = ['name' => 'Jan', 'email' => 'jan@example.com', 'terms' => '1', ...$dates];
-        $this->post(route('bookings.store', $phone->slug), $guest)->assertSessionHasErrors('phone');
-        $this->post(route('bookings.store', $phone->slug), [...$guest, 'phone' => '12'])->assertSessionHasErrors('phone');
+        $this->post(route('bookings.store', $phone->slug), $guest)
+            ->assertSessionHasErrors(['phone' => __('Your phone number is needed for your check-in.')]);
+        $this->post(route('bookings.store', $phone->slug), [...$guest, 'phone' => '12'])
+            ->assertSessionHasErrors(['phone' => __('Your phone number is needed for your check-in.')]);
         $this->post(route('bookings.store', $fixed->slug), $guest)->assertSessionDoesntHaveErrors('phone');
     }
 

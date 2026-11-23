@@ -396,8 +396,9 @@ At the next login you set it up again.
   and emails you. Mollie reports it by itself; Stripe needs the webhook
   (see "Stripe: set up the webhook" below).
 - **The payment page cannot be opened** (the provider is down, or refuses the
-  amount or currency): the guest gets a page to try again. The booking is
-  not confirmed and gives its dates back after 60 minutes.
+  amount, the currency or the key): the guest gets a page to try again. The
+  booking is not confirmed and gives its dates back after 60 minutes.
+  A key pasted with a space or line break is cleaned when you save it.
 
 ### Stripe: set up the webhook
 

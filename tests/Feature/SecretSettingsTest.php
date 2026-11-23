@@ -82,6 +82,23 @@ class SecretSettingsTest extends TestCase
         $this->assertNull(Setting::get('payments', 'stripe_secret_key'));
     }
 
+    public function test_a_pasted_key_loses_its_spaces_and_line_breaks_but_a_password_keeps_them(): void
+    {
+        Livewire::actingAs($this->owner())->test(Settings::class)
+            ->fillForm([
+                'company_name' => 'Beach BV',
+                'payments_stripe_secret_key' => " sk_live_pasted\n",
+                'payments_mollie_api_key' => "live_pasted \r\n",
+                'mail_password' => ' secret with spaces ',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('sk_live_pasted', Setting::get('payments', 'stripe_secret_key'));
+        $this->assertSame('live_pasted', Setting::get('payments', 'mollie_api_key'));
+        $this->assertSame(' secret with spaces ', Setting::get('mail', 'password'));
+    }
+
     public function test_keys_stored_before_this_update_are_encrypted_by_the_migration(): void
     {
         DB::table('settings')->insert(['group' => 'ai', 'key' => 'claude_api_key', 'value' => 'sk-ant-plain', 'created_at' => now(), 'updated_at' => now()]);

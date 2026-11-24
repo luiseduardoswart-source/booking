@@ -39,7 +39,7 @@
         <div>
             <label for="app_url" class="mb-1 block text-sm font-medium text-stone-700">{{ __('Site address') }}</label>
             <input type="url" name="app_url" id="app_url" required
-                   value="{{ old('app_url', rtrim(url('/'), '/')) }}"
+                   value="{{ old('app_url', \App\Http\Controllers\InstallController::suggestedAddress()) }}"
                    class="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none">
             @error('app_url')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </div>

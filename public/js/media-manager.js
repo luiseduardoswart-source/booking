@@ -6,6 +6,34 @@
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
+    // ---------- safe Word preview ----------
+    // mammoth turns a .docx into HTML without cleaning it: a link in the
+    // document can be "javascript:...". Only text and plain markup stay, links
+    // only to http(s)/mailto, images only as embedded pictures; no element
+    // runs code, and a link opens apart from the admin.
+    const PREVIEW_DROP = 'script, style, iframe, frame, object, embed, link, meta, base, form, input, button, textarea, select, svg, math';
+    function safePreview(html) {
+        const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+        doc.querySelectorAll(PREVIEW_DROP).forEach(el => el.remove());
+        doc.body.querySelectorAll('*').forEach(el => {
+            [...el.attributes].forEach(attr => {
+                const name = attr.name.toLowerCase();
+                const value = attr.value.trim().toLowerCase();
+                const keep = (name === 'href' && /^(https?:|mailto:|#)/.test(value))
+                    || (name === 'src' && el.tagName === 'IMG' && /^data:image\/(png|jpe?g|gif|webp);/.test(value))
+                    || ['alt', 'colspan', 'rowspan', 'id'].includes(name);
+                if (!keep) el.removeAttribute(attr.name);
+            });
+            if (el.tagName === 'A' && el.hasAttribute('href')) {
+                el.setAttribute('target', '_blank');
+                el.setAttribute('rel', 'noopener noreferrer');
+            }
+        });
+        const fragment = document.createDocumentFragment();
+        fragment.append(...doc.body.childNodes);
+        return fragment;
+    }
+
     // ---------- toasts ----------
     window.toast = function (message, type = 'success') {
         let container = document.querySelector('.toast-container');
@@ -235,7 +263,8 @@
                     .then(r => { if (!r.ok) throw new Error('fetch'); return r.arrayBuffer(); })
                     .then(buffer => mammoth.convertToHtml({ arrayBuffer: buffer }))
                     .then(result => {
-                        content.innerHTML = `<div class="page-content max-h-[62vh] overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 text-gray-800 dark:border-white/10">${result.value}</div>`;
+                        content.innerHTML = `<div class="page-content max-h-[62vh] overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 text-gray-800 dark:border-white/10"></div>`;
+                        content.firstElementChild.append(safePreview(result.value));
                     })
                     .catch(() => { content.innerHTML = fallback; });
             } else {

@@ -91,6 +91,55 @@ class PaymentLinkTest extends TestCase
         return User::factory()->create(['role' => UserRole::Administrator]);
     }
 
+    public function test_a_payment_made_after_the_booking_was_cancelled_confirms_nothing_to_the_guest(): void
+    {
+        // The provider could not close the open link at the cancellation.
+        $this->provider = new class extends FakeProvider
+        {
+            public function cancel(Payment $payment): void
+            {
+                throw new RuntimeException('Cannot cancel this method');
+            }
+        };
+        $this->app->instance(PaymentProvider::class, $this->provider);
+        $this->engine = app(PaymentEngine::class);
+        $booking = $this->booking(['status' => 'new']);
+        $payment = $this->engine->createPayment($booking, PaymentType::DownPayment);
+
+        app(BookingEngine::class)->cancel($booking->refresh());
+        $this->pay($payment->refresh());
+
+        $booking->refresh();
+        $this->assertSame(\App\Enums\BookingStatus::Cancelled, $booking->status);
+        // The money is booked, the guest gets no confirmation for free dates...
+        $this->assertSame(PaymentTransactionStatus::Paid, $payment->refresh()->status);
+        Mail::assertNotQueued(BookingMail::class, fn (BookingMail $mail) => in_array($mail->type, [MailType::Confirmation, MailType::PaymentReceived], true));
+        // ...and the owner reads that the booking is cancelled.
+        Mail::assertSent(\App\Mail\AdminNotificationMail::class, fn ($mail) => $mail->notification === \App\Enums\AdminNotification::Payment
+            && str_contains($mail->render(), __('This booking is cancelled.')));
+    }
+
+    public function test_the_guest_links_stop_working_three_months_after_departure(): void
+    {
+        $booking = $this->booking(); // departure 3 December 2026
+        $links = [
+            $booking->paymentLink(PaymentType::DownPayment),
+            $booking->signedLink('bookings.confirmation'),
+            $booking->signedLink('reviews.create'),
+        ];
+
+        foreach ($links as $link) {
+            $this->assertStringContainsString('expires=', $link);
+            $this->assertNotSame(403, $this->get($link)->getStatusCode());
+        }
+
+        $this->travelTo('2027-03-05 00:00:00');
+
+        foreach ($links as $link) {
+            $this->get($link)->assertForbidden();
+        }
+    }
+
     public function test_a_second_request_gives_same_link(): void
     {
         $booking = $this->booking();

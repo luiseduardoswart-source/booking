@@ -38,5 +38,18 @@ abstract class TestCase extends BaseTestCase
                 ? ($this->leakCheck)($request)
                 : Http::response('', 200),
         ]);
+
+        // Addresses the server fetches are looked up in DNS before anything
+        // is sent (OutboundUrl). Tests fake the answers and use made-up names
+        // (airbnb.example): those point to a public address here, localhost
+        // to the server itself. OutboundUrlTest also tests the real lookup.
+        \App\Support\OutboundUrl::resolveUsing(fn (string $host): array => strtolower($host) === 'localhost' ? ['127.0.0.1'] : ['93.184.215.14']);
+    }
+
+    protected function tearDown(): void
+    {
+        \App\Support\OutboundUrl::resolveUsing(null);
+
+        parent::tearDown();
     }
 }

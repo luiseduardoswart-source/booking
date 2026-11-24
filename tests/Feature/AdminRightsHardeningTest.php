@@ -164,6 +164,34 @@ class AdminRightsHardeningTest extends TestCase
         $this->assertDatabaseMissing('nightly_rates', ['property_id' => $this->beach->id]);
     }
 
+    public function test_blocking_and_freeing_nights_needs_the_calendar_right(): void
+    {
+        $date = today()->addDays(20)->toDateString();
+        $editorOnly = User::factory()->create(['role' => UserRole::Host, 'host_id' => $this->host->id, 'permissions' => ['accommodations' => [Access::VIEW, Access::EDIT]]]);
+        $this->cabin->calendarBlocks()->create(['type' => 'blocked', 'start_date' => today()->addDays(30), 'end_date' => today()->addDays(30)]);
+
+        // Editing the accommodation (prices) is allowed; blocking is not, and the buttons are not there.
+        Livewire::actingAs($editorOnly)->test(NightlyPricesCalendar::class, ['property' => $this->cabin])
+            ->assertDontSee(__('Unblock'))
+            ->set('selected', [$date])
+            ->call('block')
+            ->assertForbidden();
+        Livewire::actingAs($editorOnly)->test(NightlyPricesCalendar::class, ['property' => $this->cabin])
+            ->set('selected', [today()->addDays(30)->toDateString()])
+            ->call('unblock')
+            ->assertForbidden();
+        $this->assertSame(1, $this->cabin->calendarBlocks()->count());
+
+        // With the Calendar right it works.
+        $withCalendar = User::factory()->create(['role' => UserRole::Host, 'host_id' => $this->host->id, 'permissions' => ['accommodations' => [Access::VIEW, Access::EDIT], 'calendar' => Access::ACTIONS]]);
+        Livewire::actingAs($withCalendar)->test(NightlyPricesCalendar::class, ['property' => $this->cabin])
+            ->assertSee(__('Unblock'))
+            ->set('selected', [$date])
+            ->call('block')
+            ->assertOk();
+        $this->assertSame(2, $this->cabin->calendarBlocks()->count());
+    }
+
     public function test_the_media_manager_also_asks_for_two_step_verification_when_required(): void
     {
         Setting::set('security', 'two_step_required', '1');

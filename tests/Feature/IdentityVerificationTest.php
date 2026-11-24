@@ -183,7 +183,7 @@ class IdentityVerificationTest extends TestCase
         $booking = Booking::where('property_id', $property->id)->first();
         $this->assertNotNull($booking);
         $this->assertSame(0, $booking->payments()->count());
-        $response->assertRedirect(URL::signedRoute('identity.start', $booking));
+        $response->assertRedirect($booking->signedLink('identity.start'));
     }
 
     public function test_confirmation_mail_contains_verification_button_as_the_setting_on_is(): void
@@ -210,7 +210,7 @@ class IdentityVerificationTest extends TestCase
             ->assertOk()
             ->assertSee(__('Verification failed'))
             ->assertDontSee('confirmation email')
-            ->assertSee(e(URL::signedRoute('identity.start', $booking)), false)
+            ->assertSee(e($booking->signedLink('identity.start')), false)
             ->assertSee(__('Try again'));
 
         // That button starts a new check.
@@ -225,7 +225,7 @@ class IdentityVerificationTest extends TestCase
         $payLink = $booking->paymentLink(PaymentType::Balance);
 
         // Not verified yet: first the check, which remembers what was to be paid.
-        $toCheck = URL::signedRoute('identity.start', ['booking' => $booking, 'pay' => PaymentType::Balance->value]);
+        $toCheck = $booking->signedLink('identity.start', ['booking' => $booking, 'pay' => PaymentType::Balance->value]);
         $this->get($payLink)->assertRedirect($toCheck);
         $this->assertSame(0, $booking->payments()->count());
 
@@ -258,7 +258,7 @@ class IdentityVerificationTest extends TestCase
 
         $this->get(URL::signedRoute('identity.start', ['booking' => $booking, 'pay' => PaymentType::Deposit->value]));
 
-        $this->assertSame(URL::signedRoute('identity.return', ['booking' => $booking, 'pay' => PaymentType::Deposit->value]), $verifier->returnUrl);
+        $this->assertSame($booking->signedLink('identity.return', ['booking' => $booking, 'pay' => PaymentType::Deposit->value]), $verifier->returnUrl);
     }
 
     public function test_a_payment_link_pays_straight_away_once_verified_or_without_the_check(): void

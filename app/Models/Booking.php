@@ -272,12 +272,33 @@ class Booking extends Model
     }
 
     /**
-     * Permanent payment link for the guest. The provider's link expires; this
-     * one does not: it leads to the running checkout or creates a new one.
+     * Payment link for the guest. The provider's link expires within hours;
+     * this one lasts as long as the booking's other links (signedLink): it
+     * leads to the running checkout or creates a new one.
      */
     public function paymentLink(PaymentType $type): string
     {
-        return URL::signedRoute('booking.pay', ['booking' => $this->id, 'type' => $type->value]);
+        return $this->signedLink('booking.pay', ['booking' => $this->id, 'type' => $type->value]);
+    }
+
+    /** How long after departure the guest's links keep working. */
+    public const LINK_DAYS_AFTER_DEPARTURE = 90;
+
+    /**
+     * A signed link for this booking's guest (pay, confirmation, ID check,
+     * review). It works until LINK_DAYS_AFTER_DEPARTURE days after departure,
+     * not forever: a link in an old mail or a browser history does not open
+     * the booking (with the guest's details) for good.
+     *
+     * @param  array<string, mixed>|null  $parameters  the booking itself when null
+     */
+    public function signedLink(string $route, ?array $parameters = null): string
+    {
+        return URL::temporarySignedRoute(
+            $route,
+            $this->departure_date->endOfDay()->addDays(self::LINK_DAYS_AFTER_DEPARTURE),
+            $parameters ?? ['booking' => $this->id],
+        );
     }
 
     public function nights(): int

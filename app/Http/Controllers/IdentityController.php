@@ -10,7 +10,6 @@ use App\Services\IdentityVerifier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 
 /**
  * ID verification for guests (Stripe Identity): right after booking, from a
@@ -32,7 +31,7 @@ class IdentityController extends Controller
             return $this->continueToPayment($booking, $pay, $payments);
         }
 
-        $url = $verifier->start($booking, URL::signedRoute('identity.return', self::parameters($booking, $pay)));
+        $url = $verifier->start($booking, $booking->signedLink('identity.return', self::parameters($booking, $pay)));
 
         return redirect()->away($url);
     }
@@ -51,7 +50,7 @@ class IdentityController extends Controller
             'status' => $booking->identity_status,
             'property' => $booking->property,
             // A failed check can be done again right here: no email needed.
-            'retryUrl' => URL::signedRoute('identity.start', self::parameters($booking, $pay)),
+            'retryUrl' => $booking->signedLink('identity.start', self::parameters($booking, $pay)),
         ]);
     }
 

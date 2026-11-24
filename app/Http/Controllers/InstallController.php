@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\DatabaseUpdater;
 use App\Support\InstallCode;
 use App\Support\Languages;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -111,7 +112,11 @@ class InstallController extends Controller
             'db_database' => ['required', 'string', 'max:64'],
             'db_username' => ['required', 'string', 'max:255'],
             'db_password' => ['nullable', 'string', 'max:255'],
-            'app_url' => ['required', 'url'],
+            'app_url' => ['required', 'url', function (string $attribute, mixed $value, Closure $fail): void {
+                if (! self::secureAddress((string) $value)) {
+                    $fail(__('The address of the website must start with https://. Turn on the free SSL certificate at your hosting first.'));
+                }
+            }],
         ]);
 
         // Password field left empty while there is already one in .env? Then keep
@@ -144,6 +149,12 @@ class InstallController extends Controller
             'APP_URL' => rtrim($data['app_url'], '/'),
             'APP_ENV' => 'production',
             'APP_DEBUG' => 'false',
+            // Only warnings and errors, in a file per day kept for two weeks:
+            // at debug level every mail (sign-in links, door codes, guest
+            // details) would land in one log that is never cleaned up.
+            'LOG_LEVEL' => 'warning',
+            'LOG_STACK' => 'daily',
+            'LOG_DAILY_DAYS' => '14',
             'DB_CONNECTION' => 'mysql',
             'DB_HOST' => $data['db_host'],
             'DB_PORT' => (string) $data['db_port'],
@@ -264,6 +275,29 @@ class InstallController extends Controller
      *
      * @param  array<string, string>  $values
      */
+    /**
+     * A live website runs on https: otherwise sign-ins, payment links and
+     * the session cross the network unencrypted. Plain http only for a site
+     * on this computer (localhost, *.test, *.localhost).
+     */
+    /** The address of this visit, on https unless the site runs on this computer. */
+    public static function suggestedAddress(): string
+    {
+        $url = rtrim(request()->root(), '/');
+
+        return self::secureAddress($url) ? $url : (string) preg_replace('~^http://~i', 'https://', $url);
+    }
+
+    public static function secureAddress(string $url): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https'
+            || in_array($host, ['localhost', '127.0.0.1', '[::1]'], true)
+            || str_ends_with($host, '.test')
+            || str_ends_with($host, '.localhost');
+    }
+
     private function writeEnv(array $values): void
     {
         $path = base_path('.env');

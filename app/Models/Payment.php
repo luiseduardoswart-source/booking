@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\URL;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -55,11 +54,12 @@ class Payment extends Model
 
     /**
      * Where the guest returns after the payment provider: signed, so nobody
-     * can view other payments by changing the number.
+     * can view other payments by changing the number, and as long-lived as
+     * the booking's other links (the provider keeps this address).
      */
     public function returnUrl(): string
     {
-        return URL::signedRoute('payment.return', $this);
+        return $this->booking->signedLink('payment.return', ['payment' => $this]);
     }
 
     /**

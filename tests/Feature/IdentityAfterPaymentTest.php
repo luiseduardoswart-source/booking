@@ -110,7 +110,7 @@ class IdentityAfterPaymentTest extends TestCase
         $confirmation = Mail::queued(BookingMail::class, fn (BookingMail $mail) => $mail->booking->is($booking) && $mail->type === MailType::Confirmation)->sole();
         $html = $confirmation->locale('en')->render();
 
-        $this->assertStringContainsString(e(URL::signedRoute('identity.start', $booking)), $html);
+        $this->assertStringContainsString(e($booking->signedLink('identity.start')), $html);
         $this->assertStringContainsString('Please do this by Monday 23 February 2026 at the latest.', $html);
         $this->assertStringContainsString('Without it, your booking will be cancelled.', $html);
     }

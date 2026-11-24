@@ -21,19 +21,17 @@ class MetadataImporter implements ListingImportProvider
 
         // A user types this address: no internal addresses, at most 5 MB.
         try {
-            OutboundUrl::check($url);
+            $response = OutboundUrl::get($this->withLanguage($url, $language), 5 * 1024 * 1024, [
+                'User-Agent' => 'Mozilla/5.0 (compatible; BookingImporter/1.0)',
+                'Accept' => 'text/html',
+                // Without a language preference the platform picks one itself — usually that
+                // of the country where our server is. Then you get a German or
+                // Dutch translation back while your listing is in English.
+                'Accept-Language' => $language.','.$language.';q=0.9',
+            ], 15);
         } catch (\InvalidArgumentException $e) {
             throw new ListingImportException($e->getMessage());
         }
-
-        $response = Http::withOptions(OutboundUrl::options(5 * 1024 * 1024))->withHeaders([
-            'User-Agent' => 'Mozilla/5.0 (compatible; BookingImporter/1.0)',
-            'Accept' => 'text/html',
-            // Without a language preference the platform picks one itself — usually that
-            // of the country where our server is. Then you get a German or
-            // Dutch translation back while your listing is in English.
-            'Accept-Language' => $language.','.$language.';q=0.9',
-        ])->timeout(15)->get($this->withLanguage($url, $language));
 
         if (! $response->successful()) {
             throw new ListingImportException(__('The page could not be fetched (status :status).', ['status' => $response->status()]));
@@ -258,7 +256,6 @@ class MetadataImporter implements ListingImportProvider
 
     private function clean(string $value): string
     {
-        // Decode first: an encoded tag (&lt;img ...&gt;) must not survive as a real tag.
-        return trim(strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
+        return (string) ListingDraft::plainText($value);
     }
 }

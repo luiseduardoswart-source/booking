@@ -37,8 +37,8 @@ class TestCheckoutTest extends TestCase
 
         $booking = app(BookingEngine::class)->create(
             $property,
-            CarbonImmutable::parse('2026-03-02'),
-            CarbonImmutable::parse('2026-03-05'),
+            CarbonImmutable::today()->addDays(30),
+            CarbonImmutable::today()->addDays(33),
             2,
             ['name' => 'Jan Jansen', 'email' => 'jan@example.com'],
         );

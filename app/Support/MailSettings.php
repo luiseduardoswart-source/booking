@@ -60,6 +60,9 @@ final class MailSettings
             'mail.default' => 'smtp',
             // smtps: encrypted from the start (465). smtp: STARTTLS, which Symfony enables itself (587).
             'mail.mailers.smtp.scheme' => $ssl ? 'smtps' : 'smtp',
+            // STARTTLS must succeed: a server (or someone on the way) that
+            // does not offer it would otherwise get the password unencrypted.
+            'mail.mailers.smtp.require_tls' => ! $ssl,
             'mail.mailers.smtp.host' => Setting::get('mail', 'host'),
             'mail.mailers.smtp.port' => (int) (Setting::get('mail', 'port') ?: ($ssl ? 465 : 587)),
             'mail.mailers.smtp.username' => $user,

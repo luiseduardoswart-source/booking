@@ -225,6 +225,12 @@ class Property extends Model implements HasMedia
             if ($accommodation->access_code_kind !== self::ACCESS_FIXED) {
                 $accommodation->access_code = null;
             }
+            // The locks are in the owner's Seam account: only the owner links
+            // one to an accommodation, or a staff member or host could get a
+            // code for any free door (also through the API or an AI app).
+            if ($accommodation->isDirty('smart_lock_device_id') && auth()->check() && ! auth()->user()->isAdministrator()) {
+                throw new \Illuminate\Auth\Access\AuthorizationException(__('Only the owner links a smart lock to an accommodation.'));
+            }
             // Each own check-in field gets a fixed key once: the mail texts refer to it.
             if ($accommodation->is_master && is_array($accommodation->check_in_fields)) {
                 $accommodation->check_in_fields = array_values(array_map(

@@ -371,6 +371,42 @@ class SmartLockTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->method() === 'GET' && str_starts_with($request->url(), self::SEAM.'/devices/list'));
     }
 
+    public function test_only_the_owner_links_a_lock_to_an_accommodation(): void
+    {
+        $this->seam(['/devices/list' => Http::response(['devices' => [
+            ['device_id' => 'dev-owner-house', 'display_name' => 'Owner house'],
+        ], 'pagination' => []])]);
+        $accommodation = Property::create([
+            'name' => 'Duinhuis', 'slug' => 'duinhuis', 'type' => 'holiday_home', 'max_guests' => 4, 'active' => true, 'base_price_cents' => 10000,
+        ]);
+        $hostProfile = \App\Models\Host::create(['name' => 'Host']);
+        $accommodation->hosts()->sync([$hostProfile->id]);
+        $host = User::factory()->create([
+            'role' => UserRole::Host, 'host_id' => $hostProfile->id,
+            'permissions' => ['accommodations' => \App\Support\Access::ACTIONS],
+        ]);
+
+        // In the admin the host sees the field but cannot change it; saving the rest works.
+        Livewire::actingAs($host)
+            ->test(EditProperty::class, ['record' => $accommodation->getKey()])
+            ->fillForm(['check_in_kind' => Property::CHECK_IN_SELF])
+            ->fillForm(['access_code_kind' => Property::ACCESS_SMART_LOCK])
+            ->set('data.smart_lock_device_id', 'dev-owner-house')
+            ->set('data.time_zone', 'UTC')
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertNull($accommodation->refresh()->smart_lock_device_id);
+
+        // Nor any other way (API, AI app): the model refuses it.
+        $this->actingAs($host);
+        try {
+            $accommodation->update(['smart_lock_device_id' => 'dev-owner-house']);
+            $this->fail('A host linked a lock.');
+        } catch (\Illuminate\Auth\Access\AuthorizationException) {
+        }
+        $this->assertNull($accommodation->refresh()->smart_lock_device_id);
+    }
+
     public function test_the_accommodation_can_be_saved_while_seam_does_not_answer(): void
     {
         $this->seam(['/devices/list' => Http::response(['error' => ['type' => 'provider_issue', 'message' => 'Down']], 503)]);

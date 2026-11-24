@@ -25,6 +25,10 @@
 @if ($notification === \App\Enums\AdminNotification::Payment && $payment)
 **{{ $payment->kind() }}**: {{ \App\Support\Money::format($payment->amount_cents, $booking->currency) }}
 
+@if (! $booking->status->isConfirmed())
+**{{ __('This booking is cancelled.') }}** {{ __('The guest paid anyway, and did not get a confirmation. The dates may be free for someone else: refund the payment, or check the calendar and take the booking up again with the guest.') }}
+
+@endif
 @endif
 <x-mail::table>
 | | |

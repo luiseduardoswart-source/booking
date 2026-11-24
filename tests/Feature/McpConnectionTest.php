@@ -93,6 +93,39 @@ class McpConnectionTest extends TestCase
         return $token;
     }
 
+    public function test_a_new_password_ends_the_connections_and_sessions_of_that_person_only(): void
+    {
+        $this->switchOn();
+        $owner = $this->owner();
+        $colleague = $this->owner();
+        $ownerToken = $this->connect($owner);
+        // The colleague's connection: a copy of the token row under their account.
+        $colleagueTokenRow = Token::query()->firstOrFail()->replicate();
+        $colleagueTokenRow->forceFill(['id' => Str::random(80), 'user_id' => $colleague->id])->save();
+
+        $this->mcp($ownerToken, 'tools/list')->assertOk();
+
+        $owner->update(['password' => 'a-brand-new-long-password']);
+
+        auth()->forgetGuards();
+        $this->mcp($ownerToken, 'tools/list')->assertUnauthorized();
+        $this->assertFalse((bool) $colleagueTokenRow->refresh()->revoked);
+    }
+
+    public function test_a_session_from_before_a_new_password_cannot_allow_an_app(): void
+    {
+        $this->switchOn();
+        $person = $this->owner();
+        $allowScreen = '/oauth/authorize?'.http_build_query(['client_id' => 'x', 'response_type' => 'code']);
+
+        // The session knows the password of the moment it signed in...
+        $this->actingAs($person)->get($allowScreen);
+        $person->update(['password' => 'a-brand-new-long-password']);
+
+        // ...so after a new one it is signed out, and the screen asks to sign in.
+        $this->get($allowScreen)->assertRedirect(route('filament.admin.auth.login'));
+    }
+
     public function test_nothing_exists_until_the_owner_switches_it_on(): void
     {
         $this->getJson('/.well-known/oauth-protected-resource')->assertNotFound();

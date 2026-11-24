@@ -7,7 +7,6 @@ use App\Models\Setting;
 use App\Services\Importing\ApifyImporter;
 use App\Services\Importing\ListingImportService;
 use App\Support\OutboundUrl;
-use GuzzleHttp\Psr7\Uri;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -51,19 +50,50 @@ class OutboundUrlTest extends TestCase
 
     public function test_a_public_address_is_allowed(): void
     {
-        OutboundUrl::check('https://93.184.215.14/calendar.ics');
-        // A name that does not resolve fails when fetched; it is no internal address.
-        OutboundUrl::check('https://airbnb.example/calendar.ics');
-
-        $this->addToAssertionCount(2);
+        $this->assertSame(['93.184.215.14'], OutboundUrl::check('https://93.184.215.14/calendar.ics'));
+        $this->assertSame(['93.184.215.14'], OutboundUrl::check('https://airbnb.example/calendar.ics'));
     }
 
-    public function test_a_redirect_to_an_internal_address_is_refused(): void
+    public function test_a_name_that_cannot_be_looked_up_is_refused(): void
     {
-        $onRedirect = OutboundUrl::options(1024)['allow_redirects']['on_redirect'];
+        // The real lookup, for a name that does not exist: refused, not left to the HTTP client.
+        OutboundUrl::resolveUsing(null);
+        $this->expectException(InvalidArgumentException::class);
+        OutboundUrl::check('https://does-not-exist.invalid/calendar.ics');
+    }
+
+    public function test_a_name_pointing_inside_through_any_of_its_addresses_is_refused(): void
+    {
+        OutboundUrl::resolveUsing(fn (string $host): array => ['93.184.215.14', '::1']);
 
         $this->expectException(InvalidArgumentException::class);
-        $onRedirect(null, null, new Uri('http://169.254.169.254/latest/meta-data/'));
+        OutboundUrl::check('https://two-faced.example/');
+    }
+
+    public function test_the_connection_goes_to_the_checked_address_and_redirects_are_checked_too(): void
+    {
+        $pins = [];
+        Http::fake([
+            'https://calendar.example/feed.ics' => Http::response('', 302, ['Location' => 'http://169.254.169.254/latest/meta-data/']),
+            'https://good.example/feed.ics' => Http::response('', 301, ['Location' => '/real.ics']),
+            'https://good.example/real.ics' => function (Request $request, array $options) use (&$pins) {
+                $pins[] = $options['curl'][CURLOPT_RESOLVE] ?? null;
+
+                return Http::response("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n");
+            },
+        ]);
+
+        // A redirect inside is refused before it is fetched.
+        try {
+            OutboundUrl::get('https://calendar.example/feed.ics', 1024);
+            $this->fail('A redirect to the metadata address was followed.');
+        } catch (InvalidArgumentException) {
+        }
+        Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '169.254.169.254'));
+
+        // A redirect outside is followed, every request pinned to the checked address.
+        $this->assertStringContainsString('BEGIN:VCALENDAR', OutboundUrl::get('https://good.example/feed.ics', 1024)->body());
+        $this->assertSame([['good.example:443:93.184.215.14']], $pins);
     }
 
     public function test_a_calendar_on_an_internal_address_is_not_fetched(): void

@@ -9,6 +9,9 @@ use Illuminate\Http\Response;
 
 class PaymentWebhookController extends Controller
 {
+    /** Calls per minute per sender (routes/web.php). */
+    public const PER_MINUTE = 120;
+
     /**
      * Mollie only sends an id; we fetch the current status from the
      * provider ourselves (never trust the payload). Processing is idempotent.

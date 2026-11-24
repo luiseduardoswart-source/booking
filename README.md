@@ -177,7 +177,8 @@ way; only the names of the menus differ.
   **sodium**).
 - **A domain name**, for example `yourdomain.com`, connected to that hosting,
   with the free **SSL certificate** switched on (the padlock in the browser; on
-  Hostinger: **Security → SSL**).
+  Hostinger: **Security → SSL**). The installation only accepts an address
+  that starts with `https://`.
 - **A mailbox** for the website, for example `bookings@yourdomain.com` (on
   Hostinger: **Emails**). The website sends emails to guests and to you from
   this address.
@@ -206,6 +207,9 @@ land in the right place by themselves:
 
 1. Download **`booking.zip`** from the
    [latest release](https://github.com/luiseduardoswart-source/booking/releases/latest).
+   Next to it is `booking.zip.sha256`, the fingerprint of the zip as it was
+   built: anyone who wants to be sure the file is unchanged compares it with
+   `sha256sum booking.zip` (Windows: `certutil -hashfile booking.zip SHA256`).
 2. In your hosting panel, open the **File Manager** and open the folder
    `public_html` of your domain. Delete everything in it (usually a sample
    page).
@@ -723,18 +727,41 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 - **Addresses the server fetches** (iCal calendars, listings and photos to
   import) go through `app/Support/OutboundUrl.php`: http(s) only, never an
   address inside the server's own network (also not after a redirect), and a
-  size limit.
+  size limit. A name that cannot be looked up is refused, and the connection
+  goes to the address that was checked (no DNS rebinding). Imported texts
+  become plain text (`ListingDraft`), and a calendar answer that is no
+  calendar never frees blocked nights.
 - **Limits** on public endpoints: booking, contact and forms, the chat, the
   price and calendar API (at most two years of nights per request), search
   suggestions and photo tracking.
 - **Live, links use `APP_URL`** (also in mails), never the Host header of the
-  request; the session cookie is https-only when `APP_URL` is https.
+  request; the session cookie is https-only when `APP_URL` is https. With an
+  https address a visit over plain http goes to https (`CanonicalHost`), and
+  the installation refuses a live address without https.
+- **Guest links expire**: pay, confirmation, ID-check and review links work
+  until 90 days after departure (`Booking::signedLink`), not forever.
+- **Webhooks** of the payment providers: at most 120 calls a minute per
+  sender, because every call makes the site ask the provider.
 - **Passwords and API keys** in the settings (`Setting::SECRETS`) are stored
   encrypted with `APP_KEY` and never sent to the browser: the field stays
   empty, empty on save keeps the saved value, and a button removes it.
-- **Headers**: `nosniff` and a referrer policy everywhere; the admin, My
+- **Headers**: `nosniff`, a referrer policy and a narrow content policy
+  (no `<base>` or `<object>` from another site) everywhere; the admin, My
   bookings, the installation and invitations cannot be shown inside another
-  site. Accommodation pages stay embeddable for the embed code.
+  site. Accommodation pages stay embeddable for the embed code. Scripts from
+  a CDN carry an integrity hash (`ThirdPartyCodeTest`).
+- **The log** (Admin → Log, owner only, read only): sign-ins and failed
+  sign-ins, changes to accounts, rights and two-factor, which setting changed
+  (never its value), and changes to bookings, payments and accommodations. It
+  keeps a year (`activitylog:clean`). A new password ends that person's AI
+  app connections and other sessions.
+- **The right to be forgotten**: "Erase guest data" on a booking (owner only)
+  erases the personal data of every finished or cancelled stay of that guest;
+  dates, amounts and payments stay under the name "Anonymous"
+  (`App\Support\GuestDataEraser`).
+- **Smart lock and calendar rights**: only the owner links a smart lock to an
+  accommodation; blocking nights needs the Calendar right, also in the price
+  calendar of an accommodation.
 - **The test payment provider** only opens through the signed link the
   booking flow gives; never leave it switched on for a live site. The
   dashboard warns while it, or a test key, is in use.
@@ -776,6 +803,7 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `identity:process` | daily at 08:45 | ID check after payment: reminds guests, then cancels or notifies you |
 | `mails:send-scheduled` | daily at 09:00 | Sends scheduled guest emails |
 | `deposits:process` | daily at 09:30 | Refunds security deposits, or reminds the host |
+| `activitylog:clean` | daily at 03:30 | Removes log lines older than a year |
 | `lang:translate es` | by hand | Machine-translates a language file from English (DeepL) |
 | `admin:disable-two-factor` | by hand | Disables two-factor sign-in for one account |
 | `bookings:clear-test-data` | by hand | Removes test bookings before going live and restarts the numbering |

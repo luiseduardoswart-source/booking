@@ -160,11 +160,17 @@
                 <x-filament::button wire:click="discount" color="warning" icon="heroicon-o-tag">{{ __('Discount') }}</x-filament::button>
             </div>
 
-            {{-- Block --}}
-            <div class="flex items-end gap-2">
-                <x-filament::button wire:click="block" color="danger" icon="heroicon-o-lock-closed">{{ __('Block') }}</x-filament::button>
-                <x-filament::button wire:click="unblock" color="gray" icon="heroicon-o-lock-open">{{ __('Unblock') }}</x-filament::button>
-            </div>
+            {{-- Block: only with the Calendar right (create / delete). --}}
+            @if ($canBlock || $canUnblock)
+                <div class="flex items-end gap-2">
+                    @if ($canBlock)
+                        <x-filament::button wire:click="block" color="danger" icon="heroicon-o-lock-closed">{{ __('Block') }}</x-filament::button>
+                    @endif
+                    @if ($canUnblock)
+                        <x-filament::button wire:click="unblock" color="gray" icon="heroicon-o-lock-open">{{ __('Unblock') }}</x-filament::button>
+                    @endif
+                </div>
+            @endif
 
             <x-filament::button wire:click="restore" color="gray" icon="heroicon-o-arrow-uturn-left" class="ml-auto">{{ __('Reset to default') }}</x-filament::button>
         </div>

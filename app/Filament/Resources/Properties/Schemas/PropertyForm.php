@@ -539,12 +539,16 @@ class PropertyForm
             Select::make('smart_lock_device_id')
                 ->label(__('Smart lock'))
                 ->options(fn (?Property $record): array => self::smartLockOptions($record))
-                ->required()
+                ->required(fn (): bool => (bool) auth()->user()?->isAdministrator())
                 ->searchable()
                 ->helperText(fn (): ?string => app(SeamLocks::class)->configured()
                     ? __('The locks in your Seam account.')
                     : __('Enter the Seam API key under Settings → Keys first.'))
                 ->native(false)
+                // Only the owner links a lock (see Property::booted); others see which one.
+                ->disabled(fn (): bool => ! auth()->user()?->isAdministrator())
+                ->dehydrated(fn (): bool => (bool) auth()->user()?->isAdministrator())
+                ->hint(fn (): ?string => auth()->user()?->isAdministrator() ? null : __('Only the owner links a smart lock.'))
                 ->visible(fn (Get $get, ?Property $record): bool => ! $record?->is_master && $smartLock($get, $record)),
             Select::make('time_zone')
                 ->label(__('Time zone'))

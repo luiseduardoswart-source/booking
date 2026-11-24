@@ -48,8 +48,8 @@ class PaymentFlowTest extends TestCase
 
         $booking = app(BookingEngine::class)->create(
             $property,
-            CarbonImmutable::parse('2026-03-02'),
-            CarbonImmutable::parse('2026-03-05'),
+            CarbonImmutable::today()->addDays(30),
+            CarbonImmutable::today()->addDays(33),
             2,
             ['name' => 'Jan Jansen', 'email' => 'jan@example.com'],
         );
@@ -114,6 +114,19 @@ class PaymentFlowTest extends TestCase
     public function test_webhook_with_unknown_id_gives_200(): void
     {
         $this->post('/webhooks/mollie', ['id' => 'tr_exists_not'])->assertOk();
+    }
+
+    public function test_one_sender_cannot_make_the_site_hammer_the_payment_provider(): void
+    {
+        for ($i = 0; $i < \App\Http\Controllers\PaymentWebhookController::PER_MINUTE; $i++) {
+            $this->postJson('/webhooks/stripe', ['data' => ['object' => ['id' => 'cs_'.$i]]])->assertOk();
+        }
+
+        $this->postJson('/webhooks/stripe', ['data' => ['object' => ['id' => 'cs_more']]])->assertStatus(429);
+        $this->post('/webhooks/mollie', ['id' => 'tr_more'])->assertStatus(429);
+
+        // Another sender (the provider) still gets through.
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])->post('/webhooks/mollie', ['id' => 'tr_exists_not'])->assertOk();
     }
 
     /**

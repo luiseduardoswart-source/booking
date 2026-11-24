@@ -32,9 +32,19 @@ class SecurityHeaders
         $headers->set('X-Content-Type-Options', 'nosniff', false);
         $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin', false);
 
+        // A narrow content policy: no <base> tag pointing links and forms to
+        // another site, no <object>/<embed> from another site (the media
+        // manager shows the site's own PDFs that way), and the pages above
+        // not framed by another site. Scripts are left free on purpose: the
+        // owner's own code (statistics, chat) and the admin's scripts must run.
+        $policy = "base-uri 'self'; object-src 'self'";
+
         if ($request->is(...self::NOT_EMBEDDABLE)) {
             $headers->set('X-Frame-Options', 'SAMEORIGIN', false);
+            $policy .= "; frame-ancestors 'self'";
         }
+
+        $headers->set('Content-Security-Policy', $policy, false);
 
         if ($request->isSecure() && app()->environment('production')) {
             $headers->set('Strict-Transport-Security', 'max-age=15552000', false);

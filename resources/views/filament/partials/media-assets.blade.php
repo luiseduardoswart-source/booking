@@ -2,9 +2,9 @@
      CDN libraries, translation strings, routes and the modals. Behind @once,
      so both the media page and the picker on Pages can load it. --}}
 @once
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/filepond@4.31.4/dist/filepond.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" integrity="sha256-9kPW/n5nn53j4WMRYAxe9c1rCY96Oogo/MKSVdKzPmI=" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet" integrity="sha256-I2efVSznNJn4F94itdzdnh5aHlDNnXfjS70xv2WoUYY=" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/filepond@4.31.4/dist/filepond.min.css" rel="stylesheet" integrity="sha256-VgAG0NNT/DlY6ve1B07Dx5W9TTHi/duXYoFGpRa9nzU=" crossorigin="anonymous">
 
     @include('filament.partials.media-modal')
     @include('filament.partials.media-preview')
@@ -40,9 +40,9 @@
         window.STORAGE_URL = @json(asset('storage'));
     </script>
     @include('filament.partials.sortablejs')
-    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/filepond@4.31.4/dist/filepond.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js" integrity="sha256-YpCj+lgbF8z0aSzz7GF6dK5l3ojZFAxy1JKum0dwfvs=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/filepond@4.31.4/dist/filepond.min.js" integrity="sha256-jVJGcjGaevALtF1tRXtShGDvf1nK0YCrpDSMJgEr/do=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js" integrity="sha256-3rB78jDRyz4ZC8WtxnQ/NcZTG2Vx0eVGmyT0Uqfw9Ks=" crossorigin="anonymous"></script>
     <script src="{{ asset('js/image-resize.js') }}?v={{ filemtime(public_path('js/image-resize.js')) }}"></script>
     <script src="{{ asset('js/media-selection.js') }}?v={{ filemtime(public_path('js/media-selection.js')) }}"></script>
     <script src="{{ asset('js/media-manager.js') }}?v={{ filemtime(public_path('js/media-manager.js')) }}"></script>

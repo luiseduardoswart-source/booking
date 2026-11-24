@@ -28,7 +28,26 @@ class ListingDraft
         public ?int $basePriceCents = null,
         public array $photoUrls = [],
         public ?string $sourceUrl = null,
-    ) {}
+    ) {
+        // Texts from another site are plain text, whichever importer found
+        // them: the description is shown as HTML on the accommodation page,
+        // so a tag or script in it would run there.
+        foreach (['name', 'shortDescription', 'description', 'city', 'country'] as $field) {
+            $this->{$field} = self::plainText($this->{$field});
+        }
+    }
+
+    /** Text without tags; decoded first, so an encoded tag (&lt;img ...&gt;) does not survive as a real one. */
+    public static function plainText(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $text = trim(strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5)));
+
+        return $text === '' ? null : $text;
+    }
 
     /**
      * The filled-in Property fields (without photos; those are downloaded separately).
@@ -37,12 +56,13 @@ class ListingDraft
      */
     public function toAttributes(): array
     {
+        // Again here: an importer may fill a field after the draft was made.
         return array_filter([
-            'name' => $this->name,
-            'short_description' => $this->shortDescription,
-            'description' => $this->description,
-            'city' => $this->city,
-            'country' => $this->country,
+            'name' => self::plainText($this->name),
+            'short_description' => self::plainText($this->shortDescription),
+            'description' => self::plainText($this->description),
+            'city' => self::plainText($this->city),
+            'country' => self::plainText($this->country),
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'max_guests' => $this->maxGuests,

@@ -7,7 +7,6 @@ use App\Engines\PaymentEngine;
 use App\Enums\PaymentType;
 use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\URL;
 use Throwable;
 
 /**
@@ -26,7 +25,7 @@ class BookingPayController extends Controller
 
         // ID check required and not done yet: that first, then on to this payment.
         if ($booking->identityStillMissingBeforePayment()) {
-            return redirect()->to(URL::signedRoute('identity.start', IdentityController::parameters($booking, $paymentType)));
+            return redirect()->to($booking->signedLink('identity.start', IdentityController::parameters($booking, $paymentType)));
         }
 
         try {

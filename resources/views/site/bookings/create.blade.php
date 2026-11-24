@@ -13,8 +13,10 @@
                     <input type="hidden" name="adults" value="{{ $breakdown['adults'] }}">
                     <input type="hidden" name="children" value="{{ $breakdown['children'] }}">
                     <input type="hidden" name="infants" value="{{ $breakdown['infants'] }}">
-                    <input type="hidden" name="pets" value="{{ $breakdown['pets'] }}">
                 @endif
+                {{-- Always: the price shown above includes the pet fee. --}}
+                <input type="hidden" name="pets" value="{{ $breakdown['pets'] }}">
+
                 @if ($coupon)
                     <input type="hidden" name="coupon" value="{{ $coupon->code }}">
                 @endif

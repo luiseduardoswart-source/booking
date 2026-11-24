@@ -66,6 +66,24 @@ class BookingChoicesManipulationTest extends TestCase
         $this->assertSame(0, Booking::query()->count());
     }
 
+    public function test_pets_cost_their_fee_also_without_the_adults_and_children_breakdown(): void
+    {
+        $this->withoutVite();
+        Property::query()->where('slug', 'strandhuis')->update(['pets_allowed' => true, 'max_pets' => 2, 'pet_fee_cents' => 5000]);
+        $dates = ['arrival' => today()->addDays(10)->toDateString(), 'departure' => today()->addDays(13)->toDateString()];
+
+        // The page shows the price with the fee, and the form passes the pets on.
+        $this->get('/strandhuis/book?'.http_build_query([...$dates, 'guests' => 2, 'pets' => 2]))
+            ->assertOk()->assertSee('name="pets" value="2"', false);
+
+        // Left out of the breakdown (on purpose or not): still counted.
+        $this->book(['pets' => 2])->assertSessionHasNoErrors();
+
+        $booking = Booking::query()->sole();
+        $this->assertSame(2, $booking->pets);
+        $this->assertSame(30000 + 2 * 5000, $booking->total_cents); // three nights, the fee per pet
+    }
+
     public function test_the_count_guests_follows_off_adults_and_children(): void
     {
         // A separate, larger "guests" field changes nothing.

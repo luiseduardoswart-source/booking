@@ -190,12 +190,14 @@ class PublicSiteHardeningTest extends TestCase
     {
         $this->get('/admin/login')
             ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
-            ->assertHeader('X-Content-Type-Options', 'nosniff');
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('Content-Security-Policy', "base-uri 'self'; object-src 'self'; frame-ancestors 'self'");
         $this->get('/my-bookings')->assertHeader('X-Frame-Options', 'SAMEORIGIN');
 
         // An accommodation stays embeddable (the share modal offers an embed code).
         $this->get('/'.$this->accommodation()->slug)
             ->assertHeaderMissing('X-Frame-Options')
+            ->assertHeader('Content-Security-Policy', "base-uri 'self'; object-src 'self'")
             ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     }
 

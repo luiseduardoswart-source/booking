@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Http\Controllers\InstallController;
 use App\Http\Middleware\EnsureNotInstalled;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,6 +61,24 @@ class InstallTest extends TestCase
         $this->post('/install')->assertRedirect('/admin');
         $this->get('/install/account')->assertRedirect('/admin');
         $this->post('/install/account')->assertRedirect('/admin');
+    }
+
+    public function test_a_live_site_address_must_be_on_https(): void
+    {
+        // The form suggests the https address, also when opened over http.
+        $this->withCode()->get('http://www.example.com/install?again=1')
+            ->assertSee('value="https://www.example.com"', false);
+
+        $details = ['db_host' => '127.0.0.1', 'db_port' => 3306, 'db_database' => 'x', 'db_username' => 'x'];
+
+        $this->withCode()->post('/install', [...$details, 'app_url' => 'http://www.example.com'])
+            ->assertSessionHasErrors('app_url');
+
+        // On this computer plain http is fine (not posted: that would try the database).
+        $this->assertTrue(InstallController::secureAddress('http://localhost'));
+        $this->assertTrue(InstallController::secureAddress('http://booking.test'));
+        $this->assertTrue(InstallController::secureAddress('https://www.example.com'));
+        $this->assertFalse(InstallController::secureAddress('http://www.example.com'));
     }
 
     public function test_first_account_is_administrator_and_is_logged_in(): void

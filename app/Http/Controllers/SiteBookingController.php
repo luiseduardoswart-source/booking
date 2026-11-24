@@ -19,7 +19,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\URL;
 use InvalidArgumentException;
 
 class SiteBookingController extends Controller
@@ -241,12 +240,14 @@ class SiteBookingController extends Controller
                 signature: $signature,
                 couponCode: $validated['coupon'] ?? null,
                 formAnswers: FormAnswers::collect($bookingForm, (array) ($validated[FormAnswers::INPUT] ?? [])),
+                // Pets count with or without the adults/children breakdown:
+                // the pet fee is part of the price the guest was shown.
                 guestBreakdown: isset($validated['adults']) ? [
                     'adults' => (int) $validated['adults'],
                     'children' => (int) ($validated['children'] ?? 0),
                     'infants' => (int) ($validated['infants'] ?? 0),
                     'pets' => (int) ($validated['pets'] ?? 0),
-                ] : null,
+                ] : (((int) ($validated['pets'] ?? 0)) > 0 ? ['pets' => (int) $validated['pets']] : null),
             );
         } catch (InvalidCouponException $e) {
             // No booking at the full price behind the guest's back; the try stays counted.
@@ -273,7 +274,7 @@ class SiteBookingController extends Controller
         // proceed to payment. That way a guest who does not want to verify
         // does not have to pay anything yet.
         if ($booking->identityStillMissingBeforePayment()) {
-            return redirect()->to(URL::signedRoute('identity.start', $booking));
+            return redirect()->to($booking->signedLink('identity.start'));
         }
 
         return redirect()->away($payments->checkoutOrConfirmationUrl($booking));

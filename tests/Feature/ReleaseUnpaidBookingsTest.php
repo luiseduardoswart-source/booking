@@ -176,7 +176,7 @@ class ReleaseUnpaidBookingsTest extends TestCase
         $this->get(\Illuminate\Support\Facades\URL::signedRoute('booking.payment-unavailable', $booking))
             ->assertOk()
             ->assertSee(__('The payment could not be started'))
-            ->assertSee($booking->paymentLink(\App\Enums\PaymentType::DownPayment), false);
+            ->assertSee(e($booking->paymentLink(\App\Enums\PaymentType::DownPayment)), false);
 
         // Trying again while it still fails brings the guest back here, not to an error page.
         $this->get($booking->paymentLink(\App\Enums\PaymentType::DownPayment))->assertRedirectContains('/payment-unavailable');

@@ -35,6 +35,19 @@ class Setting extends Model
     {
         static::saved(fn () => static::forgets());
         static::deleted(fn () => static::forgets());
+
+        // A setting someone changes in the admin (payment provider, keys,
+        // mail...) is in the log: which one, never the value. Changes the
+        // site makes itself (counters, caches) are not.
+        static::saved(function (self $setting): void {
+            $changed = $setting->wasRecentlyCreated ? filled($setting->value) : $setting->wasChanged('value');
+
+            if (auth()->check() && $changed) {
+                activity()->event('setting_changed')
+                    ->withProperties(['setting' => "{$setting->group}.{$setting->key}"])
+                    ->log('Setting changed');
+            }
+        });
     }
 
     public static function get(string $group, string $key, ?string $default = null): ?string

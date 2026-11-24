@@ -230,6 +230,21 @@ final class McpConnection
     }
 
     /**
+     * Ends the connections of one person: after a new password (or a new
+     * invitation) an app connected with the old one must not keep working.
+     */
+    public static function disconnect(User $user): int
+    {
+        $tokenIds = Token::query()->where('user_id', $user->getKey())->where('revoked', false)->pluck('id');
+
+        $count = Token::query()->whereKey($tokenIds)->update(['revoked' => true]);
+        RefreshToken::query()->whereIn('access_token_id', $tokenIds)->where('revoked', false)->update(['revoked' => true]);
+        AuthCode::query()->where('user_id', $user->getKey())->where('revoked', false)->update(['revoked' => true]);
+
+        return $count;
+    }
+
+    /**
      * Tokens that are not revoked and still usable: the access token itself,
      * or its refresh token with which the app gets a new one.
      *

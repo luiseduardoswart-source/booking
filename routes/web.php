@@ -166,8 +166,14 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::get('/invitation/{user}', [\App\Http\Controllers\AdminInvitationController::class, 'show'])->name('admin.invitation');
     Route::post('/invitation/{user}', [\App\Http\Controllers\AdminInvitationController::class, 'store'])->name('admin.invitation.store');
 });
-Route::post('/webhooks/mollie', [PaymentWebhookController::class, 'mollie'])->name('webhooks.mollie');
-Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.stripe');
+// Payment providers report changes here. Every call makes the site ask the
+// provider (a webhook proves nothing itself), so per sender a limit: nobody
+// can make the site hammer Mollie or Stripe and use up its quota there. The
+// providers themselves stay far below it, and retry a call that was refused.
+Route::middleware('throttle:'.PaymentWebhookController::PER_MINUTE.',1')->group(function () {
+    Route::post('/webhooks/mollie', [PaymentWebhookController::class, 'mollie'])->name('webhooks.mollie');
+    Route::post('/webhooks/stripe', [PaymentWebhookController::class, 'stripe'])->name('webhooks.stripe');
+});
 
 // ID verification (signed link from the confirmation mail)
 Route::get('/booking/{booking}/verification', [\App\Http\Controllers\IdentityController::class, 'start'])

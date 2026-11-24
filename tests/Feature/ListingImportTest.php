@@ -47,6 +47,27 @@ class ListingImportTest extends TestCase
         $this->assertCount(2, $draft->photoUrls);
     }
 
+    public function test_an_apify_import_brings_no_html_or_script_along(): void
+    {
+        \App\Models\Setting::set('import', 'apify_token', 'apify_api_test');
+        \App\Models\Setting::set('import', 'apify_actor', 'someone~airbnb');
+        Http::fake(['api.apify.com/*' => Http::response([[
+            'name' => '<b>Villa</b> Sol',
+            'summary' => 'Aan &lt;img src=x onerror=alert(1)&gt; zee',
+            'description' => '<p>Ruim huis</p><img src=x onerror=alert(2)><script>alert(3)</script>',
+        ]])]);
+
+        $property = (new ListingImportService(app(\App\Services\Importing\ApifyImporter::class)))->importFromUrl('https://www.airbnb.com/rooms/1');
+
+        $this->assertSame('Villa Sol', $property->name);
+        foreach ([$property->short_description, $property->description, \App\Support\RichText::render($property->description)] as $text) {
+            $this->assertStringNotContainsString('<img', (string) $text);
+            $this->assertStringNotContainsString('onerror', (string) $text);
+            $this->assertStringNotContainsString('<script', (string) $text);
+        }
+        $this->assertStringContainsString('Ruim huis', (string) $property->description);
+    }
+
     public function test_airbnb_puts_the_own_title_in_the_name_and_not_in_the_short_description(): void
     {
         // Airbnb fills og:title with a facts line and og:description with the

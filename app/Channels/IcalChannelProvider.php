@@ -4,7 +4,6 @@ namespace App\Channels;
 
 use App\Models\ChannelConnection;
 use App\Support\OutboundUrl;
-use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 class IcalChannelProvider implements ChannelProvider
@@ -27,12 +26,7 @@ class IcalChannelProvider implements ChannelProvider
     public function pull(ChannelConnection $connection): array
     {
         try {
-            OutboundUrl::check($connection->url);
-
-            $response = Http::timeout(30)
-                ->withOptions(OutboundUrl::options(self::MAX_BYTES))
-                ->withHeaders(['User-Agent' => config('app.name').' PMS'])
-                ->get($connection->url);
+            $response = OutboundUrl::get($connection->url, self::MAX_BYTES, ['User-Agent' => config('app.name').' PMS']);
         } catch (\Throwable $e) {
             throw new RuntimeException(OutboundUrl::reason($e)?->getMessage() ?? __('The calendar could not be fetched.'));
         }

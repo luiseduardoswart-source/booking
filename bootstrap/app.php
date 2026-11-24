@@ -61,6 +61,10 @@ $app = Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ApplyContentLinks::class,
             // Pages that are not meant for search results say so (X-Robots-Tag).
             \App\Http\Middleware\NoIndex::class,
+            // A new password signs out every other session, also outside the
+            // admin panel (which does this itself): the AI connection's
+            // "Allow" screen would otherwise still accept an old session.
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

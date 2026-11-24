@@ -19,13 +19,45 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['name', 'email', 'locale', 'password', 'role', 'host_id', 'permissions'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, \Laravel\Sanctum\HasApiTokens, Notifiable;
+    use HasFactory, \Laravel\Sanctum\HasApiTokens, LogsActivity, Notifiable;
+
+    /**
+     * Who may do what is security: every change to an account is in the log
+     * (Logboek), never the password or the two-factor secret themselves.
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'role', 'permissions', 'host_id'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
+
+    protected static function booted(): void
+    {
+        static::updated(function (self $user): void {
+            // Two-factor on or off: that it happened, not the secret.
+            if ($user->wasChanged('app_authentication_secret')) {
+                activity()->performedOn($user)
+                    ->event($user->hasTwoFactor() ? 'two_factor_on' : 'two_factor_off')
+                    ->log($user->hasTwoFactor() ? 'Two-factor authentication turned on' : 'Two-factor authentication turned off');
+            }
+
+            // A new password ends the AI-app connections made with the old one.
+            if ($user->wasChanged('password')) {
+                \App\Support\McpConnection::disconnect($user);
+                activity()->performedOn($user)->event('password_changed')->log('Password changed');
+            }
+        });
+    }
 
     // Two-factor authentication with an authenticator app, with recovery codes.
     // Secret and codes are stored encrypted and never serialized.

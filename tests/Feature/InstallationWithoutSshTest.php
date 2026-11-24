@@ -187,6 +187,21 @@ class InstallationWithoutSshTest extends TestCase
         $this->assertSame(version_compare(PHP_VERSION, '8.4.1', '>='), $requirements[0]['ok']);
     }
 
+    public function test_starttls_must_succeed_before_the_password_is_sent(): void
+    {
+        Setting::set('mail', 'host', 'smtp.example.nl');
+        Setting::set('mail', 'user', 'info@example.nl');
+        Setting::set('mail', 'password', 'mailbox-password');
+
+        foreach ([MailSettings::STARTTLS => true, MailSettings::SSL => false] as $security => $required) {
+            Setting::set('mail', 'security', $security);
+            $this->fresh();
+
+            $transport = $this->app->make('mail.manager')->mailer('smtp')->getSymfonyTransport();
+            $this->assertSame($required, $transport->isTlsRequired(), $security);
+        }
+    }
+
     public function test_without_mailbox_in_the_admin_applies_the_env(): void
     {
         $this->fresh();

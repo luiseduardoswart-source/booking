@@ -99,6 +99,47 @@ class IcalSyncTest extends TestCase
         $this->assertSame(0, $property->calendarBlocks()->count());
     }
 
+    public function test_an_answer_that_is_no_calendar_keeps_the_blocked_nights(): void
+    {
+        $property = $this->makeProperty();
+        $property->channelConnections()->create([
+            'provider' => 'ical',
+            'name' => 'Airbnb',
+            'url' => 'https://airbnb.example/calendar.ics',
+        ]);
+        Http::fake(['airbnb.example/*' => Http::sequence()
+            ->push(self::SAMPLE_ICS)
+            // A maintenance page, and an empty answer: no calendar, so no "no bookings".
+            ->push('<html><body>Down for maintenance</body></html>')
+            ->push('')]);
+
+        $this->artisan('channels:sync')->assertSuccessful();
+        $this->artisan('channels:sync')->assertSuccessful();
+        $this->artisan('channels:sync')->assertSuccessful();
+
+        $this->assertSame(2, $property->calendarBlocks()->count());
+        $this->assertNotNull($property->channelConnections()->first()->last_error);
+    }
+
+    public function test_an_empty_calendar_frees_the_nights(): void
+    {
+        $property = $this->makeProperty();
+        $property->channelConnections()->create([
+            'provider' => 'ical',
+            'name' => 'Airbnb',
+            'url' => 'https://airbnb.example/calendar.ics',
+        ]);
+        Http::fake(['airbnb.example/*' => Http::sequence()
+            ->push(self::SAMPLE_ICS)
+            ->push("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Airbnb Inc//EN\r\nEND:VCALENDAR\r\n")]);
+
+        $this->artisan('channels:sync')->assertSuccessful();
+        $this->artisan('channels:sync')->assertSuccessful();
+
+        $this->assertSame(0, $property->calendarBlocks()->count());
+        $this->assertNull($property->channelConnections()->first()->last_error);
+    }
+
     public function test_conflict_between_own_booking_and_external_booking_sends_alarm(): void
     {
         $property = $this->makeProperty();

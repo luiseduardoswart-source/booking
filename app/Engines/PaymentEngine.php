@@ -17,7 +17,6 @@ use App\Support\AdminNotifications;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Throwable;
@@ -224,14 +223,14 @@ class PaymentEngine
                 $this->notifications->sendOnce($booking, MailType::Confirmation);
             }
 
-            return URL::signedRoute('bookings.confirmation', $booking);
+            return $booking->signedLink('bookings.confirmation');
         }
     }
 
     /** The page for a checkout that could not be made, with a button to try again. */
     public static function unavailableUrl(Booking $booking): string
     {
-        return URL::signedRoute('booking.payment-unavailable', $booking);
+        return $booking->signedLink('booking.payment-unavailable');
     }
 
     /**
@@ -285,6 +284,14 @@ class PaymentEngine
         if ($newStatus === PaymentTransactionStatus::Paid) {
             $this->applyPaymentToBooking($payment->booking);
             $booking = $payment->booking->refresh();
+
+            // Paid on a booking that was cancelled meanwhile (its payment link
+            // could not be closed): the money is booked, but the guest gets no
+            // confirmation for dates that are free again. The owner's payment
+            // notice says the booking is cancelled (admin-notification).
+            if (! $booking->status->isConfirmed()) {
+                return $payment;
+            }
 
             // The first paid stay payment confirms the booking: only now the
             // confirmation goes out (any ID check came before the payment), and

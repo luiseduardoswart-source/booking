@@ -3,6 +3,7 @@
 namespace App\Channels;
 
 use Carbon\CarbonImmutable;
+use RuntimeException;
 
 class IcalParser
 {
@@ -11,10 +12,20 @@ class IcalParser
      * iCal; we work with inclusive nights, so the last night is DTEND minus
      * one day.
      *
+     * Only a real calendar counts: a page that is no calendar (a maintenance
+     * or login page, an empty answer) would otherwise read as "no bookings"
+     * and free every blocked night. An empty calendar is fine.
+     *
      * @return array<int, array{external_uid: string, start_date: CarbonImmutable, end_date: CarbonImmutable, note: string|null}>
+     *
+     * @throws RuntimeException when the text is no calendar
      */
     public function parse(string $ics): array
     {
+        if (! preg_match('/^\s*BEGIN:VCALENDAR\b/i', $ics) || ! preg_match('/END:VCALENDAR\s*$/i', $ics)) {
+            throw new RuntimeException(__('The address did not return a calendar.'));
+        }
+
         // Unfolding: lines starting with a space/tab continue the previous line.
         $ics = preg_replace("/\r\n[ \t]/", '', str_replace("\n", "\r\n", str_replace("\r\n", "\n", $ics)));
 

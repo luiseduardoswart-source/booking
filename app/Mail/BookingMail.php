@@ -15,7 +15,6 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\URL;
 
 class BookingMail extends Mailable implements ShouldQueue
 {
@@ -100,12 +99,12 @@ class BookingMail extends Mailable implements ShouldQueue
                     ? null
                     : MailPlaceholders::fillIn($text, $this->booking),
                 'payBalanceUrl' => $this->booking->paymentLink(PaymentType::Balance),
-                'reviewUrl' => URL::signedRoute('reviews.create', $this->booking),
+                'reviewUrl' => $this->booking->signedLink('reviews.create'),
                 'payDepositUrl' => $this->booking->paymentLink(PaymentType::Deposit),
                 'idVerification' => $this->booking->identityMissing(),
                 // With the check after the payment: the last day to do it.
                 'identityDeadline' => $this->booking->identityDeadline(),
-                'verificationUrl' => URL::signedRoute('identity.start', $this->booking),
+                'verificationUrl' => $this->booking->signedLink('identity.start'),
                 // The booking and its documents online, until three months after departure.
                 'bookingUrl' => \App\Support\GuestAccess::bookingUrl($this->booking),
                 // Booked without a phone number: the confirmation asks for it.

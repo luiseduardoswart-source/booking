@@ -7,6 +7,7 @@ use App\Engines\PricingEngine;
 use App\Models\NightlyRate;
 use App\Filament\Resources\Properties\PropertyResource;
 use App\Models\Property;
+use App\Support\Access;
 use Carbon\CarbonImmutable;
 use Filament\Notifications\Notification;
 use Livewire\Component;
@@ -209,7 +210,7 @@ class NightlyPricesCalendar extends Component
 
     public function block(): void
     {
-        $this->checkPermission();
+        $this->checkPermission(Access::CREATE);
 
         if ($this->selected === []) {
             Notification::make()->title(__('Select one or more nights first.'))->warning()->send();
@@ -240,7 +241,7 @@ class NightlyPricesCalendar extends Component
 
     public function unblock(): void
     {
-        $this->checkPermission();
+        $this->checkPermission(Access::DELETE);
 
         if ($this->selected === []) {
             Notification::make()->title(__('Select one or more nights first.'))->warning()->send();
@@ -426,7 +427,10 @@ class NightlyPricesCalendar extends Component
 
     public function render(): \Illuminate\View\View
     {
-        return view('livewire.nightly-prices-calendar');
+        return view('livewire.nightly-prices-calendar', [
+            'canBlock' => $this->may(Access::CREATE),
+            'canUnblock' => $this->may(Access::DELETE),
+        ]);
     }
 
     /**
@@ -434,8 +438,18 @@ class NightlyPricesCalendar extends Component
      * accommodation (or the right) cannot keep changing prices from a tab
      * that is still open.
      */
-    private function checkPermission(): void
+    private function checkPermission(?string $calendarAction = null): void
     {
         abort_unless(PropertyResource::canEdit($this->property), 403);
+
+        // Blocking and freeing nights is the Calendar right, as in the AI app
+        // and the calendar screen: editing the accommodation is not enough.
+        abort_unless($calendarAction === null || $this->may($calendarAction), 403);
+    }
+
+    /** May the user block (create) or free (delete) nights? For the buttons as well. */
+    private function may(string $calendarAction): bool
+    {
+        return (bool) auth()->user()?->may('calendar', $calendarAction);
     }
 }

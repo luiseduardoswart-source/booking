@@ -1,3 +1,9 @@
+# Never a list of the files in a folder (uploads, build): also on a server
+# without mod_negotiation, where the line below does not apply.
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

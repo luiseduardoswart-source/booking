@@ -59,6 +59,29 @@ class CanonicalHostTest extends TestCase
         });
     }
 
+    public function test_plain_http_on_the_right_host_goes_to_https(): void
+    {
+        $this->asIfLive('https://www.example.nl', function () {
+            $this->get('http://www.example.nl/admin/login?x=1')
+                ->assertStatus(301)
+                ->assertRedirect('https://www.example.nl/admin/login?x=1');
+        });
+    }
+
+    public function test_a_proxy_that_already_speaks_https_causes_no_endless_redirect(): void
+    {
+        $this->asIfLive('https://www.example.nl', function () {
+            $this->get('http://www.example.nl/', ['X-Forwarded-Proto' => 'https'])->assertOk();
+        });
+    }
+
+    public function test_a_site_on_http_in_app_url_stays_on_http(): void
+    {
+        $this->asIfLive('http://www.example.nl', function () {
+            $this->get('http://www.example.nl/')->assertOk();
+        });
+    }
+
     public function test_without_production_happens_there_nothing(): void
     {
         config(['app.url' => 'https://www.example.nl']);

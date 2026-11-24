@@ -13,6 +13,12 @@ use Symfony\Component\HttpFoundation\Response;
  * versions existing side by side (duplicate content for search engines, and
  * sessions and signed links that differ per hostname).
  *
+ * The same for https: with an https address in APP_URL, a visit over plain
+ * http goes to https, so logins, payment links and the session never cross
+ * the network unencrypted. A proxy in front of the server that already
+ * speaks https with the visitor says so in X-Forwarded-Proto; that header is
+ * only used to avoid an endless redirect, never to trust anything.
+ *
  * Note: the server's certificate must cover the hostname from APP_URL,
  * otherwise you send everyone to a warning.
  */
@@ -36,12 +42,27 @@ class CanonicalHost
 
         $canonical = parse_url((string) config('app.url'), PHP_URL_HOST);
 
-        if (! is_string($canonical) || $canonical === '' || strcasecmp($canonical, $request->getHost()) === 0) {
+        if (! is_string($canonical) || $canonical === '') {
+            return $next($request);
+        }
+
+        $rightHost = strcasecmp($canonical, $request->getHost()) === 0;
+        $wantsHttps = strcasecmp((string) parse_url((string) config('app.url'), PHP_URL_SCHEME), 'https') === 0;
+
+        if ($rightHost && (! $wantsHttps || $this->secure($request))) {
             return $next($request);
         }
 
         $target = rtrim((string) config('app.url'), '/').'/'.ltrim($request->getRequestUri(), '/');
 
         return redirect()->away($target, 301);
+    }
+
+    /** Is the visitor on https, here or at a proxy in front of the server? */
+    private function secure(Request $request): bool
+    {
+        $forwarded = strtolower(trim(explode(',', (string) $request->headers->get('X-Forwarded-Proto'))[0]));
+
+        return $request->isSecure() || $forwarded === 'https';
     }
 }

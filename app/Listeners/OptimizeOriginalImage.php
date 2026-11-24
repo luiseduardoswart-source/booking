@@ -12,6 +12,9 @@ use Throwable;
  * Shrinks the stored original on upload — only if the administrator turned
  * that on in the settings. The site always serves the shrunken conversions
  * anyway; this purely saves storage on the originals.
+ *
+ * Registered by Laravel's event discovery (the type-hinted handle method).
+ * Do not also register it with Event::listen, or every upload runs it twice.
  */
 class OptimizeOriginalImage
 {

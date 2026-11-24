@@ -141,12 +141,6 @@ class AppServiceProvider extends ServiceProvider
             fn () => \Illuminate\Validation\Rules\Password::min(15)->max(64)->uncompromised()
         );
 
-        // Shrink the original on upload (optional, via settings).
-        \Illuminate\Support\Facades\Event::listen(
-            \Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent::class,
-            \App\Listeners\OptimizeOriginalImage::class,
-        );
-
         // Media picker + hero repeater on Pages: the modals and scripts must be in
         // the initial HTML (scripts in Livewire-morphed modals do not run).
         \Filament\Support\Facades\FilamentView::registerRenderHook(

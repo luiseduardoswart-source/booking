@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Listeners\OptimizeOriginalImage;
 use App\Models\Property;
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
 use Tests\TestCase;
 
 class MediaOptimizationTest extends TestCase
@@ -59,6 +62,22 @@ class MediaOptimizationTest extends TestCase
 
         [$width] = getimagesize($media->getPath());
         $this->assertSame(2000, $width);
+    }
+
+    public function test_one_upload_runs_the_optimizer_once(): void
+    {
+        Storage::fake('public');
+        Setting::set('media', 'original_shrink', '1');
+
+        // The dispatcher resolves the listener from the container on every
+        // call, so a spy bound there counts each registration that fires.
+        $spy = $this->spy(OptimizeOriginalImage::class);
+
+        $property = $this->makeProperty();
+        $property->addMedia($this->grondePhoto(800, 600))->toMediaCollection('photos');
+
+        $spy->shouldHaveReceived('handle')->once();
+        $this->assertCount(1, Event::getListeners(MediaHasBeenAddedEvent::class));
     }
 
     public function test_small_photo_is_not_touched(): void

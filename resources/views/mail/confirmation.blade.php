@@ -71,6 +71,7 @@
 </x-mail::button>
 @endif
 
+@include('mail.partials.guest-registration')
 {{ __('Questions or changes? Reply to this email and we will be happy to help.') }}
 
 @include('mail.partials.booking-link')

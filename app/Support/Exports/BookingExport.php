@@ -4,6 +4,7 @@ namespace App\Support\Exports;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Models\GuestRegistration;
 use App\Models\Invoice;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
@@ -26,7 +27,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *  - bookings: one row per booking with the guest, the price lines, the
  *    invoice and (with the right to see payments) what was paid;
  *  - tourist tax: per accommodation and month the stays, nights, guest
- *    nights and tourist tax of the confirmed bookings.
+ *    nights and tourist tax of the confirmed bookings;
+ *  - guest registration: every registered traveller of the confirmed
+ *    bookings, for the police or city portal of the accommodation's country.
  *
  * The query that comes in is already narrowed to what the user may see
  * (a host: only their own accommodations).
@@ -39,6 +42,10 @@ final class BookingExport
     public const BOOKINGS = 'bookings';
 
     public const TOURIST_TAX = 'tourist_tax';
+
+    public const GUEST_REGISTRATION = 'guest_registration';
+
+    private const FILE_NAMES = [self::BOOKINGS => 'bookings', self::TOURIST_TAX => 'tourist-tax', self::GUEST_REGISTRATION => 'guest-registration'];
 
     private const CHUNK = 500;
 
@@ -76,9 +83,11 @@ final class BookingExport
         $writer = new Writer;
         $writer->openToFile($path);
 
-        $kind === self::TOURIST_TAX
-            ? $this->writeTouristTax($writer)
-            : $this->writeBookings($writer, $withCancelled, $withPayments);
+        match ($kind) {
+            self::TOURIST_TAX => $this->writeTouristTax($writer),
+            self::GUEST_REGISTRATION => $this->writeGuestRegistrations($writer),
+            default => $this->writeBookings($writer, $withCancelled, $withPayments),
+        };
 
         $writer->close();
 
@@ -86,7 +95,7 @@ final class BookingExport
             ->withProperties(['export' => $kind, 'from' => $this->from->toDateString(), 'until' => $this->until->toDateString()])
             ->log('bookings_exported');
 
-        $name = ($kind === self::TOURIST_TAX ? 'tourist-tax' : 'bookings').'-'.$this->from->toDateString().'-'.$this->until->toDateString().'.xlsx';
+        $name = (self::FILE_NAMES[$kind] ?? self::FILE_NAMES[self::BOOKINGS]).'-'.$this->from->toDateString().'-'.$this->until->toDateString().'.xlsx';
 
         return response()->streamDownload(function () use ($path): void {
             readfile($path);
@@ -165,16 +174,12 @@ final class BookingExport
             'Accommodation', 'City', 'Registration number', 'Month', 'Stays', 'Nights', 'Guests', 'Guest nights', 'Tourist tax', 'Currency',
         ]);
 
-        $confirmed = array_map(
-            fn (BookingStatus $status): string => $status->value,
-            array_filter(BookingStatus::cases(), fn (BookingStatus $status): bool => $status->isConfirmed()),
-        );
 
         $totals = [];
 
         $this->inPeriod()
             ->with('property:id,name,city,registration_number')
-            ->whereIn('status', $confirmed)
+            ->whereIn('status', BookingStatus::confirmedValues())
             ->chunk(self::CHUNK, function (Collection $bookings) use (&$totals): void {
                 foreach ($bookings as $booking) {
                     $key = implode('|', [$booking->property?->name, $booking->property_id, $booking->arrival_date->format('Y-m'), $booking->currency]);
@@ -212,6 +217,46 @@ final class BookingExport
             ]));
         }
     }
+
+    private function writeGuestRegistrations(Writer $writer): void
+    {
+        $this->header($writer, [
+            'Booking number', 'Accommodation', 'Registration number', 'Arrival', 'Departure', 'Guest',
+            'First name', 'Last name(s)', 'Sex', 'Date of birth', 'Country of birth', 'Nationality',
+            'Type', 'Document number', 'Issued by', 'Country of residence', 'City', 'Address',
+        ]);
+
+        $this->inPeriod()
+            ->with(['property:id,name,registration_number', 'guestRegistrations'])
+            ->whereIn('status', BookingStatus::confirmedValues())
+            ->chunk(self::CHUNK, function (Collection $bookings) use ($writer): void {
+                foreach ($bookings as $booking) {
+                    foreach ($booking->guestRegistrations as $traveller) {
+                        $writer->addRow(new Row([
+                            $this->text($booking->booking_number),
+                            $this->text($booking->property?->name),
+                            $this->text($booking->property?->registration_number),
+                            $this->day($booking->arrival_date),
+                            $this->day($booking->departure_date),
+                            $this->number($traveller->position),
+                            $this->text($traveller->first_name),
+                            $this->text($traveller->last_name),
+                            $this->text(__(GuestRegistration::SEXES[$traveller->sex] ?? $traveller->sex)),
+                            $this->day($traveller->birth_date),
+                            $this->text($traveller->birth_country),
+                            $this->text($traveller->nationality),
+                            $this->text($traveller->document_type === null ? null : __(GuestRegistration::DOCUMENT_TYPES[$traveller->document_type] ?? $traveller->document_type)),
+                            $this->text($traveller->document_number),
+                            $this->text($traveller->document_country),
+                            $this->text($traveller->residence_country),
+                            $this->text($traveller->residence_city),
+                            $this->text($traveller->residence_address),
+                        ]));
+                    }
+                }
+            });
+    }
+
 
     /** Bookings that arrive in the period, in order of arrival. */
     private function inPeriod(): Builder

@@ -48,6 +48,15 @@ $task('deposits:process')->dailyAt('09:30');
 // Backup of the database and the uploaded files; old backups are removed.
 $task('backups:make')->dailyAt('02:30');
 
+// One email to the owner with what went wrong since yesterday (nothing new, no email).
+$task('errors:report')->dailyAt('07:00');
+
+// The changeovers of the coming days to every cleaner (daily, or on Mondays).
+$task('cleaning:send')->dailyAt('06:30');
+
+// The details of travellers no longer than each accommodation keeps them.
+$task('registrations:purge')->dailyAt('03:45');
+
 // The log keeps a year: older lines (with guest names) are removed.
 // --force: live, the command otherwise asks for a confirmation nobody gives.
 $task('activitylog:clean', ['--force' => true])->dailyAt('03:30');

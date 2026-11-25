@@ -38,18 +38,31 @@ final class AdminNotifications
     }
 
     /**
+     * The owner: the company address under Settings, as their account when
+     * there is one (so the email is in their own language), otherwise the
+     * address itself. Null without an address.
+     */
+    public static function owner(): User|string|null
+    {
+        $companyAddress = mb_strtolower(trim((string) Setting::get('company', 'email', config('mail.from.address'))));
+
+        if ($companyAddress === '') {
+            return null;
+        }
+
+        return User::query()
+            ->where('role', UserRole::Administrator->value)
+            ->whereRaw('lower(email) = ?', [$companyAddress])
+            ->first() ?? $companyAddress;
+    }
+
+    /**
      * @return array<int, User|string> accounts, or a standalone email address
      */
     public static function recipients(AdminNotification $notification, Booking $booking): array
     {
-        $companyAddress = mb_strtolower(trim((string) Setting::get('company', 'email', config('mail.from.address'))));
+        $owner = self::owner();
         $hostIds = $booking->property?->hosts()->pluck('hosts.id') ?? collect();
-
-        // The company address as an owner's account, so they also get their own language.
-        $owner = $companyAddress === '' ? null : (User::query()
-            ->where('role', UserRole::Administrator->value)
-            ->whereRaw('lower(email) = ?', [$companyAddress])
-            ->first() ?? $companyAddress);
 
         $hosts = User::query()
             ->where('role', UserRole::Host->value)

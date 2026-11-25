@@ -2,9 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Engines\AvailabilityEngine;
 use App\Engines\BookingEngine;
+use App\Engines\NotificationEngine;
 use App\Engines\PaymentEngine;
 use App\Enums\BookingStatus;
+use App\Enums\MailType;
 use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\Coupon;
@@ -22,6 +25,9 @@ use Throwable;
  * whoever paid at the last minute stays booked. Open payment pages are closed
  * at the provider first; if one cannot be closed yet, the booking waits for
  * the next run, so nobody can pay for a cancelled booking.
+ *
+ * The guest then gets one email to book the same dates again (if the
+ * accommodation has it switched on and the dates are still free).
  */
 class ReleaseUnpaidBookings extends Command
 {
@@ -29,7 +35,7 @@ class ReleaseUnpaidBookings extends Command
 
     protected $description = 'Cancels bookings made on the site that were not paid in time, so their dates are free again';
 
-    public function handle(PaymentEngine $payments, BookingEngine $bookings): int
+    public function handle(PaymentEngine $payments, BookingEngine $bookings, AvailabilityEngine $availability, NotificationEngine $notifications): int
     {
         $expired = Booking::query()
             ->where('status', BookingStatus::New->value)
@@ -70,6 +76,7 @@ class ReleaseUnpaidBookings extends Command
                 });
 
                 $released++;
+                $this->remindOfUnfinished($booking, $availability, $notifications);
                 $this->line("{$booking->booking_number}: not paid in time, cancelled.");
             } catch (Throwable $e) {
                 report($e);
@@ -80,5 +87,25 @@ class ReleaseUnpaidBookings extends Command
         $this->info($released === 0 ? 'No unpaid bookings to release.' : "{$released} booking(s) released.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * One email to book the same dates again: only when it is switched on,
+     * the arrival is still ahead and the dates are still free.
+     */
+    private function remindOfUnfinished(Booking $booking, AvailabilityEngine $availability, NotificationEngine $notifications): void
+    {
+        $property = $booking->property;
+
+        if ($property === null || ! (bool) (int) $property->effective('unfinished_booking_mail') || $booking->arrival_date->lessThan(today())) {
+            return;
+        }
+
+        // Taken in the meantime, for example by a booking that came in from Airbnb.
+        if (! $availability->check($property, $booking->arrival_date, $booking->departure_date)->available) {
+            return;
+        }
+
+        $notifications->sendOnce($booking, MailType::UnfinishedBooking);
     }
 }

@@ -52,6 +52,19 @@ enum BookingStatus: string implements \Filament\Support\Contracts\HasColor, \Fil
         return in_array($this, [self::Confirmed, self::Paid, self::Completed], true);
     }
 
+    /**
+     * The stored values of every status that is confirmed (see isConfirmed),
+     * for a query.
+     *
+     * @return array<int, string>
+     */
+    public static function confirmedValues(): array
+    {
+        return array_values(array_map(
+            fn (self $status): string => $status->value,
+            array_filter(self::cases(), fn (self $status): bool => $status->isConfirmed()),
+        ));
+    }
     public function getLabel(): string
     {
         return __($this->label());

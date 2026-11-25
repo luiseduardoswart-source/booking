@@ -96,6 +96,7 @@ class PropertyForm
         'verified' => 'Text for "verification successful, pay now"',
         'identity_reminder' => 'Text for the identity check reminder',
         'identity_cancelled' => 'Text for "cancelled: no identity check"',
+        'unfinished_booking' => 'Text for "booking not finished"',
     ];
 
     /**
@@ -1354,6 +1355,20 @@ class PropertyForm
                                             ->columnSpanFull(),
                                     ]),
 
+                                // Police or city registration of every traveller (Spain, Italy, Portugal, Germany...).
+                                Section::make(__('Guest registration'))
+                                    ->description(__('In many countries every guest must be registered with the police or the city. The guest then fills in the details of every traveller through a link in the confirmation, the check-in email and My booking; you export them under Bookings → Export.'))
+                                    ->columns(2)
+                                    ->components([
+                                        self::inheritToggle('guest_registration', __('Ask the details of every guest'))
+                                            ->live(),
+                                        self::defaultNumber('guest_registration_keep_days', __('Erase them: days after departure'))
+                                            ->minValue(1)
+                                            ->maxValue(3650)
+                                            ->helperText(__('As long as the law of your country requires, and no longer. Spain asks 3 years (1095 days); Italy only until you have passed them on.'))
+                                            ->visible(fn (Get $get, ?Property $record): bool => (bool) (int) self::formOrDefault($get, $record, 'guest_registration')),
+                                    ]),
+
                                 // What guests may and may not do: on the accommodation page and in the
                                 // conditions the guest accepts when booking.
                                 Section::make(__('House rules'))
@@ -1649,6 +1664,7 @@ class PropertyForm
                         self::defaultNumber('checkin_days_before_arrival', __('Check-in email: days before arrival')),
                         self::defaultNumber('checkout_days_before_departure', __('Check-out email: days before departure')),
                         self::defaultNumber('review_days_after_departure', __('Review request: days after departure')),
+                        self::inheritToggle('unfinished_booking_mail', __('Email when a booking was not paid in time'), __('One email with a link to book the same dates again')),
                     ]),
 
                 Section::make(__('Custom texts'))

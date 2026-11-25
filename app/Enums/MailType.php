@@ -15,6 +15,7 @@ enum MailType: string
     case Review = 'review';
     case IdentityReminder = 'identity_reminder';
     case IdentityCancelled = 'identity_cancelled';
+    case UnfinishedBooking = 'unfinished_booking';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum MailType: string
             self::Review => 'Review request',
             self::IdentityReminder => 'Identity check reminder',
             self::IdentityCancelled => 'Cancelled: no identity check',
+            self::UnfinishedBooking => 'Booking not finished',
         };
     }
 
@@ -52,6 +54,7 @@ enum MailType: string
             self::Review => 'The number of days after departure set here',
             self::IdentityReminder => 'With the identity check after the payment: the number of days before its deadline set under Rules, if it has not been done yet',
             self::IdentityCancelled => 'With the identity check after the payment: when the booking is cancelled because it was not done by the deadline',
+            self::UnfinishedBooking => 'Once, when a booking made on the site was not paid within the hour and its dates were given back, with a link to book the same dates again. Only while those dates are still free, and only if it is switched on here',
         };
     }
 }

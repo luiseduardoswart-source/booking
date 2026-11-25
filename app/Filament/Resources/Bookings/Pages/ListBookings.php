@@ -55,6 +55,7 @@ class ListBookings extends ListRecords
                     ->options([
                         BookingExport::BOOKINGS => __('Bookings and revenue'),
                         BookingExport::TOURIST_TAX => __('Tourist tax per accommodation and month'),
+                        BookingExport::GUEST_REGISTRATION => __('Registered guests, for the police or city'),
                     ])
                     ->live()
                     ->required(),

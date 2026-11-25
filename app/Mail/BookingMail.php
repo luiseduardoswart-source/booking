@@ -47,6 +47,7 @@ class BookingMail extends Mailable implements ShouldQueue
             MailType::Review => __('How was your stay?'),
             MailType::IdentityReminder => __('Please verify your identity before your stay (:number)', $number),
             MailType::IdentityCancelled => __('Your booking :number has been cancelled', $number),
+            MailType::UnfinishedBooking => __('You did not finish your booking at :accommodation', ['accommodation' => $this->booking->property->localized('name')]),
         };
 
         return new Envelope(subject: $subject);
@@ -109,6 +110,12 @@ class BookingMail extends Mailable implements ShouldQueue
                 'bookingUrl' => \App\Support\GuestAccess::bookingUrl($this->booking),
                 // Booked without a phone number: the confirmation asks for it.
                 'phoneMissing' => $this->booking->phoneCanBeAdded(),
+                // Where the authorities require it and not done yet: the form for every traveller.
+                'guestRegistrationUrl' => in_array($this->type, [MailType::Confirmation, MailType::Checkin], true) && $this->booking->guestRegistrationMissing()
+                    ? $this->booking->signedLink('guest-registration.show')
+                    : null,
+                // Not paid in time: the accommodation page with the same dates, to book them again.
+                'rebookUrl' => $this->type === MailType::UnfinishedBooking ? $this->booking->rebookUrl() : null,
             ],
         );
     }

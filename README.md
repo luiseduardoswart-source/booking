@@ -35,6 +35,12 @@ rental business.
   done it yet gets a reminder; when the deadline passes you choose whether the
   booking is cancelled (with the refund you pick) or you get a notification.
   The check-in email waits until the check is done.
+- **Guest registration** (optional, per property): where the law requires it
+  (Spain, Italy, Portugal, Germany...), the guest fills in the details of every
+  traveller before arrival through a link in the confirmation, the check-in email
+  and My bookings. You export them for the police or city portal; the document
+  number and address are stored encrypted and erased the number of days after
+  departure you set.
 - **My bookings**: through the icon at the top right, guests see their bookings
   and download the confirmation, invoice and receipts, without a password. They
   get a sign-in link by email (valid for 15 minutes); the browser then stays
@@ -100,6 +106,11 @@ rental business.
   supports iCal, in both directions, every 30 minutes. Double bookings are
   flagged.
 - **Block dates** yourself, for example for maintenance or personal use.
+- **Cleaning schedule**: add your cleaners and their properties. They get the
+  changeovers (every departure with the next arrival, number of guests and pets,
+  never a name) every morning or every Monday by email, and on a private page
+  without an account that is always up to date. Bookings from Airbnb,
+  Booking.com and other synced calendars are included.
 - **Unpaid bookings give their dates back**: a booking made on the site holds
   its dates for 60 minutes while the guest pays. Not paid by then, the open
   payment is closed and the booking is cancelled, so nobody can fill your
@@ -127,6 +138,13 @@ rental business.
   the dates, which are filled in automatically.
 - **Notifications for you** by email: a new booking, a cancellation, a payment,
   or a conflict with an external calendar.
+- **A booking that was not finished**: a guest who stops at the payment gets
+  one friendly email when the dates are given back after the hour, with a link
+  to book the same dates again (only while they are free; switch it off per
+  property under Automatic emails).
+- **An email when something goes wrong**: once a day, only when needed, you
+  get one email with the errors the website ran into, emails that could not be
+  sent, calendars that do not sync and a failed backup. No outside service needed.
 - **Your own mailbox**, set up in the admin panel, with a button to send a test
   email.
 
@@ -778,6 +796,13 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
   and only the owner downloads them, through a link that accepts nothing but a
   backup's own name; every download and deletion goes into the log. Guest data
   you erase leaves the backups once they expire.
+- **Guest registrations**: document numbers and addresses are encrypted in the
+  database, never shown in the admin (only in the export), and erased by
+  `registrations:purge` after the days to keep per property, at once for a
+  cancelled stay and with Erase guest data.
+- **Cleaners** see no guest names or contact details; their private page only
+  opens through a signed link, and **Give a new link** under Cleaning closes
+  the old one at once.
 - **Exports** to Excel write every text as text, so a guest name typed as a
   formula (`=HYPERLINK(...)`) never runs in Excel. Every export goes into
   the log.
@@ -830,6 +855,9 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `mails:send-scheduled` | daily at 09:00 | Sends scheduled guest emails |
 | `deposits:process` | daily at 09:30 | Refunds security deposits, or reminds the host |
 | `backups:make` | daily at 02:30 | Backs up the database and uploaded files, removes backups older than the days to keep |
+| `registrations:purge` | daily at 03:45 | Erases registered travellers after the days to keep per property |
+| `cleaning:send` | daily at 06:30 | Emails cleaners the changeovers (daily ones every day, weekly ones on Monday) |
+| `errors:report` | daily at 07:00 | Emails the owner what went wrong since the previous email; nothing new, no email |
 | `activitylog:clean` | daily at 03:30 | Removes log lines older than a year |
 | `lang:translate es` | by hand | Machine-translates a language file from English (DeepL) |
 | `admin:disable-two-factor` | by hand | Disables two-factor sign-in for one account |

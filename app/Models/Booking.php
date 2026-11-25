@@ -141,6 +141,29 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function guestRegistrations(): HasMany
+    {
+        return $this->hasMany(GuestRegistration::class)->orderBy('position');
+    }
+
+    /** Everyone who comes, babies included: each of them is registered. */
+    public function travellers(): int
+    {
+        return (int) $this->guests + (int) $this->infants;
+    }
+
+    /**
+     * Does the accommodation ask the guest to register every traveller, and
+     * has that not been done yet? Only for a stay that goes ahead.
+     */
+    public function guestRegistrationMissing(): bool
+    {
+        return (bool) (int) $this->property?->effective('guest_registration')
+            && $this->status->isConfirmed()
+            && $this->departure_date->greaterThanOrEqualTo(today())
+            && $this->guestRegistrations()->count() < $this->travellers();
+    }
+
     public function review(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Review::class);
@@ -320,6 +343,18 @@ class Booking extends Model
             $this->departure_date->endOfDay()->addDays(self::LINK_DAYS_AFTER_DEPARTURE),
             $parameters ?? ['booking' => $this->id],
         );
+    }
+
+    /**
+     * The accommodation page in the guest's language with the dates of this
+     * booking filled in: to book them again after the booking lapsed.
+     */
+    public function rebookUrl(): string
+    {
+        return \App\Support\LocalizedUrl::of($this->property, $this->locale, [
+            'arrival' => $this->arrival_date->toDateString(),
+            'departure' => $this->departure_date->toDateString(),
+        ]);
     }
 
     public function nights(): int

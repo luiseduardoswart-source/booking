@@ -84,6 +84,7 @@ final class GuestDataEraser
         ]);
 
         Review::query()->where('booking_id', $booking->id)->update(['guest_name' => self::ANONYMOUS]);
+        \App\Models\GuestRegistration::query()->where('booking_id', $booking->id)->delete();
         SentMail::query()->where('booking_id', $booking->id)->update(['recipient' => $erasedAddress]);
 
         Activity::query()

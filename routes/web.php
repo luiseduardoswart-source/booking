@@ -189,6 +189,20 @@ Route::get('/booking/{booking}/verification/ready', [\App\Http\Controllers\Ident
     ->name('identity.return')
     ->middleware('signed');
 
+// Registration of every traveller, where the authorities require it (signed link from the emails and My booking)
+Route::get('/booking/{booking}/guests', [\App\Http\Controllers\GuestRegistrationController::class, 'show'])
+    ->name('guest-registration.show')
+    ->middleware('signed');
+Route::post('/booking/{booking}/guests', [\App\Http\Controllers\GuestRegistrationController::class, 'store'])
+    ->name('guest-registration.store')
+    ->middleware(['signed', 'throttle:20,1']);
+
+// The changeovers for a cleaner (signed link from the cleaning email; a new link closes the old one)
+Route::get('/cleaning/{cleaner}/{version}', \App\Http\Controllers\CleaningScheduleController::class)
+    ->where(['cleaner' => '[0-9]+', 'version' => '[0-9]+'])
+    ->middleware(['signed', 'throttle:60,1'])
+    ->name('cleaning.schedule');
+
 // Reviews (signed link from the review request mail)
 Route::get('/booking/{booking}/review', [\App\Http\Controllers\ReviewController::class, 'create'])
     ->name('reviews.create')

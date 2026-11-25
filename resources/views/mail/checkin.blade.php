@@ -33,6 +33,7 @@
 {{ $houseRules }}
 @endif
 
+@include('mail.partials.guest-registration')
 {{ __('We wish you a wonderful stay!') }}
 
 @include('mail.partials.booking-link')

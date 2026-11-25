@@ -127,6 +127,12 @@ class BookingResource extends Resource
                     ->visible(fn (?Booking $record): bool => filled($record?->form_answers))
                     ->components(fn (?Booking $record): array => self::answers($record)),
 
+                // Where the authorities require it: who has been registered (the details are in the export).
+                Section::make(__('Guest registration'))
+                    ->columns(2)
+                    ->visible(fn (?Booking $record): bool => $record !== null && (bool) (int) $record->property?->effective('guest_registration'))
+                    ->components(fn (?Booking $record): array => self::registrations($record)),
+
                 Section::make(__('Remarks'))
                     ->columns(2)
                     ->components([
@@ -138,6 +144,25 @@ class BookingResource extends Resource
                             ->rows(3),
                     ]),
             ]);
+    }
+
+    /**
+     * How many travellers are registered, and who: name, nationality and
+     * date of birth. The document number stays in the export.
+     *
+     * @return array<int, Text>
+     */
+    private static function registrations(?Booking $record): array
+    {
+        $registered = $record?->guestRegistrations ?? collect();
+
+        return [
+            Text::make(trans_choice('{0} No guests registered yet, of :total.|{1} 1 of :total guests registered.|[2,*] :count of :total guests registered.', $registered->count(), ['total' => $record?->travellers() ?? 0]))
+                ->columnSpanFull(),
+            ...$registered->map(fn (\App\Models\GuestRegistration $traveller) => Text::make(
+                $traveller->first_name.' '.$traveller->last_name.' · '.\App\Support\Countries::name($traveller->nationality).' · '.$traveller->birth_date->format('d-m-Y')
+            ))->all(),
+        ];
     }
 
     /** @return array<int, Text> one line per answer: label, then the answer */

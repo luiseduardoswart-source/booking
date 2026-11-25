@@ -60,6 +60,12 @@
                     {{ __('Verify your identity') }}
                 </a>
             @endif
+            @if ($booking->guestRegistrationMissing())
+                <a href="{{ $booking->signedLink('guest-registration.show') }}" class="inline-flex items-center gap-2 rounded-xl border border-stone-300 px-5 py-2.5 font-semibold text-stone-800 hover:border-rose-400 hover:text-rose-600">
+                    <x-site-icon name="users" class="h-5 w-5" />
+                    {{ __('Register your guests') }}
+                </a>
+            @endif
         </div>
         @if ($booking->identityMissing() && $booking->identityDeadline() && $booking->status !== \App\Enums\BookingStatus::Cancelled)
             <p class="mt-2 text-sm text-stone-600">{{ __('Please do this by :date at the latest.', ['date' => $booking->identityDeadline()->translatedFormat('l j F Y')]) }}</p>

@@ -29,7 +29,8 @@
             <td width="50%">
                 <strong>{{ $booking->property->localized('name') }}</strong><br>
                 @if ($booking->property->address){{ $booking->property->address }}<br>@endif
-                @if ($booking->property->postal_code || $booking->property->city){{ $booking->property->postal_code }} {{ $booking->property->city }}@endif
+                @if ($booking->property->postal_code || $booking->property->city){{ $booking->property->postal_code }} {{ $booking->property->city }}<br>@endif
+                @include('pdf.partials.registration')
             </td>
             <td width="50%">
                 <strong>{{ __('Check-in') }}:</strong> {{ $booking->arrival_date->format('d-m-Y') }}

@@ -25,6 +25,7 @@
     </table>
 
     <h2>{{ $booking->property->localized('name') }} — {{ __(':of to :until', ['of' => $booking->arrival_date->format('d-m-Y'), 'until' => $booking->departure_date->format('d-m-Y')]) }} ({{ __(':count guests', ['count' => $booking->guests]) }})</h2>
+    @if (filled($booking->property?->registration_number))<p>@include('pdf.partials.registration')</p>@endif
 
     <table class="rules">
         <thead>

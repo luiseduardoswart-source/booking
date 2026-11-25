@@ -45,6 +45,9 @@ $task('channels:sync')->everyThirtyMinutes();
 // Deposit refunds after departure (automatic or reminder to the admin).
 $task('deposits:process')->dailyAt('09:30');
 
+// Backup of the database and the uploaded files; old backups are removed.
+$task('backups:make')->dailyAt('02:30');
+
 // The log keeps a year: older lines (with guest names) are removed.
 // --force: live, the command otherwise asks for a confirmation nobody gives.
 $task('activitylog:clean', ['--force' => true])->dailyAt('03:30');

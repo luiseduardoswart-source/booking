@@ -189,6 +189,13 @@
                     </div>
                 @endif
 
+                {{-- Registration number: required in many places in every advert --}}
+                @if (filled($property->registration_number))
+                    <p class="mt-8 border-t border-stone-200 pt-8 text-sm text-stone-600">
+                        {{ __('Registration number') }}: <span class="font-medium text-stone-900">{{ $property->registration_number }}</span>
+                    </p>
+                @endif
+
                 {{-- Social media of this accommodation: after the rules, at the end --}}
                 @if ($socialLinks = $property->socialLinks())
                     <div class="mt-8 border-t border-stone-200 pt-8">

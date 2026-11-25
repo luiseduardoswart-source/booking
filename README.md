@@ -82,6 +82,9 @@ rental business.
   property's time zone, sent in the check-in email. A cancelled stay loses it.
   You connect the locks in your own Seam account (paid per lock) and enter its
   API key under Settings → Keys.
+- **Registration number** per property (for example the CIN in Italy or the
+  number of your city), shown on the property page, the booking confirmation
+  and the invoice.
 - **Import a listing from a link** (for example your Airbnb page) to fill in a
   new property in seconds.
 - **AI writing help** for descriptions, and **automatic translation** of your
@@ -108,6 +111,10 @@ rental business.
   invoices, booking confirmations and receipts as PDF.
 - **Security deposit**: refunded automatically after departure, or a daily
   reminder for you to do it.
+- **Export to Excel**: the bookings arriving in a period with the guest, the
+  price lines, the invoice and what was paid, for your accountant; or the
+  tourist tax per property and month (stays, nights, guest nights and the
+  amount), for your city. A host only exports their own bookings.
 
 ### Emails
 
@@ -143,6 +150,9 @@ rental business.
   account.
 - **The admin panel speaks your language**, separate from the language of the
   website. Each user can choose their own.
+- **Backups every night** of the database and the uploaded photos, videos and
+  documents, kept for 7 days (you choose how long). Under **Backups** you
+  download one, delete one or make one right away (owner only).
 - **Updates in one click**: after uploading a new version, a button on the
   dashboard updates the database.
 - **Work from an AI app**: connect Claude, ChatGPT or another AI app (MCP)
@@ -312,8 +322,7 @@ follow steps 3 and 4; the installation code is in
   photos and documents are not in the zip, so they stay. Then open the admin
   panel: if the new version needs changes to the database, the dashboard shows
   **Update the website** with an **Update database** button. Make a backup
-  first if your hosting provider does not do this automatically, then click the
-  button.
+  first (**Backups → Make a backup now**), then click the button.
 
 Your bookings and settings stay as they are. After an update with the zip
 file, the website clears its old pages and caches once by itself.
@@ -377,8 +386,18 @@ folder (uploaded photos) and the file **`.env`** (your settings and passwords).
 Keep `.env` with the database: the passwords and API keys under Settings are
 stored encrypted with its `APP_KEY`, and without that key they cannot be read
 (you would have to enter them again).
-Most hosting plans make automatic backups; check this in your hosting panel (on
-Hostinger: **Files → Backups**).
+The website makes a backup itself every night (admin → **Backups**): a zip with
+the database (`database.sql`) and the uploaded photos, videos and documents,
+kept for 7 days unless you choose otherwise under **Backup settings**. The
+newest backup is always kept. Download one now and then and keep it somewhere
+else: a backup on the same server does not help if the server itself is lost.
+The `.env` file is not in it; keep that yourself.
+
+To restore: import `database.sql` into an empty database (phpMyAdmin →
+**Import**), put `files/public` back in `public/storage` and `files/private` in
+`storage/app/private`, and use your old `.env`. Most hosting plans also make
+automatic backups; check this in your hosting panel (on Hostinger: **Files →
+Backups**).
 
 ### Lost your phone and your recovery codes?
 
@@ -755,6 +774,13 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
   (never its value), and changes to bookings, payments and accommodations. It
   keeps a year (`activitylog:clean`). A new password ends that person's AI
   app connections and other sessions.
+- **Backups** are stored outside the web folder (`storage/app/private/backups`)
+  and only the owner downloads them, through a link that accepts nothing but a
+  backup's own name; every download and deletion goes into the log. Guest data
+  you erase leaves the backups once they expire.
+- **Exports** to Excel write every text as text, so a guest name typed as a
+  formula (`=HYPERLINK(...)`) never runs in Excel. Every export goes into
+  the log.
 - **The right to be forgotten**: "Erase guest data" on a booking (owner only)
   erases the personal data of every finished or cancelled stay of that guest;
   dates, amounts and payments stay under the name "Anonymous"
@@ -803,6 +829,7 @@ Amounts are stored in cents. Everything is date-based: one night is one date.
 | `identity:process` | daily at 08:45 | ID check after payment: reminds guests, then cancels or notifies you |
 | `mails:send-scheduled` | daily at 09:00 | Sends scheduled guest emails |
 | `deposits:process` | daily at 09:30 | Refunds security deposits, or reminds the host |
+| `backups:make` | daily at 02:30 | Backs up the database and uploaded files, removes backups older than the days to keep |
 | `activitylog:clean` | daily at 03:30 | Removes log lines older than a year |
 | `lang:translate es` | by hand | Machine-translates a language file from English (DeepL) |
 | `admin:disable-two-factor` | by hand | Disables two-factor sign-in for one account |

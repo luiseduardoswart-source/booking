@@ -1726,6 +1726,12 @@ class PropertyForm
                         ->searchable()
                         ->required()
                         ->default('NL'),
+                    // Required in many places in every advert; per accommodation, no default.
+                    TextInput::make('registration_number')
+                        ->label(__('Registration number'))
+                        ->maxLength(100)
+                        ->helperText(__('The number your city or region gave this rental, if it has one (for example the CIN in Italy). Shown on the accommodation page and on the invoice.'))
+                        ->visible(fn (?Property $record): bool => ! $record?->is_master),
                     // Degrees with a decimal point, as Google Maps gives them. Without the
                     // point (-755514039) the number is far outside the world and the
                     // database cannot store it: say so instead of "saving failed".

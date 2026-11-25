@@ -51,6 +51,7 @@ class ScheduledTasksTest extends TestCase
             'locks:sync' => '0 * * * *',
             'channels:sync' => '*/30 * * * *',
             'deposits:process' => '30 9 * * *',
+            'backups:make' => '30 2 * * *',
             'activitylog:clean' => '30 3 * * *',
             'prices:sync' => '0 5 * * *',
             'queue:work' => '* * * * *',

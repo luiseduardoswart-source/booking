@@ -25,7 +25,7 @@ class ActivityLogResource extends Resource
 {
     protected static ?string $model = Activity::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentMagnifyingGlass;
 
     protected static ?int $navigationSort = 21;
 
@@ -43,6 +43,10 @@ class ActivityLogResource extends Resource
         'two_factor_off' => 'Two-factor authentication turned off',
         'setting_changed' => 'Setting changed',
         'guest_data_erased' => 'Guest data erased',
+        'backup_made' => 'Backup made',
+        'backup_downloaded' => 'Backup downloaded',
+        'backup_deleted' => 'Backup deleted',
+        'bookings_exported' => 'Bookings exported',
     ];
 
     /** The kind of record, by model class. */
@@ -97,8 +101,8 @@ class ActivityLogResource extends Resource
                     ->state(fn (Activity $activity): string => self::what($activity))
                     ->badge()
                     ->color(fn (Activity $activity): string => match ($activity->event) {
-                        'login_failed', 'deleted', 'two_factor_off', 'guest_data_erased' => 'danger',
-                        'setting_changed', 'password_changed' => 'warning',
+                        'login_failed', 'deleted', 'two_factor_off', 'guest_data_erased', 'backup_deleted' => 'danger',
+                        'setting_changed', 'password_changed', 'backup_downloaded', 'bookings_exported' => 'warning',
                         default => 'gray',
                     }),
                 TextColumn::make('subject_type')
@@ -164,7 +168,8 @@ class ActivityLogResource extends Resource
         $properties = $activity->properties;
 
         return collect([
-            $properties['setting'] ?? null,
+            $properties['setting'] ?? $properties['backup'] ?? null,
+            isset($properties['from'], $properties['until']) ? $properties['from'].' – '.$properties['until'] : null,
             ($fields = array_keys((array) ($activity->attribute_changes['attributes'] ?? []))) !== [] ? implode(', ', $fields) : null,
             isset($properties['ip']) ? __('from :ip', ['ip' => $properties['ip']]) : null,
         ])->filter()->implode(' · ');

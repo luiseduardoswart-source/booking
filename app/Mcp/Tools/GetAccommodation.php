@@ -53,6 +53,7 @@ class GetAccommodation extends BookingTool
             'online' => (bool) $property->active,
             'type' => $property->type,
             'address' => trim(implode(', ', array_filter([$property->address, $property->postal_code, $property->city, $property->country]))),
+            'registration_number' => $property->registration_number,
             'capacity' => [
                 'max_guests' => $property->max_guests,
                 'bedrooms' => $property->bedrooms,

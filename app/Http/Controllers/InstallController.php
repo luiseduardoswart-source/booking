@@ -235,7 +235,7 @@ class InstallController extends Controller
             ['label' => __('PHP extension :name', ['name' => 'sodium']), 'ok' => extension_loaded('sodium')],
             ['label' => __('PHP extension :name', ['name' => 'fileinfo']), 'ok' => extension_loaded('fileinfo')],
             ['label' => __('PHP extension :name', ['name' => 'gd']).' — '.__('for photos and PDFs'), 'ok' => extension_loaded('gd')],
-            ['label' => __('PHP extension :name', ['name' => 'zip']).' — '.__('for layout templates'), 'ok' => extension_loaded('zip')],
+            ['label' => __('PHP extension :name', ['name' => 'zip']).' — '.__('for layout templates and backups'), 'ok' => extension_loaded('zip')],
             ['label' => __('Folder :map writable', ['map' => 'storage/']), 'ok' => is_writable(storage_path())],
             ['label' => __('Folder :map writable', ['map' => 'bootstrap/cache/']), 'ok' => is_writable(base_path('bootstrap/cache'))],
             ['label' => __('Folder :map writable', ['map' => 'public/']), 'ok' => is_writable(public_path())],

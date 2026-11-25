@@ -27,6 +27,7 @@ class PropertyApiResource extends JsonResource
             'beds' => $this->beds,
             'sofa_beds' => $this->sofa_beds,
             'bathrooms' => $this->bathrooms,
+            'registration_number' => $this->registration_number,
             'currency' => $this->priceCurrency(),
             'base_price_cents' => (int) $this->effectiveAmount('base_price_cents'),
             'cleaning_fee_cents' => (int) $this->effectiveAmount('cleaning_fee_cents'),

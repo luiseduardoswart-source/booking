@@ -118,6 +118,12 @@ Route::post('/admin-menu/order', \App\Http\Controllers\Admin\MenuOrderController
     ->middleware(['throttle:30,1', ...$adminSecurity])
     ->name('admin.menu-order');
 
+// Download of a backup (Backups page); the controller lets only the owner in.
+Route::get('/admin-backups/{name}', \App\Http\Controllers\Admin\BackupDownloadController::class)
+    ->middleware(['throttle:30,1', ...$adminSecurity])
+    ->where('name', '[A-Za-z0-9.-]+')
+    ->name('admin.backups.download');
+
 Route::prefix('admin-media')->middleware([\App\Http\Middleware\SetAdminLocale::class, ...$adminSecurity])->group(function () {
     Route::get('list', [\App\Http\Controllers\Admin\MediaController::class, 'list'])->name('media.list');
     Route::post('upload', [\App\Http\Controllers\Admin\MediaController::class, 'upload'])->name('media.upload');

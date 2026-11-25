@@ -16,7 +16,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
@@ -181,27 +180,49 @@ class Booking extends Model
      */
     public function paymentOverview(): array
     {
-        $stay = [PaymentType::DownPayment->value, PaymentType::Balance->value];
-
-        // A deposit paid along with the stay (deposit right after booking) is
-        // not part of what the stay costs, and neither is its refund.
-        $stayPart = DB::raw('amount_cents - deposit_part_cents');
-
-        $paid = (int) $this->payments()
-            ->where('status', PaymentTransactionStatus::Paid->value)
-            ->whereIn('type', $stay)
-            ->sum($stayPart);
-
-        $refunded = (int) $this->payments()
-            ->where('type', PaymentType::Refund->value)
-            ->whereIn('refunded_payment_id', Payment::query()->select('id')->whereIn('type', $stay))
-            ->sum($stayPart);
+        ['paid' => $paid, 'refunded' => $refunded] = self::stayPayments([$this->id])[$this->id];
 
         return [
             'paid' => $paid,
             'refunded' => $refunded,
             'outstanding' => max(0, $this->total_cents - ($paid - $refunded)),
         ];
+    }
+
+    /**
+     * What has been paid and refunded for the stay of each of these bookings,
+     * in cents, keyed by booking id: two queries for the whole list (the
+     * export), the same sums as paymentOverview().
+     *
+     * @param  array<int, int>  $bookingIds
+     * @return array<int, array{paid: int, refunded: int}>
+     */
+    public static function stayPayments(array $bookingIds): array
+    {
+        $stay = [PaymentType::DownPayment->value, PaymentType::Balance->value];
+
+        // A deposit paid along with the stay (deposit right after booking) is
+        // not part of what the stay costs, and neither is its refund.
+        $sum = fn (Builder $payments) => $payments
+            ->whereIn('booking_id', $bookingIds)
+            ->groupBy('booking_id')
+            ->selectRaw('booking_id, SUM(amount_cents - deposit_part_cents) AS cents')
+            ->pluck('cents', 'booking_id');
+
+        $paid = $sum(Payment::query()
+            ->where('status', PaymentTransactionStatus::Paid->value)
+            ->whereIn('type', $stay));
+
+        $refunded = $sum(Payment::query()
+            ->where('type', PaymentType::Refund->value)
+            ->whereIn('refunded_payment_id', Payment::query()->select('id')->whereIn('type', $stay)));
+
+        return collect($bookingIds)
+            ->mapWithKeys(fn (int $id): array => [$id => [
+                'paid' => (int) ($paid[$id] ?? 0),
+                'refunded' => (int) ($refunded[$id] ?? 0),
+            ]])
+            ->all();
     }
 
     /**

@@ -42,7 +42,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
     'dynamic_discount_kind', 'dynamic_discount_percentage', 'dynamic_discount_cents', 'manual_prices_win',
     'deposit_days_before_arrival', 'deposit_days_after_departure', 'deposit_auto_refund', 'deposit_moment',
     'balance_payment_days_before_arrival', 'checkin_days_before_arrival', 'checkout_days_before_departure', 'review_days_after_departure', 'mail_texts', 'cancellation_texts',
-    'address', 'postal_code', 'city', 'country', 'latitude', 'longitude', 'location_display', 'overview_location_display',
+    'address', 'postal_code', 'city', 'country', 'registration_number', 'latitude', 'longitude', 'location_display', 'overview_location_display',
     'max_guests', 'bedrooms', 'beds', 'sofa_beds', 'bathrooms',
     'base_price_cents', 'currency', 'weekend_price_cents', 'weekend_kind', 'weekend_percentage', 'cleaning_fee_cents',
     'tourist_tax_cents', 'tourist_tax_basis', 'extra_guest_fee_cents', 'pet_fee_cents', 'included_guests', 'deposit_cents',

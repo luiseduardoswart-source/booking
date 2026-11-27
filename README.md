@@ -195,6 +195,8 @@ in a few screens. Everything happens in your browser.
 The steps use **Hostinger** as an example. Other hosting providers work the same
 way; only the names of the menus differ.
 
+https://www.hostinger.com?REFERRALCODE=HR9LUISED0VH
+
 ### What you need
 
 - **Web hosting with PHP 8.4 or higher and a MySQL or MariaDB database.** Most
